@@ -139,7 +139,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
 
 # Install AWS CLI v2
 RUN apt-get update && apt-get install -y unzip && \
-    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
+    curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "awscliv2.zip" && \
     unzip awscliv2.zip && \
     ./aws/install && \
     rm -rf awscliv2.zip aws && \
