@@ -1,0 +1,482 @@
+<story-context id="{bmad_folder}/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>12</storyId>
+    <title>Validation with Real Project Workflows</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-12-validation-with-real-project-workflows.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>to validate that Claude Container works with both emassistant (Python 3.13) and work projects (Java 21)</iWant>
+    <soThat>I'm confident the tool meets the PRD validation criteria</soThat>
+    <tasks>
+- Task 1: Prepare test environments (AC: #1, #2)
+  - Subtask 1.1: Set up emassistant project with Python 3.13 requirements
+  - Subtask 1.2: Set up work project with Java 21 and Maven/Gradle
+  - Subtask 1.3: Ensure both projects have comprehensive test suites
+  - Subtask 1.4: Document project-specific validation steps
+
+- Task 2: Validate Python 3.13 environment (AC: #1)
+  - Subtask 2.1: Mount emassistant project to container workspace
+  - Subtask 2.2: Run `python3 --version` to verify Python 3.13
+  - Subtask 2.3: Execute `pip install -r requirements.txt` without errors
+  - Subtask 2.4: Run pytest test suite and verify successful execution
+  - Subtask 2.5: Test virtual environment creation and activation
+
+- Task 3: Validate Java 21 environment (AC: #2)
+  - Subtask 3.1: Mount work project to container workspace
+  - Subtask 3.2: Run `java --version` to verify Java 21
+  - Subtask 3.3: Execute Maven build: `mvn clean install` (or Gradle: `gradle build`)
+  - Subtask 3.4: Verify npm commands work for Node.js components
+  - Subtask 3.5: Test Java compilation and JAR creation
+
+- Task 4: Validate git operations (AC: #3)
+  - Subtask 4.1: Execute `git status` and verify output
+  - Subtask 4.2: Make test changes and run `git diff`
+  - Subtask 4.3: Create test commit and verify git log
+  - Subtask 4.4: Verify changes persist on host filesystem
+  - Subtask 4.5: Test branch creation and switching
+
+- Task 5: Verify tool approval elimination (AC: #4)
+  - Subtask 5.1: Monitor Claude CLI output for approval prompts
+  - Subtask 5.2: Test bash commands execute without prompts
+  - Subtask 5.3: Test git commands execute without prompts
+  - Subtask 5.4: Test package manager commands (pip, npm, mvn) without prompts
+  - Subtask 5.5: Verify destructive commands execute (in safe test environment)
+
+- Task 6: Execute full epic validation (AC: #5)
+  - Subtask 6.1: Define a small test epic with multiple stories
+  - Subtask 6.2: Ask Claude to execute epic autonomously
+  - Subtask 6.3: Monitor for approval prompts (should be none)
+  - Subtask 6.4: Verify all development tools remain functional
+  - Subtask 6.5: Document any issues or stability concerns
+  - Subtask 6.6: Validate container uptime and resource usage
+
+- Task 7: Document validation results (AC: #1, #2, #3, #4, #5)
+  - Subtask 7.1: Record test execution logs
+  - Subtask 7.2: Document successful test cases
+  - Subtask 7.3: Document any failures or issues encountered
+  - Subtask 7.4: Create validation report summarizing results
+  - Subtask 7.5: Update README with validated platform support
+</tasks>
+  </story>
+
+  <acceptanceCriteria>
+AC1: Python 3.13 Project Validation (emassistant)
+- Given the container is running with an emassistant project mounted at `/workspace`
+- When Claude is asked to run Python 3.13 code
+- Then Python 3.13 executes successfully
+- And pip installs packages without errors
+- And pytest runs tests successfully
+
+AC2: Java 21 Project Validation (Work Project)
+- Given the container is restarted with a work project (Java 21) mounted at `/workspace`
+- When Claude is asked to compile and build Java code
+- Then Java 21 compiles code successfully
+- And Maven/Gradle builds execute without errors
+- And npm commands work for Node.js portions of the project
+
+AC3: Git Operations Functional
+- Given a project mounted in the container workspace
+- When Claude executes git commands (status, diff, commit, branch)
+- Then git operations work correctly
+- And changes are reflected in the host project directory
+
+AC4: Tool Approval Elimination Verified
+- Given Claude CLI is running in the container
+- When Claude attempts to use tools (bash, git, npm, python, pytest, mvn, gradle)
+- Then NO approval prompts appear
+- And commands execute immediately without user intervention
+- And Claude can run destructive commands (rm, rm -rf) within container safely
+
+AC5: Complete Epic Autonomous Execution
+- Given a real project with defined epic tasks
+- When Claude is asked to autonomously develop features without approval prompts
+- Then Claude can execute an epic from start to finish without interruption
+- And all development tools (git, jq, curl, build-essential) are functional
+- And the container remains stable throughout the epic execution
+</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/prd.md">
+        <summary>Product Requirements Document defining the core problem (Claude approval prompts) and solution (browser-based containerized terminal). Contains all functional requirements (FR1-FR77) and non-functional requirements.</summary>
+        <relevance>Primary requirements source. FR1-FR7 define Docker container environment requirements. FR21-FR28 define terminal interaction requirements. FR53-FR58 define backend requirements. Validation criteria specified for Sprint 1.</relevance>
+      </doc>
+
+      <doc path="docs/sprint-artifacts/tech-spec-epic-1.md">
+        <summary>Technical specification for Epic 1: Foundation & Single-Session Terminal. Details Docker environment setup, volume mount strategy, backend PTY management, WebSocket protocol, frontend terminal integration.</summary>
+        <relevance>CRITICAL - This is the direct technical specification for the epic containing Story 1.12. Defines exact implementation approach for all 12 stories in Epic 1.</relevance>
+      </doc>
+
+      <doc path="docs/architecture.md">
+        <summary>System architecture document covering deployment architecture, container structure, backend/frontend stack, PTY process management, WebSocket communication, and xterm.js integration.</summary>
+        <relevance>Architectural constraints and patterns. Defines technology choices: Ubuntu 22.04, Python 3.13, Java 21, Node.js, Express.js, ws library, React 19, xterm.js.</relevance>
+      </doc>
+
+      <doc path="docs/architecture-decisions.md">
+        <summary>Architecture Decision Records (ADR) documenting 11 key decisions including single container approach, BMAD in workspace, git worktrees, node-pty usage, WebSocket streaming, React+xterm.js frontend, JSON persistence, unrestricted tools, dev environment requirements, 4 session maximum, ESC interrupt.</summary>
+        <relevance>ADR-009 specifically addresses development environment requirements (Python 3.13, Java 21) that Story 1.12 validates. ADR-008 documents tool approval elimination rationale.</relevance>
+      </doc>
+
+      <doc path="docs/ux-design-specification.md">
+        <summary>UX design specification covering design system (shadcn/ui + Tailwind), color theme (Oceanic Calm), component library, user journeys, accessibility guidelines, and implementation guidance.</summary>
+        <relevance>UI implementation context. Terminal component design, color scheme, and interaction patterns defined. Less critical for backend validation story but provides context for end-to-end testing.</relevance>
+      </doc>
+
+      <doc path="docs/epics/epic-1-foundation.md">
+        <summary>Epic 1 story breakdown containing all 12 stories including Story 1.12 (Validation with Real Project Workflows). Full acceptance criteria and technical notes for each story.</summary>
+        <relevance>CRITICAL - Contains the exact story being developed (Story 1.12). Defines acceptance criteria requiring Python 3.13 (emassistant) and Java 21 (work projects) validation.</relevance>
+      </doc>
+    </docs>
+
+    <code>
+      <status>Greenfield project - no existing code</status>
+      <nextSteps>Story 1.12 is a validation story that requires all previous Epic 1 stories (1.1-1.11) to be completed first. This story validates the complete system works with real projects.</nextSteps>
+    </code>
+
+    <dependencies>
+      <container>
+        <base>Ubuntu 22.04 LTS</base>
+        <runtime>
+          <python version="3.13">For emassistant project validation</python>
+          <java version="21">Amazon Corretto 21 (OpenJDK) for work project validation</java>
+          <nodejs version="20 LTS">Backend runtime + npm for JavaScript projects</nodejs>
+        </runtime>
+        <tools>
+          <tool>git - Version control operations</tool>
+          <tool>jq - JSON processing</tool>
+          <tool>curl - HTTP client</tool>
+          <tool>wget - File downloads</tool>
+          <tool>build-essential - Compilers (gcc, g++, make)</tool>
+        </tools>
+        <cli>
+          <tool>Claude CLI - Installed globally, configured with no approval prompts</tool>
+        </cli>
+      </container>
+
+      <backend>
+        <framework>Express.js 4.x - HTTP server</framework>
+        <websocket>ws library 8.x - WebSocket server</websocket>
+        <pty>node-pty 1.x - Pseudo-terminal process management</pty>
+        <logger>Winston - Structured JSON logging</logger>
+      </backend>
+
+      <frontend>
+        <framework>React 19 + TypeScript 5.x</framework>
+        <build>Vite 6.x - Build tool with HMR</build>
+        <terminal>xterm.js 5.x - Terminal emulator with addons (fit, web-links, screen-reader-mode)</terminal>
+        <ui>shadcn/ui + Tailwind CSS 4.0 - Component library and styling</ui>
+        <icons>Lucide React - Icon components</icons>
+      </frontend>
+
+      <testProjects>
+        <emassistant>
+          <language>Python 3.13</language>
+          <packageManager>pip - requirements.txt</packageManager>
+          <testFramework>pytest - Test suite execution</testFramework>
+          <purpose>Validate Python 3.13 environment works for real projects</purpose>
+        </emassistant>
+
+        <workProject>
+          <language>Java 21</language>
+          <buildTool>Maven or Gradle</buildTool>
+          <additional>npm for Node.js components</additional>
+          <purpose>Validate Java 21 environment works for enterprise projects</purpose>
+        </workProject>
+      </testProjects>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <technical>
+      <constraint id="CONT-1" priority="critical">
+        <description>Docker container isolation protects host system</description>
+        <rationale>ADR-008: All tools marked safe within container because worst case is destroying container filesystem, not host. This enables autonomous Claude execution without approval prompts.</rationale>
+        <impact>Validation must confirm destructive commands stay within container boundaries</impact>
+      </constraint>
+
+      <constraint id="CONT-2" priority="critical">
+        <description>Volume mounts must persist changes to host</description>
+        <rationale>FR2: Workspace mounted read-write at /workspace. Changes made by Claude must persist on host project directory for git operations and build outputs.</rationale>
+        <impact>Validation must confirm file changes in container appear in host project directory</impact>
+      </constraint>
+
+      <constraint id="CONT-3" priority="high">
+        <description>Python 3.13 must be the default python3 version</description>
+        <rationale>ADR-009 + Story 1.1: emassistant project requires Python 3.13 specifically. Container must have this as the primary Python installation.</rationale>
+        <impact>Validation must run: python3 --version and confirm 3.13.x output</impact>
+      </constraint>
+
+      <constraint id="CONT-4" priority="high">
+        <description>Java 21 must be the default Java version</description>
+        <rationale>ADR-009 + Story 1.1: Work projects require Java 21. Container must have Amazon Corretto 21 (or OpenJDK 21) as primary Java installation.</rationale>
+        <impact>Validation must run: java --version and confirm version 21.x output</impact>
+      </constraint>
+
+      <constraint id="CONT-5" priority="high">
+        <description>All development tools must be pre-installed</description>
+        <rationale>ADR-009: Comprehensive approach to avoid runtime installation delays. Git, jq, curl, wget, build-essential must be available immediately.</rationale>
+        <impact>Validation must confirm all tools are accessible without installation</impact>
+      </constraint>
+
+      <constraint id="PERF-1" priority="medium">
+        <description>Container startup must complete within 30 seconds</description>
+        <rationale>NFR-PERF-3: Zero configuration startup time target. From docker run to Claude CLI ready.</rationale>
+        <impact>Validation should measure and log startup time</impact>
+      </constraint>
+
+      <constraint id="SAFE-1" priority="critical">
+        <description>No approval prompts for any Claude CLI tools</description>
+        <rationale>FR6 + Core value proposition: This is THE PRIMARY GOAL. Claude must execute commands autonomously without user approval prompts.</rationale>
+        <impact>Validation must monitor Claude CLI output for any approval prompt text. If ANY prompts appear, validation FAILS.</impact>
+      </constraint>
+    </technical>
+
+    <validation>
+      <constraint id="VAL-1" priority="critical">
+        <description>Validation must use REAL projects, not mock examples</description>
+        <rationale>Story 1.12 technical notes: "Test with REAL projects, not mock examples". This ensures validation reflects actual usage.</rationale>
+        <impact>Use actual emassistant repository and actual work project repository</impact>
+      </constraint>
+
+      <constraint id="VAL-2" priority="high">
+        <description>Validation must cover complete workflow, not just tool availability</description>
+        <rationale>PRD Success Criteria: "Can run an epic in browser without approval prompts". Must validate Claude can autonomously develop features.</rationale>
+        <impact>Don't just check python3 --version. Run actual Python code, install packages, run tests.</impact>
+      </constraint>
+
+      <constraint id="VAL-3" priority="high">
+        <description>Both Python and Java projects must be validated in same sprint</description>
+        <rationale>Story 1.12 AC: Validate emassistant (Python 3.13) AND work project (Java 21). Both are required for story completion.</rationale>
+        <impact>Cannot mark story complete with only one project type validated</impact>
+      </constraint>
+    </validation>
+  </constraints>
+
+  <interfaces>
+    <containerRuntime>
+      <command>docker run</command>
+      <requiredFlags>
+        <flag name="-v">Mount host project directory to /workspace (read-write)</flag>
+        <flag name="-v">Mount ~/.config/claude-code to /config/.claude-code (read-only)</flag>
+        <flag name="-p">Expose port 3000:3000 for browser access</flag>
+      </requiredFlags>
+      <example>
+        <bash>docker run -v $HOME/my-project:/workspace -v ~/.config/claude-code:/config/.claude-code:ro -p 3000:3000 claude-container</bash>
+      </example>
+    </containerRuntime>
+
+    <claudeCLI>
+      <location>/usr/local/bin/claude (or wherever Claude CLI is installed)</location>
+      <configuration>
+        <file>/config/.claude-code/config (mounted from host)</file>
+        <requirement>All tools marked as "approved" or "safe" to eliminate approval prompts</requirement>
+        <alternative>Environment variable to disable all approval prompts globally</alternative>
+      </configuration>
+      <validation>
+        <check>Run commands that would normally trigger prompts (bash, git, npm, pip, mvn, gradle)</check>
+        <check>Monitor terminal output for approval prompt text</check>
+        <check>Confirm commands execute immediately without interruption</check>
+      </validation>
+    </claudeCLI>
+
+    <workspaceMount>
+      <containerPath>/workspace</containerPath>
+      <hostPath>Variable (user project directory)</hostPath>
+      <permissions>read-write</permissions>
+      <purpose>Claude modifies code, runs builds, commits to git - all changes persist on host</purpose>
+      <validation>
+        <check>Create file in container /workspace, verify appears in host project directory</check>
+        <check>Modify file in container, verify changes in host</check>
+        <check>Run git commands in container, verify git state changes on host</check>
+      </validation>
+    </workspaceMount>
+
+    <pythonEnvironment>
+      <version>3.13.x</version>
+      <location>/usr/bin/python3</location>
+      <packageManager>pip (latest)</packageManager>
+      <validation>
+        <check>python3 --version → Must output "Python 3.13.x"</check>
+        <check>pip install -r requirements.txt → Must install packages without errors</check>
+        <check>pytest → Must discover and run tests</check>
+        <check>Virtual environment creation: python3 -m venv venv → Must work</check>
+      </validation>
+    </pythonEnvironment>
+
+    <javaEnvironment>
+      <version>21.x</version>
+      <distribution>Amazon Corretto 21 (or OpenJDK 21)</distribution>
+      <location>/usr/bin/java</location>
+      <buildTools>
+        <maven>mvn command available</maven>
+        <gradle>gradle command available</gradle>
+      </buildTools>
+      <validation>
+        <check>java --version → Must output version 21.x</check>
+        <check>mvn clean install (or gradle build) → Must complete build successfully</check>
+        <check>npm commands → Must work for Node.js components in project</check>
+        <check>Java compilation and JAR creation → Must succeed</check>
+      </validation>
+    </javaEnvironment>
+
+    <gitOperations>
+      <location>/usr/bin/git</location>
+      <validation>
+        <check>git status → Must show repository state</check>
+        <check>git diff → Must show changes</check>
+        <check>git commit → Must create commit</check>
+        <check>git log → Must show commit history</check>
+        <check>Changes must persist on host filesystem (not just in container)</check>
+      </validation>
+    </gitOperations>
+  </interfaces>
+
+  <tests>
+    <standards>
+      <standard id="TEST-1">
+        <name>Real Project Testing</name>
+        <description>Validation must use actual project repositories, not contrived examples</description>
+        <rationale>Story 1.12 technical notes explicitly require REAL projects</rationale>
+        <application>Mount actual emassistant repo and actual work project repo during validation</application>
+      </standard>
+
+      <standard id="TEST-2">
+        <name>End-to-End Workflow Testing</name>
+        <description>Test complete development workflows, not just individual tool commands</description>
+        <rationale>PRD success criteria: "Can run an epic in browser without approval prompts"</rationale>
+        <application>Have Claude perform actual development tasks (install deps, run tests, compile code, make commits) not just version checks</application>
+      </standard>
+
+      <standard id="TEST-3">
+        <name>Approval Prompt Monitoring</name>
+        <description>Actively monitor for any approval prompts appearing in Claude CLI output</description>
+        <rationale>FR6 + Core value proposition: Zero approval prompts is THE requirement</rationale>
+        <application>Parse terminal output for strings like "approve", "permission", "allow", "confirm" during validation</application>
+      </standard>
+
+      <standard id="TEST-4">
+        <name>Host Persistence Verification</name>
+        <description>Verify all container changes persist to host filesystem</description>
+        <rationale>FR2: Volume mount must enable bidirectional file access</rationale>
+        <application>After Claude makes changes in container, check host directory shows same changes</application>
+      </standard>
+
+      <standard id="TEST-5">
+        <name>Container Isolation Verification</name>
+        <description>Verify destructive commands stay within container boundaries</description>
+        <rationale>ADR-008: Container isolation is what enables unrestricted tool access</rationale>
+        <application>Run safe destructive commands (rm in temp directory) and verify host system unaffected</application>
+      </standard>
+    </standards>
+
+    <locations>
+      <testEnvironment>
+        <location>Docker container running claude-container image</location>
+        <access>Browser at http://localhost:3000</access>
+        <terminal>xterm.js terminal connected via WebSocket to Claude CLI PTY</terminal>
+      </testEnvironment>
+
+      <testProjects>
+        <project name="emassistant">
+          <type>Python 3.13 project</type>
+          <mountPath>/workspace</mountPath>
+          <hostPath>$HOME/path/to/emassistant (user's actual project directory)</hostPath>
+          <requirements>requirements.txt with Python packages</requirements>
+          <testSuite>pytest test suite</testSuite>
+        </project>
+
+        <project name="work-project">
+          <type>Java 21 enterprise project</type>
+          <mountPath>/workspace</mountPath>
+          <hostPath>$HOME/path/to/work-project (user's actual project directory)</hostPath>
+          <buildTool>Maven (pom.xml) or Gradle (build.gradle)</buildTool>
+          <components>Java 21 + Node.js/npm components</components>
+        </project>
+      </testProjects>
+
+      <logLocations>
+        <backend>Container stdout/stderr (docker logs command)</backend>
+        <frontend>Browser console (DevTools)</frontend>
+        <claudeCLI>Terminal output streamed via WebSocket to browser</claudeCLI>
+      </logLocations>
+    </locations>
+
+    <ideas>
+      <testIdea id="IDEA-1" priority="critical">
+        <name>Python 3.13 Full Workflow Test</name>
+        <description>Mount emassistant project, ask Claude to: 1) Check Python version, 2) Install dependencies from requirements.txt, 3) Run pytest test suite, 4) Create virtual environment, 5) Make code change and run tests again</description>
+        <expectedOutcome>All commands execute without approval prompts. Pytest runs successfully. Changes persist to host.</expectedOutcome>
+        <validatesAC>AC1: Python 3.13 Project Validation (emassistant)</validatesAC>
+      </testIdea>
+
+      <testIdea id="IDEA-2" priority="critical">
+        <name>Java 21 Full Workflow Test</name>
+        <description>Restart container with work project mounted. Ask Claude to: 1) Check Java version, 2) Run Maven clean install (or gradle build), 3) Run npm commands for Node.js components, 4) Compile Java code, 5) Create JAR file, 6) Make code change and rebuild</description>
+        <expectedOutcome>All commands execute without approval prompts. Build succeeds. JAR created. Changes persist to host.</expectedOutcome>
+        <validatesAC>AC2: Java 21 Project Validation (Work Project)</validatesAC>
+      </testIdea>
+
+      <testIdea id="IDEA-3" priority="critical">
+        <name>Git Operations Test</name>
+        <description>In mounted project, ask Claude to: 1) git status, 2) Make file change, 3) git diff, 4) git add, 5) git commit, 6) git log, 7) Create branch, 8) Switch branch</description>
+        <expectedOutcome>All git commands work. Commits appear in host repository. Branch operations succeed.</expectedOutcome>
+        <validatesAC>AC3: Git Operations Functional</validatesAC>
+      </testIdea>
+
+      <testIdea id="IDEA-4" priority="critical">
+        <name>Approval Prompt Elimination Test</name>
+        <description>Ask Claude to execute commands that typically trigger approvals: bash commands (ls, cat, grep), git commands (status, diff, commit), package managers (pip install, npm install, mvn clean), file operations (touch, rm, mkdir), potentially destructive commands (rm -rf temp_dir)</description>
+        <expectedOutcome>ZERO approval prompts appear. All commands execute immediately. Terminal shows command output without interruption.</expectedOutcome>
+        <validatesAC>AC4: Tool Approval Elimination Verified</validatesAC>
+      </testIdea>
+
+      <testIdea id="IDEA-5" priority="high">
+        <name>Complete Epic Autonomous Execution</name>
+        <description>Define small test epic with 2-3 stories. Ask Claude to autonomously execute from start to finish without interruption. Monitor for approval prompts throughout entire epic.</description>
+        <expectedOutcome>Claude completes epic autonomously. No approval prompts appear. All dev tools functional. Container remains stable.</expectedOutcome>
+        <validatesAC>AC5: Complete Epic Autonomous Execution</validatesAC>
+      </testIdea>
+
+      <testIdea id="IDEA-6" priority="medium">
+        <name>Container Startup Performance Test</name>
+        <description>Measure time from "docker run" command to Claude CLI showing prompt in browser terminal</description>
+        <expectedOutcome>Startup completes within 30 seconds (NFR-PERF-3)</expectedOutcome>
+        <validatesNFR>NFR-PERF-3: Zero configuration startup</validatesNFR>
+      </testIdea>
+
+      <testIdea id="IDEA-7" priority="medium">
+        <name>Host Isolation Safety Test</name>
+        <description>In container, navigate to temp directory and run: mkdir test_destructive && cd test_destructive && rm -rf *. Verify host system outside /workspace is unaffected.</description>
+        <expectedOutcome>Destructive commands execute in container but host system (outside mounted volume) remains intact</expectedOutcome>
+        <validatesConstraint>CONT-1: Docker container isolation protects host system</validatesConstraint>
+      </testIdea>
+
+      <testIdea id="IDEA-8" priority="low">
+        <name>Documentation Test</name>
+        <description>Create validation report documenting: 1) Test execution logs, 2) Successful test cases, 3) Any failures/issues, 4) Summary of results, 5) Update README with validated platform support</description>
+        <expectedOutcome>Comprehensive validation documentation created</expectedOutcome>
+        <validatesTask>Task 7: Document validation results</validatesTask>
+      </testIdea>
+
+      <testIdea id="IDEA-9" priority="high">
+        <name>Multi-Tool Integration Test</name>
+        <description>Ask Claude to perform task requiring multiple tools: Clone a repo (git), install Python dependencies (pip), run tests (pytest), check into git (git commit), build documentation (sphinx or similar)</description>
+        <expectedOutcome>Claude chains multiple tools together seamlessly without approval prompts at any step</expectedOutcome>
+        <validatesIntegration>Tests that tool approval elimination works across tool boundaries</validatesIntegration>
+      </testIdea>
+
+      <testIdea id="IDEA-10" priority="medium">
+        <name>Error Recovery Test</name>
+        <description>Introduce intentional error (e.g., bad requirements.txt entry). Ask Claude to install dependencies. Observe error handling. Ask Claude to fix error and retry.</description>
+        <expectedOutcome>Claude detects error, can retry commands, error recovery works without approval prompts</expectedOutcome>
+        <validatesRobustness>Tests that approval elimination doesn't break error handling</validatesRobustness>
+      </testIdea>
+    </ideas>
+  </tests>
+</story-context>

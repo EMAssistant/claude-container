@@ -1,0 +1,171 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>2</storyId>
+    <title>Volume Mounts for Workspace and Configuration</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24T14:52:00.000Z</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-2-volume-mounts-for-workspace-and-configuration.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>my host project directory and Claude configuration mounted into the container</iWant>
+    <soThat>Claude can modify my code and use my API keys without copying files</soThat>
+    <tasks>
+      - Task 1: Configure workspace volume mount (AC: #1, #2)
+        - 1.1: Update docker run command to include `-v $HOST_PATH:/workspace` volume mount
+        - 1.2: Verify container can read files from /workspace
+        - 1.3: Verify container can create new files in /workspace that persist on host
+        - 1.4: Verify container can modify existing files in /workspace
+        - 1.5: Test with actual project directory containing source code
+      - Task 2: Configure Claude config volume mount (AC: #3, #4)
+        - 2.1: Update docker run command to include `-v ~/.config/claude-code:/config/.claude-code:ro` mount
+        - 2.2: Verify container can read files from /config/.claude-code
+        - 2.3: Verify container CANNOT write to /config/.claude-code (read-only enforcement)
+        - 2.4: Verify Claude CLI successfully reads API keys from mounted config
+      - Task 3: Add container startup validation (AC: #1, #3)
+        - 3.1: Implement startup script that checks /workspace directory exists and is writable
+        - 3.2: Implement startup check that /config/.claude-code exists and is readable
+        - 3.3: Exit with error message if required mounts are missing
+        - 3.4: Log mount validation results to container logs
+      - Task 4: Document volume mount requirements
+        - 4.1: Add volume mount examples to README
+        - 4.2: Document workspace mount purpose and permissions
+        - 4.3: Document config mount purpose and read-only rationale
+        - 4.4: Provide troubleshooting guide for mount permission issues
+      - Task 5: Testing and validation (AC: #1-4)
+        - 5.1: Test workspace mount with sample project files
+        - 5.2: Test config mount with actual Claude CLI configuration
+        - 5.3: Verify file permission handling on macOS/Linux
+        - 5.4: Test container behavior when mounts are missing (error handling)
+        - 5.5: Validate that modifications in /workspace appear on host immediately
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC1: Given a host project directory at $HOME/my-project, When the container is started with volume mounts (docker run -v $HOME/my-project:/workspace -v ~/.config/claude-code:/config/.claude-code:ro), Then the host project directory is accessible at /workspace with read-write permissions
+
+    AC2: And files created/modified in /workspace by Claude persist on the host
+
+    AC3: And the Claude configuration directory is accessible at /config/.claude-code with read-only permissions
+
+    AC4: And Claude CLI can read API keys from /config/.claude-code but cannot modify them
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>Functional Requirements - Container & Environment Management</section>
+        <snippet>FR2: System shall mount host project directory to `/workspace` with read-write access. FR3: System shall mount host `~/.config/claude-code` to `/config/.claude-code` with read-only access. FR4: System shall install BMAD Method within workspace directory (not separate mount).</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>Story 1.2 - Volume Mounts for Workspace and Configuration</section>
+        <snippet>Acceptance Criteria define workspace mount (RW) at /workspace for code modification and config mount (RO) at /config/.claude-code for API keys. Validates mounts on container startup with error exit if missing. BMAD Method installed in /workspace/.bmad per FR4.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Deployment Architecture</section>
+        <snippet>Volume Mount Strategy: Workspace (RW) - Entire host project directory mounted to /workspace for Claude code modification. Claude config (RO) - API keys and settings mounted read-only at /config/.claude-code to prevent accidental corruption. Persistence: Session JSON and logs stored in /workspace to survive container restarts.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Security Architecture</section>
+        <snippet>Volume Mount Safety: Workspace mount is read-write (intentional - Claude needs to modify project). Claude config mount is read-only (prevent accidental config corruption). Docker container isolation prevents host system access except mounted volumes.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture-decisions.md</path>
+        <title>Architecture Decision Records</title>
+        <section>ADR-002: BMAD in Workspace vs Separate Mount</section>
+        <snippet>Decision: Install BMAD Method inside workspace directory (/workspace/.bmad) and provide UI button to run `npx bmad-method install` for updates. Rationale: Version control friendly, project-specific BMAD configurations, simpler volume mount strategy (one workspace mount contains everything).</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-1-foundation.md</path>
+        <title>Epic 1: Foundation & Single-Session Terminal</title>
+        <section>Story 1.2: Volume Mounts for Workspace and Configuration</section>
+        <snippet>Technical Notes: Workspace mount (Read-write) for Claude code modification. Config mount (Read-only) prevents accidental config corruption. Validate mounts on container startup (exit with error if missing). BMAD Method installed in /workspace/.bmad per FR4.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <!-- No existing code artifacts - greenfield project -->
+    </code>
+
+    <dependencies>
+      <docker>
+        <package>Docker Desktop (macOS) or Docker Engine (Linux)</package>
+        <package>Host filesystem with project directory</package>
+        <package>Claude CLI configuration at ~/.config/claude-code</package>
+      </docker>
+      <container>
+        <package>Ubuntu 22.04 LTS base image</package>
+        <package>Standard Linux filesystem utilities (test, chmod, etc.)</package>
+      </container>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Workspace mount MUST be read-write to allow Claude CLI to modify project files
+    - Config mount MUST be read-only (:ro flag) to prevent accidental API key corruption
+    - Container startup script must validate both mounts exist before proceeding
+    - Error messages for missing mounts must guide users to correct docker run command
+    - Path validation ensures file operations stay within /workspace (prevents path traversal attacks)
+    - BMAD Method installation location MUST be /workspace/.bmad (not separate mount per FR4)
+    - Session persistence file location: /workspace/.claude-container-sessions.json
+    - Container logs location: /workspace/logs (optional, survives container restarts)
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Docker Volume Mount API</name>
+      <kind>Docker CLI parameter</kind>
+      <signature>docker run -v HOST_PATH:CONTAINER_PATH[:OPTIONS]</signature>
+      <path>N/A - Docker runtime API</path>
+    </interface>
+    <interface>
+      <name>Workspace Volume Mount</name>
+      <kind>Docker volume mount</kind>
+      <signature>-v $HOST_PROJECT:/workspace</signature>
+      <path>/workspace (container path)</path>
+    </interface>
+    <interface>
+      <name>Claude Config Volume Mount</name>
+      <kind>Docker volume mount (read-only)</kind>
+      <signature>-v ~/.config/claude-code:/config/.claude-code:ro</signature>
+      <path>/config/.claude-code (container path)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing approach for volume mounts follows Docker container testing patterns. Mount validation tests verify container can access mounted directories with correct permissions. Permission tests validate read-write vs read-only enforcement. Integration tests ensure Claude CLI can operate within mounted workspace and access configuration. Tests run on macOS/Linux to validate cross-platform compatibility.
+    </standards>
+
+    <locations>
+      - Docker container integration tests (to be created)
+      - Manual validation tests documented in story AC
+      - Container startup validation script (to be created as docker-entrypoint.sh or startup script)
+    </locations>
+
+    <ideas>
+      Test Idea 1 (AC1): Create test script to validate /workspace mount is readable and writable - use `test -r /workspace && test -w /workspace` in startup script
+
+      Test Idea 2 (AC2): Test file persistence by creating file in container at /workspace/test-file.txt and verifying it appears on host filesystem
+
+      Test Idea 3 (AC3): Validate /config/.claude-code mount is readable - use `test -r /config/.claude-code` and verify can read config files
+
+      Test Idea 4 (AC4): Validate read-only enforcement by attempting to write to /config/.claude-code and expecting permission denied error - use `touch /config/.claude-code/test 2>&1 | grep "Read-only"`
+
+      Test Idea 5 (Task 3.1-3.4): Create startup validation script (docker-entrypoint.sh) that checks mounts exist, logs results, and exits with error code if validation fails
+
+      Test Idea 6 (Task 5.3): Test Docker user mapping for file ownership - verify files created by container user are accessible to host user
+    </ideas>
+  </tests>
+</story-context>

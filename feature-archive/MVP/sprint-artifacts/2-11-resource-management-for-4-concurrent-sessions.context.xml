@@ -1,0 +1,227 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>11</storyId>
+    <title>Resource Management for 4 Concurrent Sessions</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/2-11-resource-management-for-4-concurrent-sessions.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>the system to handle 4 concurrent sessions without performance degradation</iWant>
+    <soThat>I can maximize parallel development (FR69, NFR-SCALE-1)</soThat>
+    <tasks>
+      - Task 1: Enforce maximum session limit (AC: 5-6)
+        - 1.1: Add MAX_SESSIONS constant to sessionManager.ts (value: 4)
+        - 1.2: In SessionManager.createSession(), check active session count before creation
+        - 1.3: Throw error with code 'MAX_SESSIONS' if count >= 4
+        - 1.4: Backend returns 400 error to POST /api/sessions when limit exceeded
+        - 1.5: Frontend displays user-friendly error message in modal
+        - 1.6: Unit test: Attempt to create 5th session, verify rejection
+        - 1.7: E2E test: Create 4 sessions, verify 5th is blocked with error message
+
+      - Task 2: Implement zombie process detection and cleanup (AC: 7-8)
+        - 2.1: Add periodic cleanup timer in PTYManager (interval: 60 seconds)
+        - 2.2: Track PTY PIDs in Map&lt;sessionId, number&gt; alongside PTY processes
+        - 2.3: Cleanup logic checks for PTY processes with no active session
+        - 2.4: For orphaned PTYs, send SIGKILL and remove from registry
+        - 2.5: Log warning with session ID and PID when zombie cleaned
+        - 2.6: Start cleanup timer on server initialization
+        - 2.7: Stop cleanup timer on graceful shutdown
+        - 2.8: Unit test: Mock zombie PTY, verify cleanup triggers
+        - 2.9: Integration test: Simulate crash without cleanup, verify zombie detection
+
+      - Task 3: Validate concurrent session performance (AC: 1-4)
+        - 3.1: Performance test: Create 4 sessions running concurrent Claude workflows
+        - 3.2: Measure terminal latency for each session under concurrent load
+        - 3.3: Verify p95 latency &lt;100ms per session (NFR-PERF-1)
+        - 3.4: Measure tab switching latency (click to visual update)
+        - 3.5: Verify p99 tab switching &lt;50ms (NFR-PERF-2)
+        - 3.6: Monitor memory usage via docker stats during 4-session load
+        - 3.7: Verify total memory 4-8GB (1-2GB per session, NFR-SCALE-2)
+        - 3.8: Monitor CPU distribution across available cores
+        - 3.9: Stress test: All 4 sessions generating high terminal output (npm install, test runs)
+        - 3.10: Document performance metrics in test report
+
+      - Task 4: Add resource monitoring logging (optional FR70)
+        - 4.1: Add optional memory usage tracking in SessionManager
+        - 4.2: Log memory per session on session creation/destruction
+        - 4.3: Log total active session count on state changes
+        - 4.4: Add health check endpoint GET /health with session count and memory
+        - 4.5: Winston structured logging for all resource metrics
+
+      - Task 5: Integration testing with multi-session scenarios (AC: All)
+        - 5.1: Integration test: Create 4 sessions, verify all operational
+        - 5.2: Integration test: Attempt 5th session, verify blocked
+        - 5.3: Integration test: Destroy session 2, create new session, verify success
+        - 5.4: Integration test: All 4 sessions streaming simultaneously, no cross-contamination
+        - 5.5: Integration test: Zombie cleanup detects and kills orphaned PTY
+        - 5.6: E2E test: Full 4-session workflow validation (per Story 2.12 prep)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC-1: Terminal latency per session &lt;100ms (NFR-PERF-1)
+      - GIVEN 4 sessions are active and all running Claude CLI commands
+      - WHEN all 4 terminals are streaming output simultaneously
+      - THEN each terminal maintains &lt;100ms latency (NFR-PERF-1)
+
+    AC-2: Tab switching responsiveness &lt;50ms (NFR-PERF-2)
+      - AND tab switching remains &lt;50ms responsive (NFR-PERF-2)
+
+    AC-3: Memory usage within limits (NFR-SCALE-2)
+      - AND when memory usage is checked via `docker stats`
+      - THEN total container memory is 4-8GB for 4 sessions (~1-2GB per session per NFR-SCALE-2)
+
+    AC-4: CPU distribution across cores
+      - AND CPU usage distributes across 4 cores (if available)
+
+    AC-5: Maximum session limit enforcement
+      - AND when a 5th session is attempted (beyond design limit)
+      - THEN the frontend shows error: "Maximum 4 sessions supported. Destroy a session to create a new one."
+
+    AC-6: Session creation blocked
+      - AND session creation is blocked
+
+    AC-7: Zombie process detection
+      - AND when a PTY process becomes zombie (crash without cleanup)
+      - THEN the backend detects it and cleans up (FR71)
+
+    AC-8: Zombie process cleanup logging
+      - AND logs a warning: "Cleaned up zombie process for session X"
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification - Multi-Session Parallel Development</title>
+        <section>Resource Management</section>
+        <snippet>Design limit: 4 concurrent sessions (per PRD NFR-SCALE-1). Each session consumes ~1-2GB RAM (total 4-8GB for full capacity). Zombie process detection: Periodic check every 60s for PTY processes with no active session. Detection via cross-referencing PTYManager.ptyProcesses Map with SessionManager.sessions Map.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>Non-Functional Requirements - Performance</section>
+        <snippet>NFR-PERF-2: UI Tab Switching (&lt;50ms). NFR-PERF-4: Concurrent Session Performance - System shall handle 4 concurrent Claude CLI sessions without degradation. Each session maintains independent terminal latency &lt;100ms. Memory target: 1-2GB RAM per session, 4-8GB total for 4 sessions.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Performance Considerations</title>
+        <section>Critical Performance Requirements</section>
+        <snippet>NFR-PERF-1: Terminal output streaming &lt;100ms latency. NFR-PERF-2: UI responsiveness - tab switching &lt;50ms. NFR-PERF-4: 4 concurrent sessions without degradation. Backpressure: Throttle PTY reads if WebSocket buffer full (prevent memory exhaustion).</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Performance Optimizations</title>
+        <section>Backend Efficiency</section>
+        <snippet>PTY process cleanup: Kill zombie processes on session destroy. WebSocket cleanup: Close stale connections after 5min inactivity. Memory monitoring: Track session count, warn if &gt;4 (design limit).</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>backend/src/ptyManager.ts</path>
+        <kind>service</kind>
+        <symbol>PTYManager</symbol>
+        <lines>64-302</lines>
+        <reason>Core PTY management class that will need zombie cleanup logic. Contains spawn(), kill(), onData(), onExit() methods. Story needs to extend this with periodic cleanup timer and PID tracking.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/src/types.ts</path>
+        <kind>types</kind>
+        <symbol>SessionData</symbol>
+        <lines>82-89</lines>
+        <reason>Session data structure that tracks PTY processes. Story needs to track PTY PIDs for zombie detection. Interface may need extension to include PID tracking.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/src/server.ts</path>
+        <kind>server</kind>
+        <symbol>server</symbol>
+        <lines>all</lines>
+        <reason>Main backend server where SessionManager will be instantiated. Story needs to add health check endpoint GET /health and ensure cleanup timer starts on initialization.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <dependency name="node-pty" version="^1.0.0" purpose="PTY process spawning - used for detecting and cleaning up zombie processes"/>
+        <dependency name="winston" version="^3.11.0" purpose="Structured logging for resource monitoring and zombie cleanup warnings"/>
+        <dependency name="express" version="^4.18.0" purpose="HTTP server for health check endpoint"/>
+        <dependency name="ws" version="^8.14.0" purpose="WebSocket server for concurrent session streaming"/>
+        <dependency name="uuid" version="^9.0.0" purpose="Session ID generation"/>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - MAX_SESSIONS hardcoded to 4 (per PRD NFR-SCALE-1) - not configurable in MVP
+    - Zombie cleanup interval: 60 seconds (fixed, not configurable)
+    - Session limit error code must be 'MAX_SESSIONS' for frontend error handling
+    - Zombie process cleanup uses SIGKILL (not SIGTERM) as zombies don't respond to graceful signals
+    - Performance targets are strict requirements: &lt;100ms terminal latency, &lt;50ms tab switching
+    - Memory monitoring is optional (FR70) but zombie cleanup is required (FR71)
+    - All resource metrics must use Winston structured logging (JSON format)
+    - SessionManager must be created BEFORE this story can be implemented (Story 2.1)
+    - PTYManager already exists but needs extension for zombie cleanup
+    - Health check endpoint should return JSON with session count and memory stats
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>SessionManager.createSession()</name>
+      <kind>method</kind>
+      <signature>async createSession(name?: string, branch?: string): Promise&lt;Session&gt;</signature>
+      <path>backend/src/sessionManager.ts</path>
+      <notes>Must check session count before creation. Throw error with code 'MAX_SESSIONS' if count &gt;= 4.</notes>
+    </interface>
+    <interface>
+      <name>PTYManager.cleanup()</name>
+      <kind>method (new)</kind>
+      <signature>cleanup(): void</signature>
+      <path>backend/src/ptyManager.ts</path>
+      <notes>New method to be added. Checks for zombie PTY processes (PTY exists in ptyProcesses Map but sessionId not in SessionManager). Sends SIGKILL and removes from registry.</notes>
+    </interface>
+    <interface>
+      <name>GET /health</name>
+      <kind>REST endpoint (new)</kind>
+      <signature>GET /health → { sessionCount: number, memory: { total: number, perSession: number[] } }</signature>
+      <path>backend/src/server.ts</path>
+      <notes>Optional endpoint for resource monitoring (FR70). Returns current session count and memory usage statistics.</notes>
+    </interface>
+    <interface>
+      <name>POST /api/sessions error response</name>
+      <kind>REST endpoint error</kind>
+      <signature>400 { error: string, code: 'MAX_SESSIONS' }</signature>
+      <path>backend/src/server.ts</path>
+      <notes>Must return specific error code when session limit exceeded so frontend can display appropriate message.</notes>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Frontend: Vitest for unit/integration tests, @testing-library/react for component testing. Backend: Jest for unit tests with ts-jest transformer. E2E: Playwright for browser-based validation. All tests use describe/it/expect syntax. Performance tests measure p95/p99 latency using custom timing utilities. Integration tests use real PTY processes and sessions, not mocks.
+    </standards>
+    <locations>
+      backend/tests/unit/ - Unit tests for SessionManager and PTYManager
+      backend/tests/integration/ - Integration tests for multi-session scenarios
+      backend/tests/performance/ - Performance tests for concurrent session validation
+      frontend/src/components/*.test.tsx - Frontend component tests
+      e2e/ - Playwright E2E tests
+    </locations>
+    <ideas>
+      Test Idea 1 (AC-5, AC-6): Create 4 sessions successfully, attempt 5th, verify 400 error with code 'MAX_SESSIONS', verify frontend displays error message.
+
+      Test Idea 2 (AC-7, AC-8): Create session, spawn PTY, manually remove session from SessionManager without killing PTY, wait 60+ seconds, verify cleanup timer detects and kills zombie, verify warning logged.
+
+      Test Idea 3 (AC-1, AC-3, AC-4): Performance test with 4 concurrent sessions running npm install or test runs. Measure terminal latency per session (should be &lt;100ms p95). Monitor memory via process.memoryUsage() or docker stats (should be 4-8GB total). Check CPU distribution with docker stats.
+
+      Test Idea 4 (AC-2): Create 4 sessions, programmatically switch between tabs, measure time from state update to UI render completion. Verify p99 latency &lt;50ms.
+
+      Test Idea 5 (Integration): Create 4 sessions, destroy session 2, immediately create new session, verify success (session count drops to 3, then back to 4).
+
+      Test Idea 6 (Unit): Mock PTYManager with 5 zombie PTY processes in ptyProcesses Map but only 3 sessions in SessionManager. Run cleanup(), verify 2 zombies killed and removed.
+    </ideas>
+  </tests>
+</story-context>

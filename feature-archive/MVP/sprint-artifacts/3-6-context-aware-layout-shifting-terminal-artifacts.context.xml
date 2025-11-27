@@ -1,0 +1,228 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.6</storyId>
+    <title>Context-Aware Layout Shifting (Terminal ↔ Artifacts)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/3-6-context-aware-layout-shifting-terminal-artifacts.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>the layout to automatically shift focus between terminal and artifacts based on workflow phase</iWant>
+    <soThat>I see the right content at the right time</soThat>
+    <tasks>
+      - Extend LayoutContext with layout modes (terminal, artifact, split) and split ratio state (0.3-0.7)
+      - Implement file write detection for auto-shift trigger (extend fileWatcher.ts, send layout.shift WebSocket message, debounce 500ms)
+      - Build layout animation with CSS transitions (flex container structure, height 350ms ease-out transitions)
+      - Add manual override controls (Focus Terminal/Artifacts buttons with Cmd+T/Cmd+A shortcuts, pause auto-shift)
+      - Implement resize handle for custom split (shadcn/ui Resizable component, constrain 30% min each panel, persist to localStorage)
+      - Test layout shifting workflow (auto-shift on file writes, keyboard shortcuts, resize handle, terminal usability at 30%)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. When Claude is in a conversational phase (brainstorming, asking questions), the layout is "terminal-dominant" with terminal at 100% of main area and artifacts hidden or minimized
+    2. When Claude writes a document (e.g., prd.md), the backend detects file write event and sends layout shift signal
+    3. The layout animates to "artifact-dominant" over 350ms with terminal at 30% height (bottom, still visible) and artifacts at 70% height (top, rendered markdown)
+    4. When the user types in the terminal (providing feedback), the layout remains artifact-dominant with terminal still usable
+    5. When the user clicks "Focus Terminal" button (Cmd+T), the layout manually shifts to terminal-dominant (100% terminal) and auto-shift is paused until next file write
+    6. When the user clicks "Focus Artifacts" button (Cmd+A), the layout shifts to artifact-dominant (70/30 split)
+    7. When the user drags the resize handle, the layout uses custom split (e.g., 50/50) and custom size is persisted until next auto-shift
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic Technical Specification: Workflow Visibility & Document Review</title>
+        <section>Detailed Design - LayoutState</section>
+        <snippet>LayoutState interface defines: leftSidebarView (files/workflow), mainContentMode (terminal/artifact/split), splitRatio (0.3-0.7), and sidebar widths. Context-aware layout shifting uses automatic transition from terminal-dominant (100%) to artifact-dominant (70/30 split) when Claude writes documents.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic Technical Specification: Workflow Visibility & Document Review</title>
+        <section>APIs and Interfaces - WebSocket Message Types</section>
+        <snippet>New message type: { type: 'layout.shift', mode: 'terminal' | 'artifact' | 'split', trigger: 'file_write' | 'user_input' }. Auto-triggered by backend on document write events.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-3-workflow-visibility.md</path>
+        <title>Epic 3: Workflow Visibility & Document Review - Story 3.6</title>
+        <section>Story 3.6: Context-Aware Layout Shifting</section>
+        <snippet>Implements UX pattern per section 2.3 "Context-Aware Focus Shifting". Layout modes: terminal-dominant (conversational phase), artifact-dominant (document review with 70/30 split), custom split (user-dragged). Manual override buttons pause auto-shift.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>FR Category to Architecture Mapping</section>
+        <snippet>Web Interface - Document Viewing (FR43-FR48): LayoutContext extended for context-aware layout shifting. React Context API (ADR-005) used for state management. React 19 transitions for non-urgent updates.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Non-Functional Requirements - Performance</section>
+        <snippet>NFR-PERF-2: UI responsiveness - tab switching &lt;50ms, interactions &lt;200ms. Layout animations use CSS transitions only (no JavaScript-based animation). Animation duration: 350ms ease-out for smooth visual feedback.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture-decisions.md</path>
+        <title>Architecture Decision Records</title>
+        <section>ADR-005: React Context API Over Zustand/Redux</section>
+        <snippet>Use React Context API + Hooks for state management. Application has 3-4 distinct state domains. Separate contexts per domain avoid re-render issues. LayoutContext manages layout modes and panel states.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture-decisions.md</path>
+        <title>Architecture Decision Records</title>
+        <section>ADR-006: Chokidar for File System Watching</section>
+        <snippet>Chokidar library for workspace file monitoring. Watches /workspace/**/*.md for changes with 500ms debounce. Reliable detection of document writes triggers layout shift events. Event normalization across platforms.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>frontend/src/types.ts</path>
+        <kind>interface</kind>
+        <symbol>Session, TerminalMessage, LayoutMode</symbol>
+        <lines>1-25</lines>
+        <reason>Existing type definitions. LayoutMode currently defines: 'terminal-only' | 'terminal-with-sidebar' | 'full-layout'. Needs extension for new modes: 'terminal' | 'artifact' | 'split'.</reason>
+      </file>
+      <file>
+        <path>frontend/src/App.tsx</path>
+        <kind>component</kind>
+        <symbol>App</symbol>
+        <lines>1-100</lines>
+        <reason>Main app layout component with session management, WebSocket integration, Terminal component rendering. Will need to wrap main content area with new LayoutContext provider and implement split layout structure.</reason>
+      </file>
+      <file>
+        <path>frontend/src/components/Terminal.tsx</path>
+        <kind>component</kind>
+        <symbol>Terminal</symbol>
+        <lines>1-80</lines>
+        <reason>Terminal component using xterm.js. Currently rendered in fixed layout. Will be placed in flexible container controlled by LayoutContext, constrained to 30% minimum height in artifact-dominant mode.</reason>
+      </file>
+      <file>
+        <path>frontend/src/hooks/useWebSocket.ts</path>
+        <kind>hook</kind>
+        <symbol>useWebSocket</symbol>
+        <lines>N/A</lines>
+        <reason>WebSocket hook for server communication. Needs to handle new 'layout.shift' message type from backend file watcher. Subscribe to layout shift events and update LayoutContext.</reason>
+      </file>
+      <file>
+        <path>frontend/src/components/ui/resizable.tsx</path>
+        <kind>ui-component</kind>
+        <symbol>Resizable (shadcn/ui)</symbol>
+        <lines>N/A</lines>
+        <reason>shadcn/ui Resizable component already installed (react-resizable-panels ^3.0.6). Use for horizontal divider between terminal and artifact panels. Supports drag-to-resize with min/max constraints.</reason>
+      </file>
+      <file>
+        <path>backend/src/server.ts</path>
+        <kind>server</kind>
+        <symbol>Express + WebSocket server</symbol>
+        <lines>N/A</lines>
+        <reason>Backend server with WebSocket message handling. Will need to handle file watcher events and send layout.shift messages to connected clients when markdown files are written to /workspace/docs/.</reason>
+      </file>
+    </code>
+    <dependencies>
+      <npm>
+        <react>^19.2.0</react>
+        <react-dom>^19.2.0</react-dom>
+        <react-resizable-panels>^3.0.6 (shadcn/ui Resizable component)</react-resizable-panels>
+        <tailwindcss>^4.1.17 (for CSS transitions and styling)</tailwindcss>
+        <@xterm/xterm>^5.5.0 (terminal emulator)</@xterm/xterm>
+        <lucide-react>^0.554.0 (icons for layout control buttons)</lucide-react>
+        <class-variance-authority>^0.7.1 (component variants)</class-variance-authority>
+      </npm>
+      <backend>
+        <chokidar>^4.x (file system watcher - to be installed if not present)</chokidar>
+        <ws>^8.x (WebSocket library)</ws>
+      </backend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Layout animations MUST use CSS transitions only (no JavaScript-based animation). Architecture mandates: "height 350ms ease-out" transitions.
+    - WebSocket message latency MUST be &lt;100ms for file change events (NFR-PERF-1 from architecture).
+    - Layout/tab switching MUST complete in &lt;50ms (NFR-PERF-2).
+    - Context split: LayoutContext is separate from SessionContext and WebSocketContext to avoid unnecessary re-renders (ADR-005 pattern).
+    - File watching: Only trigger auto-shift for markdown files in /workspace/docs/ directory. Ignore temporary files, hidden files, node_modules (ADR-006 pattern).
+    - Keyboard shortcuts (Cmd+T, Cmd+A) must check active element to avoid conflict with text input fields.
+    - Persistence: Layout state persisted to localStorage per session using key: claude-container-layout-${sessionId}.
+    - Split ratio constraints: Minimum 30% height for each panel (terminal/artifact) to ensure usability.
+    - React 19 concurrent features: Use transitions for non-urgent layout updates (per architecture).
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>LayoutContext</name>
+      <kind>React Context</kind>
+      <signature>
+        interface LayoutContextType {
+          mode: 'terminal' | 'artifact' | 'split';
+          splitRatio: number; // 0.3-0.7 (artifact/terminal split)
+          autoShiftPaused: boolean;
+          setMode: (mode: 'terminal' | 'artifact' | 'split') => void;
+          setSplitRatio: (ratio: number) => void;
+          pauseAutoShift: () => void;
+          resumeAutoShift: () => void;
+        }
+      </signature>
+      <path>frontend/src/context/LayoutContext.tsx (NEW)</path>
+    </interface>
+    <interface>
+      <name>WebSocket Message: layout.shift</name>
+      <kind>WebSocket Protocol</kind>
+      <signature>
+        {
+          type: 'layout.shift',
+          mode: 'terminal' | 'artifact' | 'split',
+          trigger: 'file_write' | 'user_input'
+        }
+      </signature>
+      <path>Backend server.ts → Frontend WebSocket handler</path>
+    </interface>
+    <interface>
+      <name>LayoutMode (Extended)</name>
+      <kind>TypeScript Type</kind>
+      <signature>
+        // Current: type LayoutMode = 'terminal-only' | 'terminal-with-sidebar' | 'full-layout'
+        // New: type LayoutMode = 'terminal' | 'artifact' | 'split'
+      </signature>
+      <path>frontend/src/types.ts (MODIFY)</path>
+    </interface>
+    <interface>
+      <name>Resizable Panels API</name>
+      <kind>shadcn/ui Component</kind>
+      <signature>
+        &lt;ResizablePanelGroup direction="vertical"&gt;
+          &lt;ResizablePanel minSize={30}&gt;Artifact Viewer&lt;/ResizablePanel&gt;
+          &lt;ResizableHandle /&gt;
+          &lt;ResizablePanel minSize={30}&gt;Terminal&lt;/ResizablePanel&gt;
+        &lt;/ResizablePanelGroup&gt;
+      </signature>
+      <path>frontend/src/components/ui/resizable.tsx (EXISTS)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing framework: Vitest for frontend unit/integration tests, Playwright for E2E tests. Test files co-located with source files using .test.tsx/.test.ts suffix. Frontend components tested with @testing-library/react. Assertions use @testing-library/jest-dom. Mock WebSocket connections for integration tests. CSS transitions tested via timing verification (350ms duration).
+    </standards>
+    <locations>
+      frontend/src/**/*.test.tsx
+      frontend/src/**/*.test.ts
+    </locations>
+    <ideas>
+      <test ac="1">LayoutContext: Initial state should be 'terminal' mode with terminal at 100%</test>
+      <test ac="2,3">File write event triggers layout.shift WebSocket message → LayoutContext updates to 'artifact' mode → CSS transition animates to 70/30 split within 350ms</test>
+      <test ac="4">Terminal component remains interactive (input/output) when in 'artifact' mode at 30% height</test>
+      <test ac="5">Cmd+T keyboard shortcut calls setMode('terminal') → layout shifts to terminal-dominant → autoShiftPaused becomes true</test>
+      <test ac="6">Cmd+A keyboard shortcut calls setMode('artifact') → layout shifts to artifact-dominant (70/30)</test>
+      <test ac="7">Drag ResizableHandle updates splitRatio state → new ratio persisted to localStorage → ratio restored on component mount</test>
+      <test>Unit: LayoutContext provider exports correct initial values and setter functions</test>
+      <test>Unit: Split ratio validation enforces 0.3-0.7 range constraints</test>
+      <test>Integration: File watcher detects .md file write in /workspace/docs/ → backend sends layout.shift message → frontend receives and updates LayoutContext</test>
+      <test>Integration: Manual override (Cmd+T) pauses auto-shift → subsequent file write does not trigger layout change</test>
+      <test>E2E: User creates session → Claude writes document → layout auto-shifts to artifact view → user reviews in top panel → types feedback in terminal (bottom 30%)</test>
+    </ideas>
+  </tests>
+</story-context>

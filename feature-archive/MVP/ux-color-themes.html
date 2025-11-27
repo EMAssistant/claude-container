@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Container - Color Theme Explorer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #888;
+            font-size: 16px;
+        }
+
+        .themes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .theme-card {
+            border: 1px solid #333;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #1a1a1a;
+        }
+
+        .theme-header {
+            padding: 20px;
+            border-bottom: 1px solid #333;
+        }
+
+        .theme-name {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .theme-description {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .theme-personality {
+            color: #666;
+            font-size: 13px;
+            font-style: italic;
+        }
+
+        .color-swatches {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+        }
+
+        .swatch {
+            text-align: center;
+        }
+
+        .swatch-color {
+            height: 60px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .swatch-label {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 2px;
+        }
+
+        .swatch-hex {
+            font-size: 10px;
+            color: #666;
+            font-family: 'Courier New', monospace;
+        }
+
+        .component-preview {
+            padding: 20px;
+            border-top: 1px solid #333;
+        }
+
+        .preview-section {
+            margin-bottom: 20px;
+        }
+
+        .preview-label {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Terminal Preview */
+        .terminal-preview {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            padding: 16px;
+            border-radius: 6px;
+            line-height: 1.6;
+        }
+
+        /* Button Previews */
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        /* Tab Previews */
+        .tabs-preview {
+            display: flex;
+            gap: 4px;
+            border-radius: 6px;
+            padding: 4px;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        /* Status Badges */
+        .badge-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        /* Theme 1: Soft Night (VS Code Dark+ inspired) */
+        .theme-1 .theme-name { color: #569CD6; }
+
+        .theme-1 .terminal-preview {
+            background: #1E1E1E;
+            color: #D4D4D4;
+            border: 1px solid #2D2D30;
+        }
+
+        .theme-1 .btn-primary {
+            background: #569CD6;
+            color: #000;
+        }
+        .theme-1 .btn-primary:hover {
+            background: #6AACDF;
+        }
+
+        .theme-1 .btn-secondary {
+            background: #3C3C3C;
+            color: #CCCCCC;
+            border: 1px solid #555;
+        }
+        .theme-1 .btn-secondary:hover {
+            background: #4C4C4C;
+        }
+
+        .theme-1 .btn-destructive {
+            background: #F14C4C;
+            color: #fff;
+        }
+        .theme-1 .btn-destructive:hover {
+            background: #F25C5C;
+        }
+
+        .theme-1 .tabs-preview {
+            background: #252526;
+        }
+
+        .theme-1 .tab {
+            color: #969696;
+            background: transparent;
+        }
+
+        .theme-1 .tab.active {
+            background: #1E1E1E;
+            color: #FFFFFF;
+        }
+
+        .theme-1 .badge-success { background: #4EC9B0; color: #000; }
+        .theme-1 .badge-warning { background: #DCDCAA; color: #000; }
+        .theme-1 .badge-error { background: #F14C4C; color: #fff; }
+        .theme-1 .badge-info { background: #569CD6; color: #000; }
+
+        /* Theme 2: Oceanic Calm (Nord-inspired) */
+        .theme-2 .theme-name { color: #88C0D0; }
+
+        .theme-2 .terminal-preview {
+            background: #2E3440;
+            color: #D8DEE9;
+            border: 1px solid #3B4252;
+        }
+
+        .theme-2 .btn-primary {
+            background: #88C0D0;
+            color: #2E3440;
+        }
+        .theme-2 .btn-primary:hover {
+            background: #98D0E0;
+        }
+
+        .theme-2 .btn-secondary {
+            background: #3B4252;
+            color: #D8DEE9;
+            border: 1px solid #4C566A;
+        }
+        .theme-2 .btn-secondary:hover {
+            background: #434C5E;
+        }
+
+        .theme-2 .btn-destructive {
+            background: #BF616A;
+            color: #fff;
+        }
+        .theme-2 .btn-destructive:hover {
+            background: #CF717A;
+        }
+
+        .theme-2 .tabs-preview {
+            background: #3B4252;
+        }
+
+        .theme-2 .tab {
+            color: #81A1C1;
+            background: transparent;
+        }
+
+        .theme-2 .tab.active {
+            background: #2E3440;
+            color: #ECEFF4;
+        }
+
+        .theme-2 .badge-success { background: #A3BE8C; color: #2E3440; }
+        .theme-2 .badge-warning { background: #EBCB8B; color: #2E3440; }
+        .theme-2 .badge-error { background: #BF616A; color: #fff; }
+        .theme-2 .badge-info { background: #88C0D0; color: #2E3440; }
+
+        /* Theme 3: Twilight Focus (Solarized Dark inspired) */
+        .theme-3 .theme-name { color: #2AA198; }
+
+        .theme-3 .terminal-preview {
+            background: #002B36;
+            color: #839496;
+            border: 1px solid #073642;
+        }
+
+        .theme-3 .btn-primary {
+            background: #2AA198;
+            color: #002B36;
+        }
+        .theme-3 .btn-primary:hover {
+            background: #3AB1A8;
+        }
+
+        .theme-3 .btn-secondary {
+            background: #073642;
+            color: #93A1A1;
+            border: 1px solid #586E75;
+        }
+        .theme-3 .btn-secondary:hover {
+            background: #0A4652;
+        }
+
+        .theme-3 .btn-destructive {
+            background: #DC322F;
+            color: #fff;
+        }
+        .theme-3 .btn-destructive:hover {
+            background: #EC423F;
+        }
+
+        .theme-3 .tabs-preview {
+            background: #073642;
+        }
+
+        .theme-3 .tab {
+            color: #586E75;
+            background: transparent;
+        }
+
+        .theme-3 .tab.active {
+            background: #002B36;
+            color: #93A1A1;
+        }
+
+        .theme-3 .badge-success { background: #859900; color: #FDF6E3; }
+        .theme-3 .badge-warning { background: #B58900; color: #FDF6E3; }
+        .theme-3 .badge-error { background: #DC322F; color: #fff; }
+        .theme-3 .badge-info { background: #268BD2; color: #FDF6E3; }
+
+        /* Theme 4: Moonlight (Balanced neutral) */
+        .theme-4 .theme-name { color: #82AAFF; }
+
+        .theme-4 .terminal-preview {
+            background: #1B1E28;
+            color: #C8D3F5;
+            border: 1px solid #2F334D;
+        }
+
+        .theme-4 .btn-primary {
+            background: #82AAFF;
+            color: #1B1E28;
+        }
+        .theme-4 .btn-primary:hover {
+            background: #92BAFF;
+        }
+
+        .theme-4 .btn-secondary {
+            background: #2F334D;
+            color: #C8D3F5;
+            border: 1px solid #444A73;
+        }
+        .theme-4 .btn-secondary:hover {
+            background: #3A405D;
+        }
+
+        .theme-4 .btn-destructive {
+            background: #FF5370;
+            color: #fff;
+        }
+        .theme-4 .btn-destructive:hover {
+            background: #FF6380;
+        }
+
+        .theme-4 .tabs-preview {
+            background: #2F334D;
+        }
+
+        .theme-4 .tab {
+            color: #7982B9;
+            background: transparent;
+        }
+
+        .theme-4 .tab.active {
+            background: #1B1E28;
+            color: #C8D3F5;
+        }
+
+        .theme-4 .badge-success { background: #C3E88D; color: #1B1E28; }
+        .theme-4 .badge-warning { background: #FFC777; color: #1B1E28; }
+        .theme-4 .badge-error { background: #FF5370; color: #fff; }
+        .theme-4 .badge-info { background: #82AAFF; color: #1B1E28; }
+
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Claude Container - Color Theme Explorer</h1>
+        <p>Four "easy on eyes" dark themes optimized for extended terminal use</p>
+    </div>
+
+    <div class="themes-grid">
+        <!-- Theme 1: Soft Night -->
+        <div class="theme-card theme-1">
+            <div class="theme-header">
+                <div class="theme-name">1. Soft Night</div>
+                <div class="theme-description">VS Code Dark+ inspired - Professional and familiar</div>
+                <div class="theme-personality">Balanced contrast • Reduced eye strain • Industry standard aesthetic</div>
+            </div>
+
+            <div class="color-swatches">
+                <div class="swatch">
+                    <div class="swatch-color" style="background: #569CD6;"></div>
+                    <div class="swatch-label">Primary</div>
+                    <div class="swatch-hex">#569CD6</div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color" style="background: #1E1E1E;"></div>
+                    <div class="swatch-label">Background</div>
+                    <div class="swatch-hex">#1E1E1E</div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color" style="background: #D4D4D4;"></div>
+                    <div class="swatch-label">Text</div>
+                    <div class="swatch-hex">#D4D4D4</div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color" style="background: #4EC9B0;"></div>
+                    <div class="swatch-label">Success</div>
+                    <div class="swatch-hex">#4EC9B0</div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color" style="background: #F14C4C;"></div>
+                    <div class="swatch-label">Error</div>
+                    <div class="swatch-hex">#F14C4C</div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color" style="background: #DCDCAA;"></div>
+                    <div class="swatch-label">Warning</div>
+                    <div class="swatch-hex">#DCDCAA</div>
+                </div>
+            </div>
+
+            <div class="component-preview">
+                <div class="preview-section">
+                    <div class="preview-label">Terminal</div>
+                    <div class="terminal-preview">
+                        $ claude "Start new project brainstorming"<br>
+                        <span style="color: #4EC9B0;">✓</span> Session initialized: feature-auth-system<br>
+                        <span style="color: #569CD6;">→</span> Beginning BMAD workflow...<br>
+                        <span style="color: #888;">│</span> Analyzing requirements...
+                    </div>
+                </div>
+
+                <div class="preview-section">
+                    <div class="preview-label">Buttons</div>
+                    <div class="button-group">
+                        <button class="btn btn-primary">New Session</button>
+                        <button class="btn btn-secondary">Settings</button>
+                        <button class="btn btn-destructive">STOP</button>
+                    </div>
+                </div>
+
+                <div class="preview-section">
+                    <div class="preview-label">Session Tabs</div>
+                    <div class="tabs-preview">
+                        <div class="tab active">auth-system</div>
+                        <div class="tab">payment-flow</div>
+                        <div class="tab">dashboard</div>
+                    </div>
+                </div>
+
+                <div class="preview-section">
+                    <div class="preview-label">Status Badges</div>
+                    <div class="badge-group">
+                        <span class="badge badge-success">ACTIVE</span>
+                        <span class="badge badge-warning">WAITING</span>
+                        <span class="badge badge-error">ERROR</span>
+                        <span class="badge badge-info">IDLE</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Theme 2: Oceanic Calm -->
+        <div class="theme-card theme-2">
+            <div class="theme-header">
+                <div class="theme-name">2. Oceanic Calm</div>
+                <div class="theme-description">Nord-inspired - Cool, soothing tones</div>
+                <div class="theme-personality">Low contrast • Easy on eyes • Arctic minimal aesthetic</div>
+            </div>
+
+            <div class="color-swatches">
+                <div class="swatch">
+                    <div class="swatch-color" style="background: #88C0D0;"></div>
+                    <div class="swatch-label">Primary</div>
+                    <div class="swatch-hex">#88C0D0</div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color" style="background: #2E3440;"></div>
+                    <div class="swatch-label">Background</div>
+                    <div class="swatch-hex">#2E3440</div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color" style="background: #D8DEE9;"></div>
+                    <div class="swatch-label">Text</div>
+                    <div class="swatch-hex">#D8DEE9</div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color" style="background: #A3BE8C;"></div>
+                    <div class="swatch-label">Success</div>
+                    <div class="swatch-hex">#A3BE8C</div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color" style="background: #BF616A;"></div>
+                    <div class="swatch-label">Error</div>
+                    <div class="swatch-hex">#BF616A</div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color" style="background: #EBCB8B;"></div>
+                    <div class="swatch-label">Warning</div>
+                    <div class="swatch-hex">#EBCB8B</div>
+                </div>
+            </div>
+
+            <div class="component-preview">
+                <div class="preview-section">
+                    <div class="preview-label">Terminal</div>
+                    <div class="terminal-preview">
+                        $ claude "Start new project brainstorming"<br>
+                        <span style="color: #A3BE8C;">✓</span> Session initialized: feature-auth-system<br>
+                        <span style="color: #88C0D0;">→</span> Beginning BMAD workflow...<br>
+                        <span style="color: #4C566A;">│</span> Analyzing requirements...
+                    </div>
+                </div>
+
+                <div class="preview-section">
+                    <div class="preview-label">Buttons</div>
+                    <div class="button-group">
+                        <button class="btn btn-primary">New Session</button>
+                        <button class="btn btn-secondary">Settings</button>
+                        <button class="btn btn-destructive">STOP</button>
+                    </div>
+                </div>
+
+                <div class="preview-section">
+                    <div class="preview-label">Session Tabs</div>
+                    <div class="tabs-preview">
+                        <div class="tab active">auth-system</div>
+                        <div class="tab">payment-flow</div>
+                        <div class="tab">dashboard</div>
+                    </div>
+                </div>
+
+                <div class="preview-section">
+                    <div class="preview-label">Status Badges</div>
+                    <div class="badge-group">
+                        <span class="badge badge-success">ACTIVE</span>
+                        <span class="badge badge-warning">WAITING</span>
+                        <span class="badge badge-error">ERROR</span>
+                        <span class="badge badge-info">IDLE</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Theme 3: Twilight Focus -->
+        <div class="theme-card theme-3">
+            <div class="theme-header">
+                <div class="theme-name">3. Twilight Focus</div>
+                <div class="theme-description">Solarized Dark inspired - Scientifically designed contrast</div>
+                <div class="theme-personality">Precise contrast ratios • Reduced blue light • Long session comfort</div>
+            </div>
+
+            <div class="color-swatches">
+                <div class="swatch">
+                    <div class="swatch-color" style="background: #2AA198;"></div>
+                    <div class="swatch-label">Primary</div>
+                    <div class="swatch-hex">#2AA198</div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color" style="background: #002B36;"></div>
+                    <div class="swatch-label">Background</div>
+                    <div class="swatch-hex">#002B36</div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color" style="background: #839496;"></div>
+                    <div class="swatch-label">Text</div>
+                    <div class="swatch-hex">#839496</div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color" style="background: #859900;"></div>
+                    <div class="swatch-label">Success</div>
+                    <div class="swatch-hex">#859900</div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color" style="background: #DC322F;"></div>
+                    <div class="swatch-label">Error</div>
+                    <div class="swatch-hex">#DC322F</div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color" style="background: #B58900;"></div>
+                    <div class="swatch-label">Warning</div>
+                    <div class="swatch-hex">#B58900</div>
+                </div>
+            </div>
+
+            <div class="component-preview">
+                <div class="preview-section">
+                    <div class="preview-label">Terminal</div>
+                    <div class="terminal-preview">
+                        $ claude "Start new project brainstorming"<br>
+                        <span style="color: #859900;">✓</span> Session initialized: feature-auth-system<br>
+                        <span style="color: #2AA198;">→</span> Beginning BMAD workflow...<br>
+                        <span style="color: #586E75;">│</span> Analyzing requirements...
+                    </div>
+                </div>
+
+                <div class="preview-section">
+                    <div class="preview-label">Buttons</div>
+                    <div class="button-group">
+                        <button class="btn btn-primary">New Session</button>
+                        <button class="btn btn-secondary">Settings</button>
+                        <button class="btn btn-destructive">STOP</button>
+                    </div>
+                </div>
+
+                <div class="preview-section">
+                    <div class="preview-label">Session Tabs</div>
+                    <div class="tabs-preview">
+                        <div class="tab active">auth-system</div>
+                        <div class="tab">payment-flow</div>
+                        <div class="tab">dashboard</div>
+                    </div>
+                </div>
+
+                <div class="preview-section">
+                    <div class="preview-label">Status Badges</div>
+                    <div class="badge-group">
+                        <span class="badge badge-success">ACTIVE</span>
+                        <span class="badge badge-warning">WAITING</span>
+                        <span class="badge badge-error">ERROR</span>
+                        <span class="badge badge-info">IDLE</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Theme 4: Moonlight -->
+        <div class="theme-card theme-4">
+            <div class="theme-header">
+                <div class="theme-name">4. Moonlight</div>
+                <div class="theme-description">Balanced neutral - Modern and soft</div>
+                <div class="theme-personality">Medium contrast • Warm undertones • Contemporary developer feel</div>
+            </div>
+
+            <div class="color-swatches">
+                <div class="swatch">
+                    <div class="swatch-color" style="background: #82AAFF;"></div>
+                    <div class="swatch-label">Primary</div>
+                    <div class="swatch-hex">#82AAFF</div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color" style="background: #1B1E28;"></div>
+                    <div class="swatch-label">Background</div>
+                    <div class="swatch-hex">#1B1E28</div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color" style="background: #C8D3F5;"></div>
+                    <div class="swatch-label">Text</div>
+                    <div class="swatch-hex">#C8D3F5</div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color" style="background: #C3E88D;"></div>
+                    <div class="swatch-label">Success</div>
+                    <div class="swatch-hex">#C3E88D</div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color" style="background: #FF5370;"></div>
+                    <div class="swatch-label">Error</div>
+                    <div class="swatch-hex">#FF5370</div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color" style="background: #FFC777;"></div>
+                    <div class="swatch-label">Warning</div>
+                    <div class="swatch-hex">#FFC777</div>
+                </div>
+            </div>
+
+            <div class="component-preview">
+                <div class="preview-section">
+                    <div class="preview-label">Terminal</div>
+                    <div class="terminal-preview">
+                        $ claude "Start new project brainstorming"<br>
+                        <span style="color: #C3E88D;">✓</span> Session initialized: feature-auth-system<br>
+                        <span style="color: #82AAFF;">→</span> Beginning BMAD workflow...<br>
+                        <span style="color: #7982B9;">│</span> Analyzing requirements...
+                    </div>
+                </div>
+
+                <div class="preview-section">
+                    <div class="preview-label">Buttons</div>
+                    <div class="button-group">
+                        <button class="btn btn-primary">New Session</button>
+                        <button class="btn btn-secondary">Settings</button>
+                        <button class="btn btn-destructive">STOP</button>
+                    </div>
+                </div>
+
+                <div class="preview-section">
+                    <div class="preview-label">Session Tabs</div>
+                    <div class="tabs-preview">
+                        <div class="tab active">auth-system</div>
+                        <div class="tab">payment-flow</div>
+                        <div class="tab">dashboard</div>
+                    </div>
+                </div>
+
+                <div class="preview-section">
+                    <div class="preview-label">Status Badges</div>
+                    <div class="badge-group">
+                        <span class="badge badge-success">ACTIVE</span>
+                        <span class="badge badge-warning">WAITING</span>
+                        <span class="badge badge-error">ERROR</span>
+                        <span class="badge badge-info">IDLE</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 60px; padding: 40px; color: #666;">
+        <p style="margin-bottom: 10px;">All themes optimized for extended terminal use with reduced eye strain</p>
+        <p style="font-size: 14px;">Choose based on personal preference - all have excellent readability</p>
+    </div>
+</body>
+</html>

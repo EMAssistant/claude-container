@@ -1,0 +1,305 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>10</storyId>
+    <title>Session Resume After Container Restart</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/2-10-session-resume-after-container-restart.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>to manually resume sessions after Docker container restarts</iWant>
+    <soThat>I can continue my work without losing context (FR12, FR66)</soThat>
+    <tasks>
+- [ ] Task 1: Backend session restoration on startup (AC: 1-3)
+  - [ ] 1.1: Add SessionManager.loadSessions() method to read JSON on startup
+  - [ ] 1.2: Parse JSON and restore Session objects with status='idle'
+  - [ ] 1.3: Validate worktree paths still exist on filesystem
+  - [ ] 1.4: Call loadSessions() in server.ts startup sequence
+  - [ ] 1.5: Handle corrupted JSON gracefully (log warning, continue startup)
+
+- [ ] Task 2: Frontend idle session UI display (AC: 4-5)
+  - [ ] 2.1: SessionList component renders sessions with status='idle' (blue dot)
+  - [ ] 2.2: Terminal component detects idle session and displays placeholder message
+  - [ ] 2.3: Add "Resume" button/click handler in idle terminal view
+  - [ ] 2.4: Style idle state consistently with Oceanic Calm theme
+
+- [ ] Task 3: Manual resume functionality via WebSocket (AC: 6-9)
+  - [ ] 3.1: Add WebSocket message type 'session.resume' to protocol
+  - [ ] 3.2: Backend handler spawns new PTY with persisted worktreePath as cwd
+  - [ ] 3.3: Update session status from 'idle' → 'active'
+  - [ ] 3.4: Send session.status update to frontend
+  - [ ] 3.5: Frontend terminal switches from placeholder to xterm.js instance
+  - [ ] 3.6: Verify Claude CLI loads with worktree files intact
+
+- [ ] Task 4: Testing session persistence and resume (AC: All)
+  - [ ] 4.1: Integration test: Create 3 sessions, stop container, start, verify sessions restored
+  - [ ] 4.2: Integration test: Resume session, verify PTY spawns with correct cwd
+  - [ ] 4.3: Integration test: Verify files in worktree persist across restart
+  - [ ] 4.4: Unit test: loadSessions() with valid JSON
+  - [ ] 4.5: Unit test: loadSessions() with corrupted JSON (graceful handling)
+  - [ ] 4.6: E2E test: Create session, write file in worktree, restart, resume, verify file exists
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+**Given** 3 sessions exist with work in progress
+**When** the Docker container stops and restarts
+**Then** the backend:
+1. Reads `/workspace/.claude-container-sessions.json` on startup
+2. Restores session metadata (id, name, branch, worktreePath, timestamps)
+3. Sets all session statuses to "idle" (PTY processes not restored)
+4. Does NOT automatically spawn PTY processes
+
+**And** when the UI loads
+**Then** all 3 sessions appear in the session list with "idle" status
+
+**And** the terminals show: "Session not running. Click to resume."
+
+**And** when the user clicks a session to resume
+**Then** the backend spawns a new PTY process for that session
+
+**And** the PTY cwd is set to the persisted worktree path
+
+**And** Claude CLI starts in the worktree with all previous files intact
+
+**And** the user can analyze the state (git status, check files) and decide how to continue
+
+**And** when the user asks Claude to "analyze what's been done and continue"
+**Then** Claude reads the worktree state and resumes work (manual resume per FR12, FR67)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification - Multi-Session Parallel Development</title>
+        <section>Session State Model</section>
+        <snippet>Session interface includes all metadata needed for persistence (id, name, branch, worktreePath, timestamps). PTY processes are ephemeral (ptyPid field optional, not persisted). Session JSON at /workspace/.claude-container-sessions.json survives restarts via volume mount.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification - Multi-Session Parallel Development</title>
+        <section>Workflow 5: Session Resume After Container Restart</section>
+        <snippet>Container stops → Sessions JSON persisted → PTY processes terminate. Container starts → SessionManager.loadSessions(): 1) Read JSON, 2) Parse into Session objects, 3) Set all status='idle', 4) Restore to in-memory registry (no PTY spawned). Frontend connects → Backend sends session.list → Frontend displays idle sessions. User clicks Resume → Backend spawns PTY with worktreePath → Status → 'active'.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Data Architecture</title>
+        <section>Session State Model</section>
+        <snippet>Session persistence at /workspace/.claude-container-sessions.json using atomic write pattern (temp + rename). Atomic writes prevent JSON corruption. All timestamps stored as ISO 8601 UTC strings. PTY processes not persisted (manual resume required).</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Error Handling</title>
+        <section>Logging Strategy</section>
+        <snippet>Winston structured JSON logging. Error level for failures requiring attention (PTY crash, WebSocket disconnect, file I/O errors). All session lifecycle events logged with sessionId and context.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>backend/src/types.ts</path>
+        <kind>interface</kind>
+        <symbol>SessionData</symbol>
+        <lines>82-89</lines>
+        <reason>Existing session interface - needs to be extended with persistence fields (name, branch, worktreePath, status, createdAt, lastActivity) to match Epic 2 Session model</reason>
+      </artifact>
+      <artifact>
+        <path>backend/src/server.ts</path>
+        <kind>function</kind>
+        <symbol>createSession</symbol>
+        <lines>130-162</lines>
+        <reason>Current session creation logic - will be moved to SessionManager class. Shows PTY spawning pattern with ptyManager.spawn() that needs to be replicated in resume flow</reason>
+      </artifact>
+      <artifact>
+        <path>backend/src/server.ts</path>
+        <kind>storage</kind>
+        <symbol>activeSessions</symbol>
+        <lines>105</lines>
+        <reason>Current in-memory session storage - will be managed by SessionManager with persistence to JSON file</reason>
+      </artifact>
+      <artifact>
+        <path>backend/src/ptyManager.ts</path>
+        <kind>class</kind>
+        <symbol>PTYManager.spawn</symbol>
+        <lines>83-145</lines>
+        <reason>PTY spawning logic that will be called from SessionManager.resumeSession(). Shows cwd configuration and permission bypass flags</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/Terminal.tsx</path>
+        <kind>component</kind>
+        <symbol>Terminal</symbol>
+        <lines>12-140</lines>
+        <reason>Terminal component that needs to detect idle status and display placeholder with Resume button</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/hooks/useWebSocket.ts</path>
+        <kind>hook</kind>
+        <symbol>useWebSocket</symbol>
+        <lines>18-123</lines>
+        <reason>WebSocket hook that needs session.resume message sender added. Shows existing sendInput/sendInterrupt pattern to follow</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <backend>
+        <package name="express" version="^4.18.0" />
+        <package name="node-pty" version="^1.0.0" />
+        <package name="uuid" version="^9.0.0" />
+        <package name="winston" version="^3.11.0" />
+        <package name="ws" version="^8.14.0" />
+      </backend>
+      <frontend>
+        <package name="react" version="^19.2.0" />
+        <package name="react-dom" version="^19.2.0" />
+        <package name="@xterm/xterm" version="^5.5.0" />
+        <package name="@xterm/addon-fit" version="^0.10.0" />
+        <package name="@xterm/addon-web-links" version="^0.11.0" />
+      </frontend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+- SessionManager must use atomic write pattern for JSON persistence (temp file + rename) to prevent corruption
+- All session statuses MUST be set to 'idle' on restore, regardless of pre-restart status (PTY processes don't survive)
+- Do NOT auto-spawn PTY processes on container startup (manual resume only per FR12)
+- Session JSON path MUST be /workspace/.claude-container-sessions.json (survives container restarts via volume mount)
+- Worktree path validation: Verify paths exist on filesystem, log warning if missing but keep session (user can recreate)
+- Corrupted JSON handling: Log warning, continue startup with empty session list, do NOT crash server
+- All timestamps MUST be stored as ISO 8601 UTC strings (new Date().toISOString())
+- Winston logger MUST be used for all session lifecycle events with structured JSON format
+- Session status enum values: 'active' | 'waiting' | 'idle' | 'error' | 'stopped'
+- Terminal idle state MUST use Oceanic Calm blue color (#88C0D0) for status indicator
+- WebSocket protocol extension: Add 'session.resume' message type following existing 'resource.action' pattern
+- PTY spawn on resume MUST use persisted worktreePath as cwd parameter
+- Frontend MUST display "Session not running. Click to resume." for idle sessions
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Session (Epic 2 Model)</name>
+      <kind>TypeScript interface</kind>
+      <signature>
+interface Session {
+  id: string;                    // UUID v4, generated by backend
+  name: string;                  // User-provided or auto-generated
+  status: 'active' | 'waiting' | 'idle' | 'error' | 'stopped';
+  branch: string;                // Git branch name
+  worktreePath: string;          // Absolute path: /workspace/.worktrees/&lt;session-id&gt;
+  ptyPid?: number;               // Claude CLI process ID (only if running)
+  createdAt: string;             // ISO 8601 UTC timestamp
+  lastActivity: string;          // ISO 8601 UTC timestamp
+  currentPhase?: string;         // Optional BMAD phase
+  metadata?: { epicName?: string; storyId?: string; };
+}
+      </signature>
+      <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+    </interface>
+    <interface>
+      <name>Session Persistence JSON Schema</name>
+      <kind>JSON file format</kind>
+      <signature>
+{
+  "version": "1.0",
+  "sessions": [
+    {
+      "id": "uuid-v4-string",
+      "name": "feature-auth",
+      "status": "idle",
+      "branch": "feature/feature-auth",
+      "worktreePath": "/workspace/.worktrees/&lt;session-id&gt;",
+      "ptyPid": null,
+      "createdAt": "2025-11-24T10:30:00.000Z",
+      "lastActivity": "2025-11-24T10:45:00.000Z",
+      "currentPhase": "Story Development",
+      "metadata": { "epicName": "Authentication System" }
+    }
+  ]
+}
+      </signature>
+      <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+    </interface>
+    <interface>
+      <name>WebSocket session.resume message</name>
+      <kind>WebSocket protocol extension</kind>
+      <signature>
+// Client → Server: Resume idle session
+{ type: 'session.resume', sessionId: string }
+
+// Server → Client: Session status update
+{ type: 'session.status', sessionId: string, status: SessionStatus, reason?: string }
+      </signature>
+      <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+    </interface>
+    <interface>
+      <name>SessionManager Public API</name>
+      <kind>TypeScript class API</kind>
+      <signature>
+class SessionManager {
+  async loadSessions(): Promise&lt;void&gt;;           // Read JSON on startup, restore sessions
+  async saveSessions(): Promise&lt;void&gt;;           // Save to JSON (atomic write)
+  async resumeSession(sessionId: string): Promise&lt;void&gt;;  // Spawn PTY for idle session
+  updateSessionStatus(sessionId: string, status: SessionStatus): void;
+  getSession(sessionId: string): Session | undefined;
+  getAllSessions(): Session[];
+}
+      </signature>
+      <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+    </interface>
+    <interface>
+      <name>PTYManager.spawn (existing)</name>
+      <kind>TypeScript method</kind>
+      <signature>
+spawn(command: string, args: string[], config: Partial&lt;PTYConfig&gt;): IPty
+// PTYConfig includes: { name, cols, rows, cwd, env }
+// Returns IPty process instance
+      </signature>
+      <path>backend/src/ptyManager.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+Backend: Jest with ts-jest transformer for TypeScript support. Unit tests co-located with source files (.test.ts suffix). Integration tests verify full API flows. Winston logger mocked in tests to prevent console pollution. Frontend: Vitest for component/hook tests. Testing Library for React component testing. E2E: Playwright for critical flows. All tests follow AAA pattern (Arrange, Act, Assert).
+    </standards>
+    <locations>
+- backend/src/**/*.test.ts (unit tests)
+- frontend/src/**/*.test.tsx (component tests)
+- e2e/**/*.spec.ts (Playwright E2E tests)
+    </locations>
+    <ideas>
+      <test id="AC-1">
+        <description>Unit test: SessionManager.loadSessions() with valid JSON</description>
+        <criteria>AC 1-3</criteria>
+        <approach>Mock fs.readFileSync to return valid session JSON. Verify sessions restored with status='idle', worktree paths validated, in-memory map populated correctly.</approach>
+      </test>
+      <test id="AC-2">
+        <description>Unit test: SessionManager.loadSessions() with corrupted JSON</description>
+        <criteria>AC 1-3</criteria>
+        <approach>Mock fs.readFileSync to return malformed JSON. Verify logger.warn called, startup continues with empty session list, no exceptions thrown.</approach>
+      </test>
+      <test id="AC-3">
+        <description>Unit test: SessionManager.loadSessions() with missing worktree path</description>
+        <criteria>AC 1-3</criteria>
+        <approach>Mock fs.existsSync to return false for worktree path. Verify logger.warn called, session kept in memory (not deleted), worktreePath field preserved.</approach>
+      </test>
+      <test id="AC-4">
+        <description>Integration test: Container restart recovery</description>
+        <criteria>AC 1-5</criteria>
+        <approach>Create 3 sessions via API, write JSON file, restart backend server, verify GET /api/sessions returns all 3 sessions with status='idle'.</approach>
+      </test>
+      <test id="AC-5">
+        <description>Integration test: Manual resume flow</description>
+        <criteria>AC 6-9</criteria>
+        <approach>Create idle session, send session.resume WebSocket message, verify PTY spawned with correct cwd, session.status update received, terminal output streaming works.</approach>
+      </test>
+      <test id="AC-6">
+        <description>E2E test: Full cycle - create, persist, restart, resume</description>
+        <criteria>All ACs</criteria>
+        <approach>Create session via UI, write test file in worktree, stop container (docker stop), start container, verify UI shows idle session, click Resume button, verify terminal loads, cat test file in terminal to confirm persistence.</approach>
+      </test>
+    </ideas>
+  </tests>
+</story-context>

@@ -1,0 +1,295 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.7</storyId>
+    <title>shadcn/ui Component Library Integration</title>
+    <status>ready-for-dev</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-7-shadcn-ui-component-library-integration.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>accessible UI component primitives that can be fully customized</iWant>
+    <soThat>I can build the Oceanic Calm themed interface quickly without reinventing components</soThat>
+    <tasks>
+- [ ] Initialize shadcn/ui in frontend project (AC: #1)
+  - [ ] Run `npx shadcn-ui@latest init` in frontend directory
+  - [ ] Verify Tailwind CSS configuration updated with shadcn theme
+  - [ ] Verify `components/ui/` directory created
+  - [ ] Verify `lib/utils.ts` with cn() helper created
+
+- [ ] Configure Oceanic Calm theme colors in Tailwind (AC: #3)
+  - [ ] Update `tailwind.config.js` with Oceanic Calm color palette
+  - [ ] Define primary color (`#88C0D0`), secondary (`#3B4252`, `#4C566A`), destructive (`#BF616A`), background (`#2E3440`), foreground (`#D8DEE9`)
+  - [ ] Extend Tailwind theme with custom color variables
+  - [ ] Verify theme colors accessible via Tailwind utility classes
+
+- [ ] Add core shadcn/ui components (AC: #2, #5)
+  - [ ] Run `npx shadcn-ui@latest add button` → Verify button.tsx in components/ui/
+  - [ ] Run `npx shadcn-ui@latest add tabs` → Verify tabs.tsx created
+  - [ ] Run `npx shadcn-ui@latest add dialog` → Verify dialog.tsx created
+  - [ ] Add remaining components: `npx shadcn-ui@latest add resizable badge dropdown-menu scroll-area separator tooltip`
+  - [ ] Verify all components copied to components/ui/ directory
+
+- [ ] Customize components with Oceanic Calm styling (AC: #3)
+  - [ ] Update button component variants to use theme colors
+  - [ ] Verify primary button renders with `#88C0D0` background
+  - [ ] Verify secondary button uses `#3B4252` background and `#4C566A` border
+  - [ ] Verify destructive button uses `#BF616A` background
+  - [ ] Test component variants visually match UX spec color palette
+
+- [ ] Install Lucide React icons (AC: #5)
+  - [ ] Run `npm install lucide-react` in frontend directory
+  - [ ] Verify icons accessible for import in components
+  - [ ] Test sample icon renders correctly with shadcn components
+
+- [ ] Validate accessibility (AC: #4)
+  - [ ] Test keyboard navigation on Button component (Tab, Enter, Space)
+  - [ ] Test keyboard navigation on Dialog (Tab, Escape to close)
+  - [ ] Test keyboard navigation on Dropdown Menu (Arrow keys, Enter, Escape)
+  - [ ] Verify focus rings visible for all interactive components
+  - [ ] Run axe DevTools accessibility audit on sample components
+
+- [ ] Create sample component showcase page (Testing)
+  - [ ] Create temporary demo page showing all shadcn components
+  - [ ] Verify all components render with Oceanic Calm theme
+  - [ ] Test component interactions (buttons click, dialogs open/close, tabs switch)
+  - [ ] Validate TypeScript types work correctly with React 19
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **shadcn/ui Initialization:** Given shadcn/ui is initialized in the frontend project, when `npx shadcn-ui@latest init` is run, then the following is configured: Tailwind CSS with shadcn/ui theme, `components/ui/` directory for copied components, `lib/utils.ts` with cn() helper function
+
+2. **Component Installation:** When components are added via `npx shadcn-ui@latest add button tabs dialog`, then the components are copied into `components/ui/`: `components/ui/button.tsx`, `components/ui/tabs.tsx`, `components/ui/dialog.tsx`
+
+3. **Oceanic Calm Color Scheme:** The components follow Oceanic Calm color scheme with primary buttons using `#88C0D0` background, secondary buttons using `#3B4252` background with `#4C566A` border, and destructive buttons using `#BF616A` background
+
+4. **Accessibility Compliance:** All components support keyboard navigation and screen readers (WCAG AA compliance)
+
+5. **Component Library Completeness:** shadcn/ui provides the following components: Button, Tabs, Dialog, Resizable, Badge, Dropdown Menu, Scroll Area, Separator, Tooltip, all copied and customizable
+
+6. **Integration with Frontend:** Components integrate cleanly with React 19 and TypeScript 5.x, using Tailwind CSS 4.0 utility classes
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <!-- UX Design Specification - Color System Foundation -->
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification - Design System Foundation</title>
+        <section>Section 1.1: Design System Choice</section>
+        <snippet>Selected: shadcn/ui + Tailwind CSS. Claude Container is a highly specialized terminal-centric developer tool that requires full control over visual styling. shadcn/ui provides accessible, unstyled primitives that can be fully customized. Key advantages: Full Control (components copied into codebase), No Visual Opinions, Accessibility Built-In, Dark Theme Excellence, Perfect for Specialized UIs.</snippet>
+      </doc>
+
+      <!-- UX Design Specification - Oceanic Calm Color Palette -->
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification - Color System</title>
+        <section>Section 3.1: Color System</section>
+        <snippet>Selected Theme: Oceanic Calm (Nord-inspired). Low-contrast, cool soothing tones optimized for extended terminal sessions. Primary: #88C0D0, Background (Main): #2E3440, Background (Secondary): #3B4252, Text (Primary): #D8DEE9, Success: #A3BE8C, Warning: #EBCB8B, Error: #BF616A, Border: #4C566A.</snippet>
+      </doc>
+
+      <!-- UX Design Specification - Component Library -->
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification - Component Library</title>
+        <section>Section 6: Component Library</section>
+        <snippet>Components from shadcn/ui: Button (multiple variants), Tabs (for session switching), Dialog/Modal (session creation), Resizable (panel resize handles), Badge (session status), Dropdown Menu (session actions), Scroll Area (file browser), Separator (panel divisions), Tooltip (help text). All styled with Oceanic Calm theme colors.</snippet>
+      </doc>
+
+      <!-- Architecture Document - Frontend Stack -->
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Frontend Setup</title>
+        <section>Frontend Setup</section>
+        <snippet>npm create vite@latest claude-container-ui -- --template react-ts. Install Tailwind CSS, shadcn/ui via npx shadcn-ui@latest init. Install core dependencies: xterm, react-markdown, lucide-react, clsx, tailwind-merge. Vite provides instant HMR and optimized builds for React 19 + TypeScript + Tailwind CSS.</snippet>
+      </doc>
+
+      <!-- Architecture Document - Project Structure -->
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Project Structure</title>
+        <section>Project Structure - Frontend</section>
+        <snippet>frontend/src/components/ui/ contains shadcn/ui components (copied). Custom application components in flat components/ directory. Separation: shadcn components (ui/) vs. application components (root). Path aliases: @/ maps to src/.</snippet>
+      </doc>
+
+      <!-- Epic 1 Story Definition -->
+      <doc>
+        <path>docs/epics/epic-1-foundation.md</path>
+        <title>Epic 1: Story 1.7</title>
+        <section>Story 1.7: shadcn/ui Component Library Integration</section>
+        <snippet>As a developer, I want accessible UI component primitives that can be fully customized, so that I can build the Oceanic Calm themed interface quickly without reinventing components. Components are copied (not imported) for full customization. Tailwind config extended with Oceanic Calm colors. Lucide React icons installed.</snippet>
+      </doc>
+
+      <!-- Technical Specification - Epic 1 -->
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>Story 1.7 Technical Details</section>
+        <snippet>shadcn/ui provides: Button, Tabs, Dialog, Resizable, Badge, Dropdown Menu, Scroll Area, Separator, Tooltip. Components copied via npx shadcn-ui@latest add [component]. Tailwind CSS 4.0 configured with Oceanic Calm theme. WCAG AA accessibility compliance required for all components.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <!-- No existing code - greenfield project -->
+      <note>Frontend directory does not yet exist. This is the first frontend story in Epic 1 (Story 1.6 creates initial project structure, Story 1.7 adds shadcn/ui). All code will be created from scratch following Architecture and UX specifications.</note>
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="react" version="^19.0.0" />
+        <package name="react-dom" version="^19.0.0" />
+        <package name="vite" version="^6.0.0" />
+        <package name="tailwindcss" version="^4.0.0" />
+        <package name="@tailwindcss/vite" version="^4.0.0" />
+        <package name="lucide-react" version="^0.294.0" />
+        <package name="clsx" version="^2.0.0" />
+        <package name="tailwind-merge" version="^2.2.0" />
+        <package name="typescript" version="^5.3.0" />
+      </node>
+      <note>shadcn/ui components are not npm dependencies - they are copied into the project via CLI tool</note>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <!-- Architecture Patterns -->
+    <constraint>
+      <type>Architecture Pattern</type>
+      <description>shadcn/ui Philosophy: Components are copied into your project, not imported from node_modules. Full customization control - modify component source code directly as needed. Built on Radix UI primitives for accessibility.</description>
+      <source>Story Dev Notes - Architecture Patterns</source>
+    </constraint>
+
+    <!-- Naming Conventions -->
+    <constraint>
+      <type>Naming Convention</type>
+      <description>shadcn components: PascalCase files but lowercase names per shadcn convention (button.tsx, dialog.tsx). Custom components: PascalCase files (Terminal.tsx, SessionList.tsx). Path aliases: @/ maps to src/ for clean imports. Import shadcn components: import { Button } from '@/components/ui/button'</description>
+      <source>Architecture - Consistency Rules</source>
+    </constraint>
+
+    <!-- Color System -->
+    <constraint>
+      <type>Design System</type>
+      <description>Oceanic Calm theme colors MUST be used consistently: Primary #88C0D0, Background Main #2E3440, Background Secondary #3B4252, Text Primary #D8DEE9, Success #A3BE8C, Warning #EBCB8B, Error #BF616A, Border #4C566A. All components styled to match this palette.</description>
+      <source>UX Design Specification Section 3.1</source>
+    </constraint>
+
+    <!-- Accessibility Requirements -->
+    <constraint>
+      <type>Accessibility</type>
+      <description>WCAG AA compliance required. All components must support keyboard navigation (Tab, Enter, Space, Escape, Arrow keys). Focus rings visible (2px solid #88C0D0). Screen reader compatible. Color contrast meets AA standards. Test with axe DevTools.</description>
+      <source>UX Design Specification Section 8.2</source>
+    </constraint>
+
+    <!-- Component Copy Pattern -->
+    <constraint>
+      <type>Installation Pattern</type>
+      <description>Each npx shadcn-ui@latest add [component] copies source into components/ui/. Components are starting points, not locked dependencies. Safe to modify component code for project-specific needs. Version updates require manual re-copying (trade-off for control).</description>
+      <source>Story Dev Notes</source>
+    </constraint>
+
+    <!-- Testing Standards -->
+    <constraint>
+      <type>Testing</type>
+      <description>Unit tests: 50% code coverage target (pragmatic, not exhaustive). Focus on core component behavior, not shadcn internals. Accessibility validation critical (WCAG AA requirement). Visual inspection for theme color accuracy. Keyboard navigation testing for all interactive components.</description>
+      <source>Tech Spec - Test Strategy</source>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <!-- Button Component API -->
+    <interface>
+      <name>Button Component</name>
+      <kind>React Component</kind>
+      <signature>Button({ variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link', size?: 'default' | 'sm' | 'lg' | 'icon', asChild?: boolean, children, ...props })</signature>
+      <path>components/ui/button.tsx</path>
+      <description>Primary button component with Oceanic Calm styling. Variants: default (primary #88C0D0), destructive (#BF616A), secondary (#3B4252), outline, ghost, link. All variants support keyboard navigation.</description>
+    </interface>
+
+    <!-- Tabs Component API -->
+    <interface>
+      <name>Tabs Component</name>
+      <kind>React Component</kind>
+      <signature>Tabs({ defaultValue, value, onValueChange, children }), TabsList, TabsTrigger, TabsContent</signature>
+      <path>components/ui/tabs.tsx</path>
+      <description>Tabbed interface component for session switching. Styled with Oceanic Calm colors. Active tab: bottom border #88C0D0, background #2E3440. Inactive: color #81A1C1.</description>
+    </interface>
+
+    <!-- Dialog Component API -->
+    <interface>
+      <name>Dialog Component</name>
+      <kind>React Component</kind>
+      <signature>Dialog({ open, onOpenChange, children }), DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription</signature>
+      <path>components/ui/dialog.tsx</path>
+      <description>Modal dialog component for session creation and confirmations. Backdrop blur, Oceanic Calm styled. Focus trap, ESC to close, keyboard accessible.</description>
+    </interface>
+
+    <!-- Tailwind Config -->
+    <interface>
+      <name>Tailwind Config Extended Colors</name>
+      <kind>Configuration</kind>
+      <signature>theme.extend.colors.oceanic = { bg: { main, secondary, elevated }, text: { primary, secondary, muted }, primary, success, warning, error, info, border }</signature>
+      <path>tailwind.config.js</path>
+      <description>Extended Tailwind theme with Oceanic Calm color tokens. Use via utility classes: bg-oceanic-bg-main, text-oceanic-text-primary, border-oceanic-border, etc.</description>
+    </interface>
+
+    <!-- cn() Utility -->
+    <interface>
+      <name>cn Utility Function</name>
+      <kind>TypeScript Function</kind>
+      <signature>cn(...inputs: ClassValue[]): string</signature>
+      <path>lib/utils.ts</path>
+      <description>Utility for merging Tailwind classes with clsx and tailwind-merge. Prevents class conflicts. Use for component className props: className={cn("base-class", conditionalClass, props.className)}</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+Unit tests using Vitest + @testing-library/react. Focus on component rendering, theme color accuracy, keyboard navigation, and accessibility compliance. Target 50% code coverage for Epic 1 (pragmatic approach). Visual inspection required for color validation. Automated accessibility audits using axe DevTools browser extension. Example pattern: Test button variants render with correct Oceanic Calm colors, verify keyboard navigation (Tab, Enter, Space), check WCAG AA compliance.
+    </standards>
+
+    <locations>
+frontend/src/components/ui/*.test.tsx (co-located with component files)
+frontend/src/__tests__/ (integration tests)
+    </locations>
+
+    <ideas>
+<!-- AC #1: shadcn/ui Initialization -->
+- Test: Verify components/ui/ directory exists after init
+- Test: Verify lib/utils.ts contains cn() function
+- Test: Verify tailwind.config.js has shadcn theme configuration
+
+<!-- AC #2: Component Installation -->
+- Test: Button component renders with default variant
+- Test: Tabs component switches between tab panels
+- Test: Dialog opens and closes correctly
+- Test: All 9 components (Button, Tabs, Dialog, Resizable, Badge, Dropdown, Scroll Area, Separator, Tooltip) present in components/ui/
+
+<!-- AC #3: Oceanic Calm Styling -->
+- Test: Primary button has background #88C0D0
+- Test: Secondary button has background #3B4252 and border #4C566A
+- Test: Destructive button has background #BF616A
+- Test: Verify all Oceanic Calm colors applied via Tailwind utilities
+
+<!-- AC #4: Accessibility -->
+- Test: Button component receives focus on Tab key
+- Test: Enter/Space keys trigger button onClick
+- Test: Dialog closes on ESC key press
+- Test: Dropdown Menu navigable with Arrow keys
+- Test: Focus rings visible (2px solid #88C0D0)
+- Test: axe DevTools accessibility audit passes (no violations)
+
+<!-- AC #5: Component Completeness -->
+- Test: All 9 shadcn components imported successfully
+- Test: Lucide React icons render correctly with components
+- Test: Component TypeScript types compatible with React 19
+
+<!-- AC #6: Integration -->
+- Test: Components render without errors in React 19 environment
+- Test: Tailwind CSS 4.0 utility classes applied correctly
+- Test: TypeScript 5.x compilation succeeds with no type errors
+    </ideas>
+  </tests>
+</story-context>

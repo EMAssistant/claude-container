@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Container - Design Direction Mockups</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #0a0a0a;
+            color: #D8DEE9;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            color: #88C0D0;
+        }
+
+        .header p {
+            color: #81A1C1;
+            font-size: 14px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            padding: 10px 20px;
+            background: #3B4252;
+            border: 1px solid #4C566A;
+            border-radius: 6px;
+            color: #D8DEE9;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .control-btn:hover {
+            background: #434C5E;
+            border-color: #88C0D0;
+        }
+
+        .control-btn.active {
+            background: #88C0D0;
+            color: #2E3440;
+            border-color: #88C0D0;
+        }
+
+        .mockup-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            border: 2px solid #4C566A;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #2E3440;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+
+        .mockup {
+            display: none;
+            width: 100%;
+            min-height: 800px;
+        }
+
+        .mockup.active {
+            display: block;
+        }
+
+        .mockup-meta {
+            background: #3B4252;
+            padding: 16px 24px;
+            border-bottom: 1px solid #4C566A;
+        }
+
+        .mockup-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #88C0D0;
+            margin-bottom: 6px;
+        }
+
+        .mockup-description {
+            font-size: 13px;
+            color: #81A1C1;
+            margin-bottom: 8px;
+        }
+
+        .mockup-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            padding: 4px 10px;
+            background: #2E3440;
+            border-radius: 12px;
+            font-size: 11px;
+            color: #88C0D0;
+        }
+
+        /* Common UI Elements */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 800px;
+            background: #2E3440;
+        }
+
+        .top-bar {
+            background: #3B4252;
+            border-bottom: 1px solid #4C566A;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-weight: 600;
+            font-size: 14px;
+            color: #88C0D0;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            flex: 1;
+            margin: 0 16px;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            background: transparent;
+            border: none;
+            color: #81A1C1;
+            font-size: 13px;
+            cursor: pointer;
+            border-radius: 6px 6px 0 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            background: #434C5E;
+            color: #D8DEE9;
+        }
+
+        .tab.active {
+            background: #2E3440;
+            color: #D8DEE9;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-active { background: #A3BE8C; }
+        .status-waiting { background: #EBCB8B; }
+        .status-idle { background: #88C0D0; }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            font-size: 13px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #88C0D0;
+            color: #2E3440;
+        }
+
+        .btn-primary:hover {
+            background: #98D0E0;
+        }
+
+        .btn-secondary {
+            background: #3B4252;
+            color: #D8DEE9;
+            border: 1px solid #4C566A;
+        }
+
+        .btn-secondary:hover {
+            background: #434C5E;
+        }
+
+        .btn-stop {
+            background: #BF616A;
+            color: #fff;
+        }
+
+        .btn-stop:hover {
+            background: #CF717A;
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .terminal-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #2E3440;
+        }
+
+        .terminal-header {
+            background: #3B4252;
+            padding: 8px 16px;
+            border-bottom: 1px solid #4C566A;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .terminal-title {
+            font-size: 12px;
+            color: #81A1C1;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .terminal-content {
+            flex: 1;
+            padding: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            overflow-y: auto;
+            color: #D8DEE9;
+        }
+
+        .terminal-prompt {
+            color: #88C0D0;
+        }
+
+        .terminal-success {
+            color: #A3BE8C;
+        }
+
+        .terminal-error {
+            color: #BF616A;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: #3B4252;
+            border-left: 1px solid #4C566A;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-left {
+            border-left: none;
+            border-right: 1px solid #4C566A;
+        }
+
+        .sidebar-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid #4C566A;
+            font-size: 12px;
+            color: #81A1C1;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            padding: 12px;
+            overflow-y: auto;
+            font-size: 13px;
+        }
+
+        .workflow-step {
+            padding: 8px 12px;
+            margin-bottom: 4px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+        }
+
+        .workflow-step.completed {
+            color: #81A1C1;
+        }
+
+        .workflow-step.current {
+            background: #434C5E;
+            color: #D8DEE9;
+            border-left: 3px solid #88C0D0;
+        }
+
+        .workflow-step.upcoming {
+            color: #4C566A;
+        }
+
+        .step-icon {
+            font-size: 14px;
+        }
+
+        .file-tree-item {
+            padding: 6px 8px;
+            margin-bottom: 2px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            color: #D8DEE9;
+        }
+
+        .file-tree-item:hover {
+            background: #434C5E;
+        }
+
+        .file-tree-item.folder {
+            font-weight: 500;
+            color: #88C0D0;
+        }
+
+        .resize-handle {
+            width: 4px;
+            background: #4C566A;
+            cursor: ew-resize;
+            transition: background 0.2s;
+        }
+
+        .resize-handle:hover {
+            background: #88C0D0;
+        }
+
+        .session-list {
+            width: 240px;
+            background: #3B4252;
+            border-right: 1px solid #4C566A;
+        }
+
+        .session-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid #4C566A;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .session-item:hover {
+            background: #434C5E;
+        }
+
+        .session-item.active {
+            background: #2E3440;
+            border-left: 3px solid #88C0D0;
+        }
+
+        .session-name {
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 4px;
+            color: #D8DEE9;
+        }
+
+        .session-meta {
+            font-size: 11px;
+            color: #81A1C1;
+            display: flex;
+            gap: 12px;
+        }
+
+        .badge {
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        .badge-active { background: #A3BE8C; color: #2E3440; }
+        .badge-waiting { background: #EBCB8B; color: #2E3440; }
+        .badge-idle { background: #88C0D0; color: #2E3440; }
+
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Claude Container - Design Direction Mockups</h1>
+        <p>6 complete layout approaches with Oceanic Calm theme</p>
+    </div>
+
+    <div class="controls">
+        <button class="control-btn active" onclick="showMockup(1)">1. Browser-Style Tabs</button>
+        <button class="control-btn" onclick="showMockup(2)">2. IDE Three-Panel</button>
+        <button class="control-btn" onclick="showMockup(3)">3. Sidebar Sessions</button>
+        <button class="control-btn" onclick="showMockup(4)">4. Terminal-Dominant</button>
+        <button class="control-btn" onclick="showMockup(5)">5. Vertical Split</button>
+        <button class="control-btn" onclick="showMockup(6)">6. Minimal Chrome</button>
+    </div>
+
+    <!-- Direction 1: Browser-Style Tabs -->
+    <div class="mockup-container">
+        <div id="mockup-1" class="mockup active">
+            <div class="mockup-meta">
+                <div class="mockup-title">1. Browser-Style Tabs</div>
+                <div class="mockup-description">Familiar browser tabs at top, terminal center, workflow sidebar right</div>
+                <div class="mockup-tags">
+                    <span class="tag">Horizontal Tabs</span>
+                    <span class="tag">Three-Panel</span>
+                    <span class="tag">Balanced Density</span>
+                </div>
+            </div>
+            <div class="app-container">
+                <div class="top-bar">
+                    <div class="logo">Claude Container</div>
+                    <div class="tabs">
+                        <div class="tab active">
+                            <span class="status-dot status-active"></span>
+                            auth-system
+                        </div>
+                        <div class="tab">
+                            <span class="status-dot status-waiting"></span>
+                            payment-flow
+                        </div>
+                        <div class="tab">
+                            <span class="status-dot status-idle"></span>
+                            dashboard
+                        </div>
+                        <div class="tab" style="color: #81A1C1;">+ New</div>
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-stop">■ STOP</button>
+                        <button class="btn btn-secondary">⚙</button>
+                    </div>
+                </div>
+                <div class="main-content">
+                    <div class="terminal-panel">
+                        <div class="terminal-header">
+                            <div class="terminal-title">Terminal - auth-system</div>
+                            <div style="font-size: 11px; color: #81A1C1;">Last activity: 2m ago</div>
+                        </div>
+                        <div class="terminal-content">
+                            <div class="terminal-prompt">$ claude "Start brainstorming for authentication system"</div>
+                            <div class="terminal-success">✓ Session initialized: auth-system</div>
+                            <div style="color: #88C0D0;">→ Beginning BMAD brainstorming workflow...</div>
+                            <div style="color: #D8DEE9; margin-top: 12px;">Let's explore authentication patterns for your application.</div>
+                            <div style="color: #D8DEE9; margin-top: 8px;">What type of users will need to authenticate?</div>
+                            <div style="color: #4C566A; margin-top: 8px;">│ 1. End users (customers)</div>
+                            <div style="color: #4C566A;">│ 2. Admin users</div>
+                            <div style="color: #4C566A;">│ 3. API clients</div>
+                            <div style="color: #4C566A;">│ 4. All of the above</div>
+                            <div class="terminal-prompt" style="margin-top: 16px;">▊</div>
+                        </div>
+                    </div>
+                    <div class="sidebar">
+                        <div class="sidebar-header">BMAD Workflow</div>
+                        <div class="sidebar-content">
+                            <div class="workflow-step completed">
+                                <span class="step-icon">✓</span>
+                                <span>Project Setup</span>
+                            </div>
+                            <div class="workflow-step current">
+                                <span class="step-icon">→</span>
+                                <span>Brainstorming</span>
+                            </div>
+                            <div class="workflow-step upcoming">
+                                <span class="step-icon">○</span>
+                                <span>Product Brief</span>
+                            </div>
+                            <div class="workflow-step upcoming">
+                                <span class="step-icon">○</span>
+                                <span>PRD Creation</span>
+                            </div>
+                            <div class="workflow-step upcoming">
+                                <span class="step-icon">○</span>
+                                <span>Architecture</span>
+                            </div>
+                            <div class="workflow-step upcoming">
+                                <span class="step-icon">○</span>
+                                <span>Implementation</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Direction 2: IDE Three-Panel -->
+        <div id="mockup-2" class="mockup">
+            <div class="mockup-meta">
+                <div class="mockup-title">2. IDE Three-Panel</div>
+                <div class="mockup-description">File browser left, terminal center, workflow right (IntelliJ-inspired)</div>
+                <div class="mockup-tags">
+                    <span class="tag">Horizontal Tabs</span>
+                    <span class="tag">Three-Panel</span>
+                    <span class="tag">Dense Layout</span>
+                </div>
+            </div>
+            <div class="app-container">
+                <div class="top-bar">
+                    <div class="logo">Claude Container</div>
+                    <div class="tabs">
+                        <div class="tab active">
+                            <span class="status-dot status-active"></span>
+                            auth-system
+                        </div>
+                        <div class="tab">
+                            <span class="status-dot status-waiting"></span>
+                            payment-flow
+                        </div>
+                        <div class="tab" style="color: #81A1C1;">+ New</div>
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-stop">■ STOP</button>
+                        <button class="btn btn-secondary">⚙</button>
+                    </div>
+                </div>
+                <div class="main-content">
+                    <div class="sidebar sidebar-left">
+                        <div class="sidebar-header">Workspace</div>
+                        <div class="sidebar-content">
+                            <div class="file-tree-item folder">📁 docs</div>
+                            <div class="file-tree-item" style="padding-left: 24px;">📄 brainstorming.md</div>
+                            <div class="file-tree-item" style="padding-left: 24px;">📄 prd.md</div>
+                            <div class="file-tree-item folder">📁 src</div>
+                            <div class="file-tree-item folder">📁 .bmad</div>
+                        </div>
+                    </div>
+                    <div class="resize-handle"></div>
+                    <div class="terminal-panel">
+                        <div class="terminal-header">
+                            <div class="terminal-title">Terminal - auth-system</div>
+                            <div style="font-size: 11px; color: #81A1C1;">Active</div>
+                        </div>
+                        <div class="terminal-content">
+                            <div class="terminal-prompt">$ claude "Continue with PRD"</div>
+                            <div class="terminal-success">✓ Starting PRD workflow...</div>
+                            <div style="color: #88C0D0; margin-top: 8px;">→ Analyzing brainstorming results</div>
+                            <div style="color: #D8DEE9; margin-top: 12px;">I've reviewed your brainstorming session. Let's create a comprehensive PRD.</div>
+                            <div class="terminal-prompt" style="margin-top: 16px;">▊</div>
+                        </div>
+                    </div>
+                    <div class="resize-handle"></div>
+                    <div class="sidebar">
+                        <div class="sidebar-header">BMAD Workflow</div>
+                        <div class="sidebar-content">
+                            <div class="workflow-step completed">
+                                <span class="step-icon">✓</span>
+                                <span>Brainstorming</span>
+                            </div>
+                            <div class="workflow-step current">
+                                <span class="step-icon">→</span>
+                                <span>PRD Creation</span>
+                            </div>
+                            <div class="workflow-step upcoming">
+                                <span class="step-icon">○</span>
+                                <span>Architecture</span>
+                            </div>
+                            <div class="workflow-step upcoming">
+                                <span class="step-icon">○</span>
+                                <span>Epic Planning</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Direction 3: Sidebar Sessions -->
+        <div id="mockup-3" class="mockup">
+            <div class="mockup-meta">
+                <div class="mockup-title">3. Sidebar Sessions</div>
+                <div class="mockup-description">Vertical session list left, terminal dominates, collapsible workflow right</div>
+                <div class="mockup-tags">
+                    <span class="tag">Vertical Session List</span>
+                    <span class="tag">Terminal-Focused</span>
+                    <span class="tag">Spacious</span>
+                </div>
+            </div>
+            <div class="app-container">
+                <div class="top-bar">
+                    <div class="logo">Claude Container</div>
+                    <div style="flex: 1;"></div>
+                    <div class="actions">
+                        <button class="btn btn-primary">+ New Session</button>
+                        <button class="btn btn-stop">■ STOP</button>
+                        <button class="btn btn-secondary">⚙</button>
+                    </div>
+                </div>
+                <div class="main-content">
+                    <div class="session-list">
+                        <div class="session-item active">
+                            <div class="session-name">
+                                <span class="status-dot status-active" style="display: inline-block; margin-right: 8px;"></span>
+                                auth-system
+                            </div>
+                            <div class="session-meta">
+                                <span>Brainstorming</span>
+                                <span>2m ago</span>
+                            </div>
+                        </div>
+                        <div class="session-item">
+                            <div class="session-name">
+                                <span class="status-dot status-waiting" style="display: inline-block; margin-right: 8px;"></span>
+                                payment-flow
+                            </div>
+                            <div class="session-meta">
+                                <span class="badge badge-waiting">WAITING</span>
+                                <span>5m ago</span>
+                            </div>
+                        </div>
+                        <div class="session-item">
+                            <div class="session-name">
+                                <span class="status-dot status-idle" style="display: inline-block; margin-right: 8px;"></span>
+                                dashboard-ui
+                            </div>
+                            <div class="session-meta">
+                                <span class="badge badge-idle">IDLE</span>
+                                <span>12m ago</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="terminal-panel">
+                        <div class="terminal-header">
+                            <div class="terminal-title">auth-system • Brainstorming Phase</div>
+                            <div style="font-size: 11px;">
+                                <span class="badge badge-active">ACTIVE</span>
+                            </div>
+                        </div>
+                        <div class="terminal-content">
+                            <div class="terminal-prompt">$ claude "Let's brainstorm authentication patterns"</div>
+                            <div class="terminal-success">✓ Brainstorming session started</div>
+                            <div style="color: #88C0D0; margin-top: 12px;">→ Exploring authentication approaches...</div>
+                            <div style="color: #D8DEE9; margin-top: 16px;">Based on your requirements, I'm seeing three potential patterns:</div>
+                            <div style="color: #D8DEE9; margin-top: 8px;">1. <strong>JWT-based authentication</strong> - Stateless, scalable</div>
+                            <div style="color: #D8DEE9; margin-top: 4px;">2. <strong>Session-based authentication</strong> - Traditional, server-managed</div>
+                            <div style="color: #D8DEE9; margin-top: 4px;">3. <strong>OAuth 2.0 with third-party providers</strong> - Social login</div>
+                            <div style="color: #D8DEE9; margin-top: 16px;">Which direction interests you most?</div>
+                            <div class="terminal-prompt" style="margin-top: 16px;">▊</div>
+                        </div>
+                    </div>
+                    <div class="sidebar">
+                        <div class="sidebar-header">Workflow Progress</div>
+                        <div class="sidebar-content">
+                            <div class="workflow-step current">
+                                <span class="step-icon">→</span>
+                                <span>Brainstorming</span>
+                            </div>
+                            <div class="workflow-step upcoming">
+                                <span class="step-icon">○</span>
+                                <span>PRD</span>
+                            </div>
+                            <div class="workflow-step upcoming">
+                                <span class="step-icon">○</span>
+                                <span>Architecture</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Direction 4: Terminal-Dominant -->
+        <div id="mockup-4" class="mockup">
+            <div class="mockup-meta">
+                <div class="mockup-title">4. Terminal-Dominant</div>
+                <div class="mockup-description">Maximize terminal space, minimal chrome, workflow as compact overlay</div>
+                <div class="mockup-tags">
+                    <span class="tag">Minimal UI</span>
+                    <span class="tag">Terminal-First</span>
+                    <span class="tag">Maximum Focus</span>
+                </div>
+            </div>
+            <div class="app-container">
+                <div class="top-bar" style="padding: 8px 16px;">
+                    <div class="logo" style="font-size: 13px;">Claude Container</div>
+                    <div class="tabs">
+                        <div class="tab active" style="padding: 6px 14px; font-size: 12px;">auth-system</div>
+                        <div class="tab" style="padding: 6px 14px; font-size: 12px;">payment-flow</div>
+                        <div class="tab" style="padding: 6px 14px; font-size: 12px; color: #81A1C1;">+</div>
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-stop" style="padding: 6px 14px; font-size: 12px;">STOP</button>
+                    </div>
+                </div>
+                <div class="main-content">
+                    <div class="terminal-panel">
+                        <div class="terminal-content" style="padding: 24px;">
+                            <div class="terminal-prompt">$ claude "Start new authentication system project"</div>
+                            <div class="terminal-success">✓ Session: auth-system initialized</div>
+                            <div style="color: #88C0D0; margin-top: 8px;">→ BMAD Workflow: Brainstorming Phase</div>
+                            <div style="color: #D8DEE9; margin-top: 16px;">Let's explore your authentication requirements.</div>
+                            <div style="color: #D8DEE9; margin-top: 12px;">What's your target platform?</div>
+                            <div style="color: #4C566A; margin-top: 8px;">│ • Web application</div>
+                            <div style="color: #4C566A;">│ • Mobile app</div>
+                            <div style="color: #4C566A;">│ • Desktop application</div>
+                            <div style="color: #4C566A;">│ • API service</div>
+                            <div class="terminal-prompt" style="margin-top: 20px;">▊</div>
+                            <div style="position: absolute; bottom: 16px; right: 16px; background: #3B4252; padding: 12px; border-radius: 6px; border: 1px solid #4C566A; font-size: 11px;">
+                                <div style="color: #81A1C1; margin-bottom: 6px; font-weight: 600;">WORKFLOW</div>
+                                <div style="color: #A3BE8C;">✓ Setup</div>
+                                <div style="color: #88C0D0;">→ Brainstorming</div>
+                                <div style="color: #4C566A;">○ PRD</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Direction 5: Vertical Split -->
+        <div id="mockup-5" class="mockup">
+            <div class="mockup-meta">
+                <div class="mockup-title">5. Vertical Split</div>
+                <div class="mockup-description">Terminal top, artifact viewer/workflow bottom (focus-shifting friendly)</div>
+                <div class="mockup-tags">
+                    <span class="tag">Vertical Layout</span>
+                    <span class="tag">Artifact-Ready</span>
+                    <span class="tag">Context-Aware</span>
+                </div>
+            </div>
+            <div class="app-container">
+                <div class="top-bar">
+                    <div class="logo">Claude Container</div>
+                    <div class="tabs">
+                        <div class="tab active">
+                            <span class="status-dot status-active"></span>
+                            auth-system
+                        </div>
+                        <div class="tab">
+                            <span class="status-dot status-waiting"></span>
+                            payment-flow
+                        </div>
+                        <div class="tab" style="color: #81A1C1;">+ New</div>
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-secondary" style="font-size: 11px;">Focus: Terminal</button>
+                        <button class="btn btn-stop">■ STOP</button>
+                    </div>
+                </div>
+                <div class="main-content" style="flex-direction: column;">
+                    <div style="flex: 1; display: flex; flex-direction: column; border-bottom: 2px solid #4C566A;">
+                        <div class="terminal-header">
+                            <div class="terminal-title">Terminal - auth-system</div>
+                            <div style="font-size: 11px; color: #A3BE8C;">● ACTIVE • Brainstorming</div>
+                        </div>
+                        <div class="terminal-content">
+                            <div class="terminal-prompt">$ claude "Create PRD for authentication system"</div>
+                            <div class="terminal-success">✓ Starting PRD creation workflow...</div>
+                            <div style="color: #88C0D0; margin-top: 8px;">→ Generating Product Requirements Document</div>
+                            <div style="color: #D8DEE9; margin-top: 12px;">Analyzing brainstorming results and creating comprehensive PRD...</div>
+                            <div class="terminal-success" style="margin-top: 8px;">✓ PRD document created: docs/auth-system-prd.md</div>
+                            <div class="terminal-prompt" style="margin-top: 16px;">▊</div>
+                        </div>
+                    </div>
+                    <div style="flex: 1; display: flex; background: #3B4252;">
+                        <div style="flex: 2; padding: 16px; overflow-y: auto;">
+                            <div style="font-size: 12px; color: #81A1C1; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Artifact: auth-system-prd.md</div>
+                            <div style="font-size: 16px; font-weight: 600; margin-bottom: 8px; color: #D8DEE9;">Authentication System - PRD</div>
+                            <div style="font-size: 13px; color: #D8DEE9; line-height: 1.6;">
+                                <p style="margin-bottom: 12px;">This document outlines the requirements for implementing a secure, scalable authentication system...</p>
+                                <p style="margin-bottom: 12px;"><strong style="color: #88C0D0;">Core Features:</strong></p>
+                                <ul style="margin-left: 20px; color: #81A1C1;">
+                                    <li>JWT-based stateless authentication</li>
+                                    <li>Multi-factor authentication (MFA)</li>
+                                    <li>OAuth 2.0 social login integration</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div style="width: 200px; border-left: 1px solid #4C566A; padding: 16px;">
+                            <div style="font-size: 11px; color: #81A1C1; margin-bottom: 12px; text-transform: uppercase;">Workflow</div>
+                            <div class="workflow-step completed" style="margin-bottom: 8px;">
+                                <span class="step-icon">✓</span>
+                                <span style="font-size: 11px;">Brainstorming</span>
+                            </div>
+                            <div class="workflow-step current" style="margin-bottom: 8px;">
+                                <span class="step-icon">→</span>
+                                <span style="font-size: 11px;">PRD</span>
+                            </div>
+                            <div class="workflow-step upcoming">
+                                <span class="step-icon">○</span>
+                                <span style="font-size: 11px;">Architecture</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Direction 6: Minimal Chrome -->
+        <div id="mockup-6" class="mockup">
+            <div class="mockup-meta">
+                <div class="mockup-title">6. Minimal Chrome</div>
+                <div class="mockup-description">Ultra-minimal UI, panels slide in on demand, terminal-first philosophy</div>
+                <div class="mockup-tags">
+                    <span class="tag">Minimal</span>
+                    <span class="tag">Distraction-Free</span>
+                    <span class="tag">Power User</span>
+                </div>
+            </div>
+            <div class="app-container">
+                <div style="background: #3B4252; padding: 6px 12px; border-bottom: 1px solid #4C566A; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; gap: 16px; align-items: center;">
+                        <div class="logo" style="font-size: 12px;">CC</div>
+                        <div style="display: flex; gap: 6px;">
+                            <div style="padding: 4px 12px; background: #2E3440; border-radius: 4px; font-size: 11px; color: #A3BE8C; font-weight: 600;">auth-system</div>
+                            <div style="padding: 4px 12px; background: transparent; border-radius: 4px; font-size: 11px; color: #81A1C1;">payment-flow</div>
+                            <div style="padding: 4px 12px; background: transparent; border-radius: 4px; font-size: 11px; color: #81A1C1;">+</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px; font-size: 11px;">
+                        <span style="color: #81A1C1;">Brainstorming • 2m ago</span>
+                        <button class="btn btn-stop" style="padding: 4px 12px; font-size: 11px;">STOP</button>
+                    </div>
+                </div>
+                <div class="main-content">
+                    <div class="terminal-panel">
+                        <div class="terminal-content" style="padding: 32px; padding-top: 24px;">
+                            <div class="terminal-prompt">$ claude "Design authentication architecture"</div>
+                            <div class="terminal-success">✓ Architecture workflow started</div>
+                            <div style="color: #88C0D0; margin-top: 12px;">→ Analyzing requirements from PRD...</div>
+                            <div style="color: #D8DEE9; margin-top: 20px;">Let's design your authentication architecture.</div>
+                            <div style="color: #D8DEE9; margin-top: 12px;">Key architectural decisions:</div>
+                            <div style="color: #D8DEE9; margin-top: 16px;"><strong style="color: #88C0D0;">1. Token Storage Strategy</strong></div>
+                            <div style="color: #81A1C1; margin-top: 6px; margin-left: 16px;">Where should JWTs be stored on the client?</div>
+                            <div style="color: #4C566A; margin-top: 4px; margin-left: 16px;">• localStorage (simple, XSS vulnerable)</div>
+                            <div style="color: #4C566A; margin-top: 2px; margin-left: 16px;">• httpOnly cookies (secure, requires backend)</div>
+                            <div style="color: #4C566A; margin-top: 2px; margin-left: 16px;">• sessionStorage (tab-scoped)</div>
+                            <div class="terminal-prompt" style="margin-top: 24px;">▊</div>
+
+                            <div style="position: fixed; top: 60px; right: 16px; width: 48px; display: flex; flex-direction: column; gap: 8px;">
+                                <button style="background: #3B4252; border: 1px solid #4C566A; border-radius: 6px; padding: 12px; color: #81A1C1; cursor: pointer; font-size: 16px;" title="Workflow">☰</button>
+                                <button style="background: #3B4252; border: 1px solid #4C566A; border-radius: 6px; padding: 12px; color: #81A1C1; cursor: pointer; font-size: 16px;" title="Files">📁</button>
+                                <button style="background: #3B4252; border: 1px solid #4C566A; border-radius: 6px; padding: 12px; color: #81A1C1; cursor: pointer; font-size: 16px;" title="Settings">⚙</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 40px; padding: 30px; color: #81A1C1;">
+        <p style="margin-bottom: 10px; font-size: 14px;">All mockups use Oceanic Calm theme with Nord-inspired colors</p>
+        <p style="font-size: 13px; color: #4C566A;">Click buttons above to explore different layout approaches</p>
+    </div>
+
+    <script>
+        function showMockup(num) {
+            // Hide all mockups
+            for (let i = 1; i <= 6; i++) {
+                document.getElementById('mockup-' + i).classList.remove('active');
+            }
+
+            // Show selected mockup
+            document.getElementById('mockup-' + num).classList.add('active');
+
+            // Update button states
+            const buttons = document.querySelectorAll('.control-btn');
+            buttons.forEach((btn, index) => {
+                if (index === num - 1) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

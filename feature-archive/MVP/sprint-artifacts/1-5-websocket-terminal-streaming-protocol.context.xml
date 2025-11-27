@@ -1,0 +1,236 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>5</storyId>
+    <title>WebSocket Terminal Streaming Protocol</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-5-websocket-terminal-streaming-protocol.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>PTY stdout/stderr streamed to the browser via WebSocket in real-time</iWant>
+    <soThat>I see Claude's terminal output instantly (<100ms latency per NFR-PERF-1)</soThat>
+    <tasks>
+- Task 1: Implement PTY output streaming to WebSocket (AC: #1)
+  - Create WebSocket message handler in server.ts
+  - Implement 16ms buffering mechanism for PTY output chunks
+  - Wire PTY onData callback to WebSocket send with sessionId
+  - Add timestamp logging for latency measurement
+
+- Task 2: Implement terminal input handling from WebSocket (AC: #2)
+  - Create WebSocket message listener for terminal.input type
+  - Extract sessionId and data from incoming messages
+  - Write data to corresponding PTY process stdin
+  - Add error handling for invalid sessionId
+
+- Task 3: Implement terminal interrupt handling (AC: #3)
+  - Create WebSocket message listener for terminal.interrupt type
+  - Extract sessionId from interrupt message
+  - Send SIGINT signal to PTY process using ptyProcess.kill('SIGINT')
+  - Add confirmation logging when interrupt sent
+
+- Task 4: Add WebSocket protocol validation and error handling (AC: #1, #2, #3)
+  - Validate incoming message format (type field required)
+  - Validate sessionId exists before processing messages
+  - Send error response for invalid messages
+  - Handle WebSocket connection errors gracefully
+
+- Task 5: Implement performance monitoring for latency target (AC: #1)
+  - Add performance.now() timestamps in PTY onData callback
+  - Measure time from PTY output to WebSocket send
+  - Log latency metrics using Winston (debug level)
+  - Verify <100ms latency target in testing
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. Given a PTY process is running for a session, When the PTY writes output (e.g., "Hello from Claude\n"), Then the backend sends a WebSocket message: {"type": "terminal.output", "sessionId": "<uuid>", "data": "Hello from Claude\n"}, And the message is sent within 100ms of the PTY outputting the data
+
+2. Given the browser is connected via WebSocket, When the browser sends terminal input: {"type": "terminal.input", "sessionId": "<uuid>", "data": "help\n"}, Then the backend writes the data to the PTY stdin via ptyProcess.write("help\n"), And Claude CLI receives the input and responds
+
+3. Given the browser is connected via WebSocket, When the browser sends an interrupt: {"type": "terminal.interrupt", "sessionId": "<uuid>"}, Then the backend sends SIGINT to the PTY process (Ctrl+C), And Claude CLI stops the current operation and returns to prompt
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <artifact>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>Sequence 2: User Input Flow</section>
+        <snippet>Terminal input flow shows how user keystrokes travel from browser through WebSocket to PTY: xterm.js captures keypresses → sends WebSocket messages (type: 'terminal.input') → backend writes to PTY stdin → Claude receives input.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>Sequence 3: Interrupt Flow</section>
+        <snippet>Interrupt mechanism: ESC key or STOP button triggers WebSocket message (type: 'terminal.interrupt') → backend sends SIGINT to PTY → Claude stops operation and returns to prompt within 1 second.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>WebSocket Message Protocol</section>
+        <snippet>Client→Server: terminal.input (data), terminal.interrupt. Server→Client: terminal.output (data), terminal.ready, error, heartbeat. Message format enforced by TypeScript interfaces.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>Performance: NFR-PERF-1</section>
+        <snippet>Terminal latency target: <100ms from PTY output to WebSocket send. Implementation uses 16ms buffering (60fps equivalent) to balance latency with message overhead.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Communication Patterns - WebSocket</section>
+        <snippet>WebSocket protocol uses JSON for control messages. Client sends terminal.input with data field. Server streams terminal.output. Heartbeat every 30s detects disconnections.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>PTY Process Communication Pattern</section>
+        <snippet>node-pty spawns Claude with xterm-256color terminal, 80x24 initial size, /workspace cwd. onData callback captures stdout for WebSocket streaming. write() sends stdin to Claude.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/architecture-decisions.md</path>
+        <title>Architecture Decisions</title>
+        <section>ADR-005: WebSocket for Terminal Streaming</section>
+        <snippet>WebSocket chosen over SSE/polling for bidirectional real-time terminal I/O. Low latency, browser native support, natural fit for xterm.js integration.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/architecture-decisions.md</path>
+        <title>Architecture Decisions</title>
+        <section>ADR-011: ESC Key Interrupt</section>
+        <snippet>Dual interrupt: ESC key (keyboard) + STOP button (UI). Both send SIGINT to PTY. ESC is browser-safe alternative to Ctrl+C. Always available for user control.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR21-FR24: Terminal Emulation</section>
+        <snippet>System shall stream Claude stdout/stderr to browser via WebSocket real-time. Users can send input from browser to Claude stdin. Terminal supports full TTY features (colors, cursor control).</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR26-FR28: Interrupt Mechanism</section>
+        <snippet>Users can interrupt Claude via ESC key or STOP button. Both send SIGINT (Ctrl+C) to PTY process. Graceful stop returns to Claude prompt.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>NFR-PERF-1: Terminal Latency</section>
+        <snippet>Terminal output streaming must have <100ms latency between Claude CLI output and browser display. Critical for natural terminal interaction feel.</snippet>
+      </artifact>
+    </docs>
+    <code>
+      <artifact>
+        <path>N/A - Greenfield Project</path>
+        <kind>none</kind>
+        <symbol>N/A</symbol>
+        <lines>N/A</lines>
+        <reason>No existing codebase. Story 1.5 will create backend/src/server.ts (WebSocket handlers) and wire backend/src/ptyManager.ts (PTY output streaming).</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <backend>
+        <package name="express" version="^4.18.0" purpose="HTTP server for static files and WebSocket upgrade" />
+        <package name="ws" version="^8.14.0" purpose="WebSocket server for terminal streaming" />
+        <package name="node-pty" version="^1.0.0" purpose="PTY spawning and TTY emulation" />
+        <package name="winston" version="^3.11.0" purpose="Structured JSON logging" />
+        <package name="uuid" version="^9.0.0" purpose="Session ID generation" />
+      </backend>
+      <frontend>
+        <package name="xterm" version="^5.3.0" purpose="Terminal emulator component" />
+        <package name="xterm-addon-fit" version="^0.8.0" purpose="Terminal auto-sizing" />
+        <package name="xterm-addon-web-links" version="^0.9.0" purpose="Clickable URLs in terminal" />
+      </frontend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>WebSocket message format must follow Architecture "API Contracts" spec: { type: 'resource.action', sessionId?: string, data?: string }</constraint>
+    <constraint>PTY output buffering must use 16ms chunks (60fps equivalent) to achieve <100ms latency target while reducing message overhead</constraint>
+    <constraint>SIGINT handling must use ptyProcess.kill('SIGINT') not process.kill() to send signal to PTY pseudo-terminal correctly</constraint>
+    <constraint>WebSocket connection must implement heartbeat every 30 seconds to detect disconnections (per Architecture pattern)</constraint>
+    <constraint>Terminal streaming must use binary frames for PTY data (not JSON encoding) for performance per Architecture "Performance Optimization"</constraint>
+    <constraint>Backend must validate sessionId exists before routing messages to PTY processes (prevent invalid message routing)</constraint>
+    <constraint>Error responses must follow format: { type: 'error', message: string, code?: string } for consistent frontend handling</constraint>
+    <constraint>All timestamps must use performance.now() for latency measurement (debug level logging)</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>WebSocket Client→Server Messages</name>
+      <kind>WebSocket JSON Protocol</kind>
+      <signature>
+        terminal.input: { type: 'terminal.input', sessionId: string, data: string }
+        terminal.interrupt: { type: 'terminal.interrupt', sessionId: string }
+        heartbeat: { type: 'heartbeat', timestamp: number }
+      </signature>
+      <path>Architecture doc "API Contracts - WebSocket Protocol"</path>
+    </interface>
+    <interface>
+      <name>WebSocket Server→Client Messages</name>
+      <kind>WebSocket JSON Protocol</kind>
+      <signature>
+        terminal.output: { type: 'terminal.output', sessionId: string, data: string }
+        terminal.ready: { type: 'terminal.ready' }
+        error: { type: 'error', message: string, code?: string }
+        heartbeat: { type: 'heartbeat', timestamp: number }
+      </signature>
+      <path>Architecture doc "API Contracts - WebSocket Protocol"</path>
+    </interface>
+    <interface>
+      <name>PTY Manager - Spawn Method</name>
+      <kind>TypeScript Class Method</kind>
+      <signature>
+        spawn(command: string, args: string[], config: PTYConfig): PTYProcess
+        PTYConfig: { name: 'xterm-256color', cols: 80, rows: 24, cwd: string, env: ProcessEnv }
+      </signature>
+      <path>backend/src/ptyManager.ts (to be created in Story 1.4)</path>
+    </interface>
+    <interface>
+      <name>PTY Manager - Data Callback</name>
+      <kind>TypeScript Event Handler</kind>
+      <signature>
+        onData(ptyProcess: PTYProcess, callback: (data: string) => void): void
+        Callback fires when PTY writes to stdout/stderr
+      </signature>
+      <path>backend/src/ptyManager.ts (Story 1.4)</path>
+    </interface>
+    <interface>
+      <name>PTY Manager - Signal Method</name>
+      <kind>TypeScript Class Method</kind>
+      <signature>
+        kill(ptyProcess: PTYProcess, signal: 'SIGINT' | 'SIGTERM'): void
+        Used for interrupt (SIGINT) and graceful shutdown (SIGTERM)
+      </signature>
+      <path>backend/src/ptyManager.ts (Story 1.4)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Backend: Jest + ts-jest for unit/integration tests. Frontend: Vitest for React component tests. Test PTY→WebSocket flow with mocked PTY and real WebSocket. Measure latency using performance.now() timestamps (target p95 <100ms). Integration tests use real PTY process (echo command) to verify stdout streaming. Unit tests mock WebSocket and PTY for isolated message handler testing.
+    </standards>
+    <locations>
+      backend/src/__tests__/ - Backend unit tests
+      backend/src/**/*.test.ts - Co-located integration tests
+      frontend/src/__tests__/ - Frontend component tests
+      frontend/src/**/*.test.tsx - Co-located React tests
+    </locations>
+    <ideas>
+      <idea ac="1">Unit: Mock WebSocket, verify terminal.output message sent when PTY onData callback fires. Assert message format correct and data matches PTY output.</idea>
+      <idea ac="1">Integration: Spawn real PTY (echo command), send input, verify output streams to WebSocket within 100ms using performance.now() timestamps.</idea>
+      <idea ac="1">Performance: High-volume test with 1000+ lines output. Verify buffering works (16ms chunks) and no frames dropped. Measure p95 latency.</idea>
+      <idea ac="2">Unit: Mock PTY process, send terminal.input WebSocket message, verify ptyProcess.write() called with correct data.</idea>
+      <idea ac="2">Integration: Real PTY + WebSocket, send "help\n" input, verify Claude CLI responds with help text output.</idea>
+      <idea ac="2">Error: Send terminal.input with invalid sessionId, verify error response { type: 'error', code: 'INVALID_SESSION' } returned.</idea>
+      <idea ac="3">Unit: Mock PTY, send terminal.interrupt message, verify ptyProcess.kill('SIGINT') called.</idea>
+      <idea ac="3">Integration: Spawn PTY running long operation (sleep 60), send interrupt, verify PTY receives SIGINT and ^C appears in output within 1 second.</idea>
+      <idea ac="3">Timing: Measure time from WebSocket interrupt message received to SIGINT sent. Target <50ms for responsive interrupt.</idea>
+      <idea ac="1,2,3">WebSocket Protocol: Validate all message formats match TypeScript interfaces. Test heartbeat mechanism (30s interval). Test connection drop/reconnect handling.</idea>
+    </ideas>
+  </tests>
+</story-context>

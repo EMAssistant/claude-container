@@ -1,0 +1,233 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.9</storyId>
+    <title>Basic UI Layout with Single Terminal View</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-9-basic-ui-layout-with-single-terminal-view.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>a minimal browser UI that displays a single terminal session</iWant>
+    <soThat>I can validate the complete stack (Docker → Backend → WebSocket → Frontend → Terminal) works end-to-end</soThat>
+    <tasks>
+      - Task 1: Create App.tsx root component with layout structure (AC: 1)
+        - Subtask 1.1: Set up Flexbox vertical layout (top bar + main content)
+        - Subtask 1.2: Apply Oceanic Calm background colors
+        - Subtask 1.3: Ensure full viewport height (no scrolling)
+      - Task 2: Implement top bar component with title and STOP button (AC: 1, 5)
+        - Subtask 2.1: Create header element with "Claude Container" title
+        - Subtask 2.2: Add red STOP button using shadcn/ui Button (destructive variant)
+        - Subtask 2.3: Wire STOP button click to interrupt handler
+        - Subtask 2.4: Set top bar height to 56px (14rem) per UX spec
+      - Task 3: Integrate Terminal component into main content area (AC: 1, 2, 3, 4)
+        - Subtask 3.1: Import Terminal component from Story 1.8
+        - Subtask 3.2: Pass WebSocket URL prop (ws://localhost:3000)
+        - Subtask 3.3: Configure Terminal to fill available space (flex-1)
+        - Subtask 3.4: Verify terminal renders with Claude prompt visible
+      - Task 4: Implement WebSocket connection management in App context (AC: 2)
+        - Subtask 4.1: Create useWebSocket custom hook or Context
+        - Subtask 4.2: Handle connection establishment on mount
+        - Subtask 4.3: Pass connection state to Terminal component
+        - Subtask 4.4: Handle connection errors with user feedback
+      - Task 5: Wire STOP button to terminal interrupt (AC: 5)
+        - Subtask 5.1: Create interrupt handler function in App.tsx
+        - Subtask 5.2: Send terminal.interrupt WebSocket message on click
+        - Subtask 5.3: Verify SIGINT sent to PTY process
+        - Subtask 5.4: Test interrupt stops long-running commands (e.g., sleep 60)
+      - Task 6: Apply Oceanic Calm theme styling (AC: 6)
+        - Subtask 6.1: Verify Tailwind config has Oceanic Calm colors from Story 1.7
+        - Subtask 6.2: Apply color classes to top bar (bg-oceanic-bg-secondary)
+        - Subtask 6.3: Apply color classes to main area (bg-oceanic-bg-main)
+        - Subtask 6.4: Ensure STOP button uses error color (bg-oceanic-error)
+      - Task 7: Test end-to-end stack integration (AC: 3, 4, 5)
+        - Subtask 7.1: Verify Docker → Backend → WebSocket → Frontend flow works
+        - Subtask 7.2: Test typing commands and seeing Claude responses
+        - Subtask 7.3: Test STOP button interrupts Claude operations
+        - Subtask 7.4: Measure terminal output latency (&lt;100ms target)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC1: UI Layout Structure
+    - GIVEN the App.tsx root component
+    - WHEN the app loads at http://localhost:3000
+    - THEN the UI displays:
+      - Top bar with "Claude Container" logo/title
+      - Large red "STOP" button in top bar (Oceanic Calm error color #BF616A)
+      - Main content area with Terminal component (full height minus top bar)
+
+    AC2: WebSocket Connection
+    - GIVEN the Terminal component rendered
+    - WHEN the component mounts
+    - THEN the Terminal connects to WebSocket ws://localhost:3000
+    - AND the connection is established successfully
+
+    AC3: Terminal Display
+    - GIVEN WebSocket connected successfully
+    - WHEN the connection completes
+    - THEN the terminal displays Claude CLI prompt
+    - AND the terminal accepts keyboard input
+
+    AC4: Command Execution
+    - GIVEN terminal ready with Claude prompt
+    - WHEN the user types commands in the terminal
+    - THEN Claude CLI responds with output
+    - AND output appears in real-time (&lt;100ms latency per NFR-PERF-1)
+
+    AC5: STOP Button Functionality
+    - GIVEN the STOP button is visible in the top bar
+    - WHEN the user clicks the STOP button
+    - THEN an interrupt message { type: 'terminal.interrupt' } is sent to the backend
+    - AND Claude CLI stops the current operation (Ctrl+C effect)
+    - AND the terminal returns to the prompt
+
+    AC6: UI Styling
+    - GIVEN the UI components rendered
+    - WHEN displayed in browser
+    - THEN components follow Oceanic Calm theme colors:
+      - Top bar background: #3B4252
+      - Main background: #2E3440
+      - STOP button: #BF616A (destructive red)
+      - Text: #D8DEE9 (primary)
+    - AND layout uses Flexbox vertical stack (top bar + terminal)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic Technical Specification: Foundation &amp; Single-Session Terminal</title>
+        <section>Detailed Design - Layout Structure</section>
+        <snippet>Epic 1 implements the minimal viable UI required for validation. Layout is intentionally simple - top bar (56px) with logo and STOP button, main content area with Terminal component taking full remaining height. No tabs, sidebars, or complex navigation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Frontend Stack</title>
+        <section>Frontend Stack</section>
+        <snippet>React 19 + TypeScript 5.x for component-based UI, Vite 6.x for fast HMR, xterm.js 5.x for terminal emulation, shadcn/ui components styled with Oceanic Calm theme, Tailwind CSS 4.0 for utility-first styling.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - WebSocket Protocol</title>
+        <section>API Contracts - WebSocket Protocol</section>
+        <snippet>Client sends terminal.input for keystrokes, terminal.interrupt for ESC/STOP. Server sends terminal.output with PTY data, terminal.ready when prompt available. Heartbeat messages every 30s.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification - Initial Layout</title>
+        <section>4.1 Chosen Design Approach</section>
+        <snippet>Top Bar: 56px height with "Claude Container" title and STOP button. Main Content: Terminal component fills remaining vertical space. Colors: Top bar #3B4252, main #2E3440, STOP button #BF616A.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification - Color System</title>
+        <section>3.1 Color System - Oceanic Calm</section>
+        <snippet>Primary: #88C0D0, Background Main: #2E3440, Background Secondary: #3B4252, Text Primary: #D8DEE9, Error: #BF616A. STOP button uses error color for destructive action.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <!-- No existing code - this is the first frontend implementation story -->
+      <!-- Terminal component from Story 1.8 will be dependency -->
+      <!-- shadcn/ui Button component from Story 1.7 will be used -->
+    </code>
+    <dependencies>
+      <node>
+        <package name="react" version="^19.0.0" />
+        <package name="react-dom" version="^19.0.0" />
+        <package name="vite" version="^6.0.0" />
+        <package name="@vitejs/plugin-react" version="^4.2.0" />
+        <package name="typescript" version="^5.3.0" />
+        <package name="tailwindcss" version="^4.0.0" />
+        <package name="@tailwindcss/vite" version="^4.0.0" />
+        <package name="xterm" version="^5.3.0" />
+        <package name="xterm-addon-fit" version="^0.8.0" />
+        <package name="xterm-addon-web-links" version="^0.9.0" />
+        <package name="lucide-react" version="^0.294.0" />
+        <package name="clsx" version="^2.0.0" />
+        <package name="tailwind-merge" version="^2.2.0" />
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Single session only (Epic 1 scope limitation - no multi-session support)
+    - Terminal-first layout: Terminal takes full main content area, no split views yet
+    - Top bar only: 56px header, no sidebars or complex navigation in Epic 1
+    - No session persistence: Refreshing page disconnects terminal (fixed in Epic 2)
+    - No tabs: Only one session supported (multi-session in Epic 2)
+    - No reconnection: WebSocket disconnect requires page refresh (auto-reconnect in Epic 4)
+    - Flexbox layout for efficient rendering (no JavaScript calculations)
+    - Terminal auto-resizes to fill available space (xterm-addon-fit)
+    - WebSocket binary frames for PTY data (faster than JSON)
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>WebSocket Connection</name>
+      <kind>WebSocket</kind>
+      <signature>ws://localhost:3000</signature>
+      <path>Backend WebSocket server endpoint</path>
+    </interface>
+    <interface>
+      <name>terminal.interrupt Message</name>
+      <kind>WebSocket message</kind>
+      <signature>{ type: 'terminal.interrupt' }</signature>
+      <path>STOP button sends this to trigger SIGINT</path>
+    </interface>
+    <interface>
+      <name>terminal.input Message</name>
+      <kind>WebSocket message</kind>
+      <signature>{ type: 'terminal.input', data: string }</signature>
+      <path>Terminal sends user keystrokes</path>
+    </interface>
+    <interface>
+      <name>terminal.output Message</name>
+      <kind>WebSocket message</kind>
+      <signature>{ type: 'terminal.output', data: string }</signature>
+      <path>Server streams PTY output</path>
+    </interface>
+    <interface>
+      <name>Terminal Component Props</name>
+      <kind>React component interface</kind>
+      <signature>interface TerminalProps { websocketUrl: string; onInterrupt?: () => void; }</signature>
+      <path>Terminal component from Story 1.8</path>
+    </interface>
+    <interface>
+      <name>Button Component</name>
+      <kind>shadcn/ui component</kind>
+      <signature>Button variant="destructive"</signature>
+      <path>components/ui/button.tsx (from Story 1.7)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Unit tests using Vitest for frontend components. React Testing Library for component behavior testing. Integration tests verify WebSocket connection and terminal rendering. E2E tests validate complete user flows from browser to backend PTY. Test files co-located with components using .test.tsx suffix. Mock WebSocket connections for unit tests, use real connections for integration tests.
+    </standards>
+    <locations>
+      frontend/src/**/*.test.tsx
+      frontend/src/**/*.test.ts
+    </locations>
+    <ideas>
+      - AC1: Test App.tsx renders top bar and main content area with correct structure
+      - AC1: Test top bar displays "Claude Container" title
+      - AC1: Test STOP button is visible with error color styling
+      - AC2: Test WebSocket connection initializes on component mount
+      - AC2: Test WebSocket connects to ws://localhost:3000
+      - AC3: Test Terminal component renders in main content area
+      - AC3: Test Terminal fills available vertical space (flex-1)
+      - AC4: Mock WebSocket and verify terminal.input messages sent on keypress
+      - AC5: Test STOP button click triggers interrupt handler
+      - AC5: Verify terminal.interrupt message sent via WebSocket
+      - AC6: Test Tailwind classes applied correctly (bg-oceanic-bg-secondary, bg-oceanic-bg-main, bg-oceanic-error)
+      - AC6: Test Flexbox layout (flex flex-col h-screen)
+      - Integration: Test WebSocket connection establishes and receives terminal.output
+      - Integration: Test Terminal component displays PTY output from backend
+      - E2E: Full stack test - load page, verify terminal prompt appears, type command, see response
+    </ideas>
+  </tests>
+</story-context>

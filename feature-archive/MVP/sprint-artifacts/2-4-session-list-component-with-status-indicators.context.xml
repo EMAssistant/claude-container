@@ -1,0 +1,389 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>4</storyId>
+    <title>Session List Component with Status Indicators</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/2-4-session-list-component-with-status-indicators.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>to see all active sessions in a right sidebar with visual status indicators</iWant>
+    <soThat>I can monitor multiple Claude processes at a glance</soThat>
+    <tasks>
+      - Task 1: Create SessionList.tsx component structure (AC: #1)
+      - Task 2: Implement session item UI with status indicators (AC: #1)
+      - Task 3: Add real-time status updates via WebSocket (AC: #2)
+      - Task 4: Implement stuck detection warning (AC: #3)
+      - Task 5: Add waiting for input badge (AC: #4)
+      - Task 6: Implement session selection (AC: #5, #6)
+      - Task 7: Integrate SessionList into App layout (AC: #1)
+      - Task 8: Create relativeTime utility function
+      - Task 9: Add CSS animations for status indicators
+      - Task 10: Write unit tests for SessionList component
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC1: Given a SessionList.tsx component in the right sidebar (260px wide, resizable), when 3 sessions exist, then the sidebar displays a vertical list with each session showing status dot (8px circle with colors: green #A3BE8C pulsing for active, yellow #EBCB8B for waiting, blue #88C0D0 for idle, red #BF616A for error), session name (14px, truncated at 20 chars), last activity timestamp (11px gray, "5m ago" format), and optional current BMAD phase (11px gray).
+
+    AC2: When a session's status changes (backend sends session.status WebSocket message), then the status dot color updates in real-time (FR33).
+
+    AC3: When the last activity timestamp exceeds 30 minutes, then a yellow "Stuck?" warning indicator appears (FR36).
+
+    AC4: When Claude is waiting for user input, then a "!" badge appears on the session (FR50).
+
+    AC5: When the user clicks a session, then the main terminal view switches to that session (FR30).
+
+    AC6: The clicked session highlights with active state background.
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <!-- Tech Spec Epic 2 -->
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic Technical Specification: Multi-Session Parallel Development</title>
+        <section>Session State Model</section>
+        <snippet>Session interface defines id, name, status (active|waiting|idle|error|stopped), branch, worktreePath, ptyPid, createdAt, lastActivity, currentPhase, and metadata fields. Status colors: active=#A3BE8C (green), waiting=#EBCB8B (yellow), idle=#88C0D0 (blue), error=#BF616A (red), stopped=#4C566A (gray).</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic Technical Specification: Multi-Session Parallel Development</title>
+        <section>Frontend Components - SessionList.tsx</section>
+        <snippet>Right sidebar component displaying all sessions with real-time status indicators. Handles session selection, shows last activity timestamps, renders attention badges. Consumes sessions array from SessionContext and status updates via WebSocket.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic Technical Specification: Multi-Session Parallel Development</title>
+        <section>WebSocket Protocol Extensions for Multi-Session</section>
+        <snippet>Server to Client: session.status message with sessionId, status (active|waiting|idle|error|stopped), and optional reason. Used for real-time status indicator updates in SessionList.</snippet>
+      </doc>
+
+      <!-- Architecture -->
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>React Context API Over Zustand/Redux (ADR-005)</section>
+        <snippet>Use React Context API + Hooks for state management. Create separate contexts per domain: SessionContext, LayoutContext, WebSocketContext. Each context manages independent slice of state to avoid re-render issues.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Naming Conventions - Components</section>
+        <snippet>React components: PascalCase - SessionList.tsx. CSS classes: component-specific classes like "session-list". State modifiers: "session-list--active". Utility-first Tailwind approach preferred.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Date/Time Handling</section>
+        <snippet>Store all timestamps as ISO 8601 strings in UTC. Display in user's local timezone. "Last activity" formatting uses custom relative time ("5m ago", "2h ago", "Yesterday"). No date library needed, native Date sufficient.</snippet>
+      </doc>
+
+      <!-- UX Design -->
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification</title>
+        <section>Session List Component (Section 6.1)</section>
+        <snippet>Right sidebar: 260px default width, resizable. Session items: 8px status dot + name + timestamp. Status colors from Oceanic Calm palette. "Stuck?" indicator: Yellow warning when greater than 30min no activity. Click to switch updates activeSessionId in context.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <!-- Existing Components to Reference -->
+      <artifact>
+        <path>frontend/src/components/Terminal.tsx</path>
+        <kind>component</kind>
+        <symbol>Terminal</symbol>
+        <lines>1-141</lines>
+        <reason>Reference implementation for WebSocket integration pattern, status handling, and Oceanic Calm theme colors. Shows how to use useWebSocket hook and handle sessionId prop.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/App.tsx</path>
+        <kind>component</kind>
+        <symbol>App</symbol>
+        <lines>1-49</lines>
+        <reason>Current app layout structure. SessionList will be added to the right side of the main content area alongside the Terminal component.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/hooks/useWebSocket.ts</path>
+        <kind>hook</kind>
+        <symbol>useWebSocket</symbol>
+        <lines>1-124</lines>
+        <reason>WebSocket hook interface and usage pattern. SessionList will use the "on" method to subscribe to session.status messages for real-time status updates.</reason>
+      </artifact>
+
+      <!-- Existing Types -->
+      <artifact>
+        <path>frontend/src/types.ts</path>
+        <kind>types</kind>
+        <symbol>Session</symbol>
+        <lines>3-9</lines>
+        <reason>Current Session interface definition. Note: Missing fields from tech spec (branch, worktreePath, ptyPid, currentPhase, metadata). SessionList should accept Session[] prop matching this interface.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/src/types.ts</path>
+        <kind>types</kind>
+        <symbol>ServerMessage</symbol>
+        <lines>73-76</lines>
+        <reason>Backend message types. Note: session.status message type not yet defined but will be added in Story 2.1. SessionList will subscribe to this message type.</reason>
+      </artifact>
+
+      <!-- UI Components Available -->
+      <artifact>
+        <path>frontend/src/components/ui/badge.tsx</path>
+        <kind>component</kind>
+        <symbol>Badge</symbol>
+        <lines>all</lines>
+        <reason>shadcn/ui Badge component available for "!" waiting indicator and "Stuck?" warning badge.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/ui/scroll-area.tsx</path>
+        <kind>component</kind>
+        <symbol>ScrollArea</symbol>
+        <lines>all</lines>
+        <reason>shadcn/ui ScrollArea component for vertical scrolling session list container.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/ui/tooltip.tsx</path>
+        <kind>component</kind>
+        <symbol>Tooltip</symbol>
+        <lines>all</lines>
+        <reason>shadcn/ui Tooltip component for displaying full session names on hover when truncated.</reason>
+      </artifact>
+
+      <!-- Utilities -->
+      <artifact>
+        <path>frontend/src/lib/utils.ts</path>
+        <kind>utility</kind>
+        <symbol>cn</symbol>
+        <lines>1-6</lines>
+        <reason>Utility function for merging Tailwind classes. Use for conditional styling of active session state.</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <frontend>
+        <package name="react" version="^19.2.0" />
+        <package name="react-dom" version="^19.2.0" />
+        <package name="@xterm/xterm" version="^5.5.0" />
+        <package name="lucide-react" version="^0.554.0" note="Icon library for badges and indicators" />
+        <package name="clsx" version="^2.1.1" />
+        <package name="tailwind-merge" version="^3.4.0" />
+        <package name="@radix-ui/react-tooltip" version="^1.2.8" />
+        <package name="@radix-ui/react-scroll-area" version="^1.2.10" />
+        <package name="tailwindcss-animate" version="^1.0.7" note="For pulsing animation on active status dot" />
+      </frontend>
+      <backend>
+        <package name="express" version="^4.18.0" />
+        <package name="ws" version="^8.14.0" />
+        <package name="winston" version="^3.11.0" />
+      </backend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Component MUST be named SessionList.tsx (PascalCase) and placed in frontend/src/components/
+    - Component MUST accept props: sessions (Session[]), activeSessionId (string), onSessionSelect ((id: string) => void)
+    - Status dot colors MUST match Oceanic Calm theme exactly: active=#A3BE8C, waiting=#EBCB8B, idle=#88C0D0, error=#BF616A
+    - Status dot MUST be 8px circle (w-2 h-2 rounded-full)
+    - Active status dot MUST have pulsing animation using tailwindcss-animate
+    - Session name MUST truncate at 20 characters with ellipsis
+    - Last activity MUST display in relative time format: "Xs ago", "Xm ago", "Xh ago", "Xd ago"
+    - Stuck detection MUST trigger when lastActivity > 30 minutes and status is "active"
+    - "!" badge MUST appear when session.status === "waiting"
+    - Clicking session MUST call onSessionSelect callback with session.id
+    - Active session MUST show highlighted background using Oceanic Calm active state color
+    - All state MUST come from props/context - no local session state
+    - WebSocket status updates MUST use useWebSocket hook's "on" method to subscribe to "session.status" messages
+    - MUST use shadcn/ui components: ScrollArea for container, Badge for indicators, Tooltip for truncated names
+    - MUST follow existing Terminal.tsx pattern for WebSocket integration
+    - MUST NOT create SessionContext yet (that's Story 2.1) - accept sessions via props for now
+    - Sidebar MUST be 260px default width (will add resizable in future story)
+    - Component MUST be accessible: status dots have aria-label, session items are keyboard navigable buttons, focus indicators visible
+  </constraints>
+
+  <interfaces>
+    <!-- SessionList Component Props -->
+    <interface>
+      <name>SessionListProps</name>
+      <kind>React Props Interface</kind>
+      <signature>
+        interface SessionListProps {
+          sessions: Session[];
+          activeSessionId: string;
+          onSessionSelect: (id: string) => void;
+        }
+      </signature>
+      <path>frontend/src/components/SessionList.tsx</path>
+    </interface>
+
+    <!-- Session Interface (Current) -->
+    <interface>
+      <name>Session</name>
+      <kind>TypeScript Interface</kind>
+      <signature>
+        interface Session {
+          id: string;
+          name: string;
+          status: 'active' | 'idle' | 'waiting' | 'error';
+          createdAt: string;
+          lastActivity: string;
+        }
+      </signature>
+      <path>frontend/src/types.ts</path>
+      <note>Current definition. Story 2.1 will add: branch, worktreePath, ptyPid, currentPhase, metadata fields per tech spec.</note>
+    </interface>
+
+    <!-- relativeTime Utility Function -->
+    <interface>
+      <name>relativeTime</name>
+      <kind>Utility Function</kind>
+      <signature>
+        export function relativeTime(isoString: string): string;
+        // Returns: "Xs ago", "Xm ago", "Xh ago", "Xd ago"
+        // Implementation from story Dev Notes section
+      </signature>
+      <path>frontend/src/lib/utils.ts</path>
+      <note>Must be added to existing utils.ts file alongside cn() function</note>
+    </interface>
+
+    <!-- WebSocket Message for Status Updates -->
+    <interface>
+      <name>SessionStatusMessage</name>
+      <kind>WebSocket Message</kind>
+      <signature>
+        {
+          type: 'session.status',
+          sessionId: string,
+          status: 'active' | 'waiting' | 'idle' | 'error' | 'stopped',
+          reason?: string
+        }
+      </signature>
+      <path>N/A - Will be added in Story 2.1</path>
+      <note>SessionList subscribes to this message type using ws.on('session.status', callback)</note>
+    </interface>
+
+    <!-- Stuck Detection Hook (Suggested) -->
+    <interface>
+      <name>useStuckDetection</name>
+      <kind>Custom React Hook</kind>
+      <signature>
+        function useStuckDetection(session: Session): boolean {
+          // Returns true if session.lastActivity > 30 min and status === 'active'
+          // Implementation in Task 4
+        }
+      </signature>
+      <path>frontend/src/components/SessionList.tsx or frontend/src/hooks/useStuckDetection.ts</path>
+      <note>Can be inline in SessionList or extracted to separate hook file</note>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Frontend testing uses Vitest + React Testing Library per Story 1.6. Test files co-located with component using .test.tsx suffix. Focus on user interactions and component behavior. Mock WebSocket connections using vi.fn(). Test coverage target: 50%+ for components per Architecture testing strategy.
+    </standards>
+
+    <locations>
+      - frontend/src/components/SessionList.test.tsx (new file)
+      - frontend/src/lib/utils.test.ts (add tests for relativeTime function)
+    </locations>
+
+    <ideas>
+      <!-- AC1: Component Rendering and UI -->
+      <test ac="AC1">
+        Test: Renders all sessions from props
+        Given: sessions = [{ id: '1', name: 'feature-auth', status: 'active', ...}, { id: '2', name: 'feature-ui', status: 'waiting', ...}]
+        When: render SessionList with sessions prop
+        Then: expect screen.getByText('feature-auth') and screen.getByText('feature-ui') to be in document
+      </test>
+      <test ac="AC1">
+        Test: Status dots show correct colors for each status
+        Given: session with status 'active'
+        When: render SessionList
+        Then: expect status dot to have backgroundColor '#A3BE8C' (green)
+        Repeat for: waiting (#EBCB8B), idle (#88C0D0), error (#BF616A)
+      </test>
+      <test ac="AC1">
+        Test: Session name truncates at 20 characters
+        Given: session with name 'very-long-session-name-that-exceeds-twenty-characters'
+        When: render SessionList
+        Then: expect displayed text to be truncated with ellipsis, max 20 chars visible
+      </test>
+      <test ac="AC1">
+        Test: Last activity displays in relative format
+        Given: session with lastActivity = 5 minutes ago
+        When: render SessionList
+        Then: expect screen.getByText('5m ago') to be in document
+      </test>
+
+      <!-- AC2: Real-time Status Updates -->
+      <test ac="AC2">
+        Test: Status dot updates when WebSocket message received
+        Given: session initially with status 'active' (green dot)
+        When: mock ws.on('session.status', callback) fires with { sessionId, status: 'error' }
+        Then: expect status dot color to change to #BF616A (red)
+        Note: May require Story 2.1 context implementation to test properly
+      </test>
+
+      <!-- AC3: Stuck Detection -->
+      <test ac="AC3">
+        Test: Stuck indicator appears when lastActivity > 30 min
+        Given: session with lastActivity = 31 minutes ago, status = 'active'
+        When: render SessionList
+        Then: expect screen.getByText('Stuck?') to be in document
+      </test>
+      <test ac="AC3">
+        Test: Stuck indicator does NOT appear for idle sessions
+        Given: session with lastActivity = 31 minutes ago, status = 'idle'
+        When: render SessionList
+        Then: expect screen.queryByText('Stuck?') to be null
+      </test>
+
+      <!-- AC4: Waiting Badge -->
+      <test ac="AC4">
+        Test: "!" badge shows when status is 'waiting'
+        Given: session with status 'waiting'
+        When: render SessionList
+        Then: expect screen.getByText('!') badge to be in document
+      </test>
+
+      <!-- AC5, AC6: Session Selection -->
+      <test ac="AC5">
+        Test: Clicking session calls onSessionSelect callback
+        Given: onSessionSelect = vi.fn(), session with id '1'
+        When: user clicks session item
+        Then: expect onSessionSelect to have been called with '1'
+      </test>
+      <test ac="AC6">
+        Test: Active session shows highlighted background
+        Given: activeSessionId = '1', session with id '1'
+        When: render SessionList
+        Then: expect session item with id '1' to have active background class
+      </test>
+
+      <!-- Utility Function Tests -->
+      <test>
+        Test: relativeTime formats seconds correctly
+        Given: timestamp = 30 seconds ago
+        When: relativeTime(isoString)
+        Then: expect result to be "30s ago"
+      </test>
+      <test>
+        Test: relativeTime formats minutes correctly
+        Given: timestamp = 5 minutes ago
+        When: relativeTime(isoString)
+        Then: expect result to be "5m ago"
+      </test>
+      <test>
+        Test: relativeTime handles future timestamps
+        Given: timestamp = 5 seconds in future
+        When: relativeTime(isoString)
+        Then: expect result to be "just now" (edge case handling)
+      </test>
+    </ideas>
+  </tests>
+</story-context>

@@ -1,0 +1,108 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>6</storyId>
+    <title>Frontend Project Setup with Vite, React, TypeScript</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-6-frontend-project-setup-with-vite-react-typescript.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>a modern React frontend with instant HMR and TypeScript safety</iWant>
+    <soThat>I can build the UI quickly with fast feedback loops</soThat>
+    <tasks>
+- Task 1: Initialize Vite + React + TypeScript project
+  - Run `npm create vite@latest frontend -- --template react-ts`
+  - Verify directory structure matches requirements
+  - Test `npm run dev` starts development server
+  - Test `npm run build` creates production assets
+
+- Task 2: Configure Tailwind CSS 4.0
+  - Install Tailwind CSS: `npm install tailwindcss @tailwindcss/vite`
+  - Create `tailwind.config.js` with Oceanic Calm theme colors
+  - Add Tailwind directives to `src/styles/globals.css`
+  - Configure Vite plugin in `vite.config.ts`
+  - Test Tailwind utilities work in components
+
+- Task 3: Configure path aliases and TypeScript
+  - Add `@/` path alias to `vite.config.ts` mapping to `src/`
+  - Update `tsconfig.json` with path mapping
+  - Configure strict TypeScript checks
+  - Test imports work with `@/` prefix
+  - Verify real-time error reporting in dev mode
+
+- Task 4: Set up Vitest for unit testing
+  - Install Vitest: `npm install -D vitest @testing-library/react @testing-library/jest-dom`
+  - Create `vitest.config.ts`
+  - Add test script to `package.json`
+  - Create sample test for App component
+  - Verify tests run with `npm test`
+
+- Task 5: Create project structure and baseline components
+  - Create directory structure: `components/`, `hooks/`, `context/`, `lib/`, `styles/`
+  - Create `src/types.ts` for shared TypeScript interfaces
+  - Create `src/App.tsx` with basic layout
+  - Create `src/main.tsx` as React entry point
+  - Create `src/styles/globals.css` with Tailwind directives
+
+- Task 6: Verify backend can serve built assets
+  - Run `npm run build` to create production bundle
+  - Verify `frontend/dist/` directory created
+  - Document Express static file serving configuration needed
+  - Test that built assets are servable (manual verification or mock Express server)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **Given** the frontend directory structure exists:
+   ```
+   frontend/
+   ├── src/
+   │   ├── main.tsx          # React entry point
+   │   ├── App.tsx           # Root component
+   │   ├── components/
+   │   ├── hooks/
+   │   ├── context/
+   │   └── types.ts
+   ├── index.html
+   ├── package.json
+   ├── vite.config.ts
+   ├── tailwind.config.js
+   └── tsconfig.json
+   ```
+   **When** `npm run dev` is executed in the frontend directory
+   **Then** Vite dev server starts with instant HMR
+
+2. **When** code changes are made
+   **Then** TypeScript compilation errors are shown in real-time
+
+3. **When** `npm run build` is executed
+   **Then** optimized production assets are created in `frontend/dist/`
+
+4. **When** production build completes
+   **Then** the build output includes:
+   - `index.html` with hashed asset references
+   - JavaScript bundles with code splitting
+   - CSS bundle with Tailwind utilities
+
+5. **When** backend Express server is configured
+   **Then** the backend can serve these static assets from `frontend/dist/`
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>{{docs_artifacts}}</docs>
+    <code>{{code_artifacts}}</code>
+    <dependencies>{{dependencies_artifacts}}</dependencies>
+  </artifacts>
+
+  <constraints>{{constraints}}</constraints>
+  <interfaces>{{interfaces}}</interfaces>
+  <tests>
+    <standards>{{test_standards}}</standards>
+    <locations>{{test_locations}}</locations>
+    <ideas>{{test_ideas}}</ideas>
+  </tests>
+</story-context>

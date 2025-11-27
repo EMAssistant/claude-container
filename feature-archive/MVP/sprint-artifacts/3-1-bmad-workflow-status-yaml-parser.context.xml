@@ -1,0 +1,314 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>1</storyId>
+    <title>BMAD Workflow Status YAML Parser</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/3-1-bmad-workflow-status-yaml-parser.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>backend developer</asA>
+    <iWant>a robust YAML parser that extracts BMAD workflow state from status files</iWant>
+    <soThat>the frontend can display real-time workflow progress for each Claude session</soThat>
+    <tasks>
+      <task id="1" ac="1-3">Create statusParser Module
+        - 1.1: Create backend/src/statusParser.ts file
+        - 1.2: Import js-yaml dependency for YAML parsing
+        - 1.3: Define TypeScript interfaces: WorkflowState, WorkflowStep
+        - 1.4: Implement parseWorkflowStatus(yamlContent: string): WorkflowState | null
+        - 1.5: Handle valid YAML: extract current_phase, completed_steps, and steps array
+      </task>
+      <task id="2" ac="2-3">Implement Error Handling
+        - 2.1: Wrap js-yaml.load() in try-catch block
+        - 2.2: Return null on parse errors (invalid YAML syntax)
+        - 2.3: Log warnings using Winston logger with error context
+        - 2.4: Handle missing fields gracefully (use defaults, don't throw)
+        - 2.5: Return partial WorkflowState if schema incomplete
+      </task>
+      <task id="3" ac="1-3">Unit Tests for Parser
+        - 3.1: Create backend/src/statusParser.test.ts
+        - 3.2: Test valid YAML → correct WorkflowState object
+        - 3.3: Test invalid YAML syntax → returns null
+        - 3.4: Test missing current_phase field → partial state with defaults
+        - 3.5: Test empty YAML file → returns null or empty state
+        - 3.6: Test malformed steps array → graceful degradation
+        - 3.7: Achieve 70%+ code coverage per architecture testing strategy
+      </task>
+      <task id="4" ac="4">Integration with File Watcher
+        - 4.1: Extend fileWatcher.ts to watch .bmad/bmm/status/*.yaml files
+        - 4.2: Add 500ms debounce for YAML file changes (per architecture)
+        - 4.3: On YAML change event, read file content
+        - 4.4: Call statusParser.parseWorkflowStatus() with file content
+        - 4.5: If parse succeeds, broadcast workflow.updated WebSocket message to clients
+      </task>
+      <task id="5" ac="4">WebSocket Protocol Implementation
+        - 5.1: Define workflow.updated message type in types.ts
+        - 5.2: Message format: { type: 'workflow.updated', sessionId: string, workflow: WorkflowState }
+        - 5.3: Implement broadcast logic in server.ts WebSocket handler
+        - 5.4: Test WebSocket message delivery (mock file change → message received)
+        - 5.5: Verify &lt;1s end-to-end latency (file change → frontend receives message)
+      </task>
+      <task id="6" ac="All">Documentation and Type Exports
+        - 6.1: Document WorkflowState and WorkflowStep interfaces in types.ts
+        - 6.2: Export interfaces for frontend consumption
+        - 6.3: Add JSDoc comments to parseWorkflowStatus() function
+        - 6.4: Document expected BMAD YAML schema format
+        - 6.5: Add example YAML file to test fixtures
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">
+      Given a valid BMAD workflow status YAML file at /workspace/.bmad/bmm/status/bmm-workflow-status.yaml
+      When the statusParser.parseWorkflowStatus(yamlContent) function is called
+      Then it returns a WorkflowState object with currentStep, completedSteps, and steps array
+      And each step in the array has name, status ('completed' | 'in_progress' | 'pending'), and optional displayName
+    </criterion>
+    <criterion id="AC2">
+      Given an invalid or malformed YAML file
+      When the parser attempts to parse it
+      Then it returns null without throwing an exception
+      And logs a warning with error details for debugging
+    </criterion>
+    <criterion id="AC3">
+      Given a YAML file missing expected fields (e.g., no current_phase or steps)
+      When the parser processes it
+      Then it returns a partial WorkflowState with defaults (empty arrays, unknown current step)
+      And does not crash the backend service
+    </criterion>
+    <criterion id="AC4">
+      Given the parser is integrated into the backend
+      When workflow status updates occur
+      Then the backend sends workflow.updated WebSocket messages to connected clients within 1 second
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification: Workflow Visibility &amp; Document Review</title>
+        <section>Data Models and Contracts - WorkflowState</section>
+        <snippet>Defines WorkflowState interface with currentStep (string), completedSteps (string[]), and steps (WorkflowStep[]). WorkflowStep includes name, status enum, and optional displayName.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Services and Modules - statusParser.ts</section>
+        <snippet>statusParser.ts module parses BMAD YAML status files and extracts workflow step information. Inputs: YAML file content string. Outputs: WorkflowState object or null on error.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Workflows and Sequencing - Workflow Progress Update Flow</section>
+        <snippet>Flow: Claude advances step → BMAD updates YAML → Chokidar detects change (500ms debounce) → statusParser parses → Backend sends workflow.updated WebSocket → Frontend updates UI</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Non-Functional Requirements - NFR-REL-4 Graceful Degradation</section>
+        <snippet>If workflow parsing fails, show "Status unavailable" instead of crashing. File watcher recovery: If chokidar errors, log warning and continue (non-critical feature).</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Technology Stack Details - Backend Stack</section>
+        <snippet>Backend uses js-yaml ^4.x for YAML parsing, winston for structured logging, TypeScript 5.x for type safety. Node.js 20+ LTS runtime.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Error Handling</section>
+        <snippet>Winston structured JSON logging. Log levels: error (failures), warn (degraded state), info (important state changes), debug (detailed execution). All logs include context (sessionId, file paths, error details).</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture-decisions.md</path>
+        <title>Architecture Decision Records</title>
+        <section>ADR-006: Chokidar for File System Watching</section>
+        <snippet>Chokidar normalizes events across platforms. Production-ready reliability for workspace file monitoring. Event normalization simplifies update logic. 500ms debounce batches rapid updates.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>backend/src/types.ts</path>
+        <kind>interfaces</kind>
+        <symbol>ClientMessage, ServerMessage, SessionStatus, Session</symbol>
+        <lines>1-244</lines>
+        <reason>Contains existing WebSocket message type definitions. Need to add WorkflowState and WorkflowStep interfaces here, plus workflow.updated message type to ServerMessage union.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/src/server.ts</path>
+        <kind>server</kind>
+        <symbol>WebSocket handler, logger</symbol>
+        <lines>1-100</lines>
+        <reason>Main WebSocket server implementation. Need to add workflow.updated message broadcasting logic here when file watcher detects YAML changes.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/src/utils/logger.ts</path>
+        <kind>utility</kind>
+        <symbol>logger</symbol>
+        <lines>all</lines>
+        <reason>Winston logger utility for structured logging. Use this logger in statusParser.ts for warning logs when YAML parsing fails.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/src/sessionManager.ts</path>
+        <kind>service</kind>
+        <symbol>sessionManager</symbol>
+        <lines>all</lines>
+        <reason>Session management service. Reference for error handling patterns (try-catch, null returns, Winston logging) and TypeScript patterns.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/src/sessionManager.test.ts</path>
+        <kind>test</kind>
+        <symbol>SessionManager tests</symbol>
+        <lines>all</lines>
+        <reason>Example of Jest test structure for backend modules. Use as reference for statusParser.test.ts structure (describe blocks, test cases, coverage patterns).</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <backend>
+        <package name="express" version="^4.18.0" />
+        <package name="node-pty" version="^1.0.0" />
+        <package name="simple-git" version="^3.30.0" />
+        <package name="uuid" version="^9.0.0" />
+        <package name="winston" version="^3.11.0" />
+        <package name="ws" version="^8.14.0" />
+        <note>js-yaml NOT YET INSTALLED - need to add "js-yaml": "^4.1.0" to dependencies</note>
+        <note>@types/js-yaml NOT YET INSTALLED - need to add "@types/js-yaml": "^4.0.0" to devDependencies</note>
+      </backend>
+      <backend-dev>
+        <package name="@types/express" version="^4.17.0" />
+        <package name="@types/jest" version="^30.0.0" />
+        <package name="@types/node" version="^20.10.0" />
+        <package name="@types/ws" version="^8.5.0" />
+        <package name="jest" version="^30.2.0" />
+        <package name="ts-jest" version="^29.4.5" />
+        <package name="typescript" version="^5.3.0" />
+      </backend-dev>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>
+      Parser must be a pure function (stateless) that takes YAML content string and returns WorkflowState | null. No side effects except logging.
+    </constraint>
+    <constraint>
+      Must never throw exceptions - all errors must be caught and return null. Frontend must handle null gracefully.
+    </constraint>
+    <constraint>
+      Follow existing TypeScript patterns from backend/src/types.ts - use interface exports, JSDoc comments, organize by message type.
+    </constraint>
+    <constraint>
+      Use Winston logger from backend/src/utils/logger.ts for all logging. Log format: logger.warn('BMAD status file invalid', { error, filePath }).
+    </constraint>
+    <constraint>
+      WebSocket message type must follow existing protocol: { type: 'workflow.updated', sessionId, workflow: WorkflowState }. Add to ServerMessage union in types.ts.
+    </constraint>
+    <constraint>
+      File watcher integration requires chokidar library (will be added in Story 3.7 or later) - for this story, focus on parser module and types only.
+    </constraint>
+    <constraint>
+      Test fixtures must use valid BMAD YAML schema format. Create backend/src/__tests__/fixtures/ directory with sample YAML files.
+    </constraint>
+    <constraint>
+      Jest test coverage target: 70%+ for statusParser.ts module per architecture testing strategy.
+    </constraint>
+    <constraint>
+      Performance requirement: Parser must complete in &lt;100ms for YAML files up to 10MB (worst case: 100+ step workflows).
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>WorkflowState</name>
+      <kind>TypeScript interface</kind>
+      <signature>
+        interface WorkflowState {
+          currentStep: string;                    // e.g., "prd_creation"
+          completedSteps: string[];               // ["brainstorming", "product_brief"]
+          steps: WorkflowStep[];                  // Full step list with status
+        }
+      </signature>
+      <path>backend/src/types.ts</path>
+      <note>Add after Session interfaces (line 244+). Export for frontend consumption.</note>
+    </interface>
+    <interface>
+      <name>WorkflowStep</name>
+      <kind>TypeScript interface</kind>
+      <signature>
+        interface WorkflowStep {
+          name: string;                           // Step identifier
+          status: 'completed' | 'in_progress' | 'pending';
+          displayName?: string;                   // Human-readable name
+        }
+      </signature>
+      <path>backend/src/types.ts</path>
+      <note>Add after WorkflowState interface. Export for frontend consumption.</note>
+    </interface>
+    <interface>
+      <name>WorkflowUpdatedMessage</name>
+      <kind>WebSocket message type</kind>
+      <signature>
+        export interface WorkflowUpdatedMessage extends BaseMessage {
+          type: 'workflow.updated';
+          sessionId: string;
+          workflow: WorkflowState;
+        }
+      </signature>
+      <path>backend/src/types.ts</path>
+      <note>Add to ServerMessage union type. Sent when BMAD status file changes.</note>
+    </interface>
+    <interface>
+      <name>parseWorkflowStatus</name>
+      <kind>Function signature</kind>
+      <signature>
+        export function parseWorkflowStatus(yamlContent: string): WorkflowState | null
+      </signature>
+      <path>backend/src/statusParser.ts</path>
+      <note>Main parser function. Pure function with no side effects (except logging). Returns null on any error.</note>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Backend unit tests use Jest with ts-jest transformer. Test files co-located with source using .test.ts suffix. Structure: describe blocks for module/function, nested describe for methods, it blocks for individual test cases. Use expect assertions. Mock external dependencies (file system, logger). Coverage target: 70%+ per architecture. Run with: npm run test, npm run test:coverage.
+    </standards>
+    <locations>
+      - backend/src/**/*.test.ts (co-located with source files)
+      - backend/src/__tests__/fixtures/ (test fixture files like sample YAML)
+    </locations>
+    <ideas>
+      <idea ac="AC1">
+        Test parseWorkflowStatus with valid BMAD YAML containing all expected fields. Assert returned WorkflowState has correct currentStep string, completedSteps array, and steps array with proper name/status/displayName fields.
+      </idea>
+      <idea ac="AC1">
+        Test step status derivation: Given YAML with current_phase="prd" and completed_steps=["brainstorm"], assert steps array has "brainstorm" with status="completed", "prd" with status="in_progress", others with status="pending".
+      </idea>
+      <idea ac="AC2">
+        Test parseWorkflowStatus with malformed YAML (syntax errors, invalid UTF-8). Assert returns null and does not throw. Mock logger.warn and assert it was called with error details.
+      </idea>
+      <idea ac="AC2">
+        Test parseWorkflowStatus with null/undefined input. Assert returns null gracefully without throwing.
+      </idea>
+      <idea ac="AC3">
+        Test parseWorkflowStatus with YAML missing current_phase field. Assert returns partial WorkflowState with currentStep="unknown" or empty string, does not throw.
+      </idea>
+      <idea ac="AC3">
+        Test parseWorkflowStatus with YAML missing steps array. Assert returns WorkflowState with empty steps array [], does not throw.
+      </idea>
+      <idea ac="AC3">
+        Test parseWorkflowStatus with empty YAML file (empty string). Assert returns null or minimal state, does not throw.
+      </idea>
+      <idea ac="AC4">
+        Integration test (may be in Story 3.7): Mock file watcher event, trigger YAML change, assert parseWorkflowStatus called and workflow.updated message sent via WebSocket within 1 second.
+      </idea>
+      <idea>
+        Performance test: Test parseWorkflowStatus with large YAML file (10MB, 100+ steps). Assert completes in &lt;100ms.
+      </idea>
+    </ideas>
+  </tests>
+</story-context>

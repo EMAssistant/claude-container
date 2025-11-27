@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Container - Final Design Direction</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #0a0a0a;
+            color: #D8DEE9;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            color: #88C0D0;
+        }
+
+        .header p {
+            color: #81A1C1;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .view-selector {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .view-btn {
+            padding: 10px 24px;
+            background: #3B4252;
+            border: 1px solid #4C566A;
+            border-radius: 6px;
+            color: #D8DEE9;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .view-btn:hover {
+            background: #434C5E;
+            border-color: #88C0D0;
+        }
+
+        .view-btn.active {
+            background: #88C0D0;
+            color: #2E3440;
+            border-color: #88C0D0;
+        }
+
+        .phase-selector {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .phase-btn {
+            padding: 8px 16px;
+            background: #3B4252;
+            border: 1px solid #4C566A;
+            border-radius: 6px;
+            color: #D8DEE9;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .phase-btn:hover {
+            background: #434C5E;
+            border-color: #88C0D0;
+        }
+
+        .phase-btn.active {
+            background: #88C0D0;
+            color: #2E3440;
+            border-color: #88C0D0;
+        }
+
+        .mockup-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            border: 2px solid #4C566A;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #2E3440;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+
+        .phase-info {
+            background: #3B4252;
+            padding: 12px 20px;
+            border-bottom: 1px solid #4C566A;
+            text-align: center;
+            font-size: 13px;
+            color: #81A1C1;
+        }
+
+        .phase-info strong {
+            color: #88C0D0;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 850px;
+            background: #2E3440;
+        }
+
+        .top-bar {
+            background: #3B4252;
+            border-bottom: 1px solid #4C566A;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-weight: 600;
+            font-size: 14px;
+            color: #88C0D0;
+        }
+
+        .top-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            font-size: 13px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #88C0D0;
+            color: #2E3440;
+        }
+
+        .btn-primary:hover {
+            background: #98D0E0;
+        }
+
+        .btn-stop {
+            background: #BF616A;
+            color: #fff;
+        }
+
+        .btn-stop:hover {
+            background: #CF717A;
+        }
+
+        .btn-secondary {
+            background: #3B4252;
+            color: #D8DEE9;
+            border: 1px solid #4C566A;
+        }
+
+        .main-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Left Sidebar - Files & Workflow */
+        .left-sidebar {
+            width: 280px;
+            background: #3B4252;
+            border-right: 1px solid #4C566A;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-tabs {
+            display: flex;
+            background: #3B4252;
+            border-bottom: 1px solid #4C566A;
+        }
+
+        .sidebar-tab {
+            flex: 1;
+            padding: 10px 16px;
+            text-align: center;
+            font-size: 11px;
+            color: #81A1C1;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .sidebar-tab:hover {
+            background: #434C5E;
+            color: #D8DEE9;
+        }
+
+        .sidebar-tab.active {
+            color: #88C0D0;
+            border-bottom-color: #88C0D0;
+            background: #2E3440;
+        }
+
+        .sidebar-header {
+            padding: 10px 16px;
+            background: #434C5E;
+            border-bottom: 1px solid #4C566A;
+            font-size: 11px;
+            color: #81A1C1;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .sidebar-content {
+            padding: 12px;
+            overflow-y: auto;
+        }
+
+        .file-item {
+            padding: 6px 8px;
+            margin-bottom: 2px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            color: #D8DEE9;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .file-item:hover {
+            background: #434C5E;
+        }
+
+        .file-item.folder {
+            color: #88C0D0;
+            font-weight: 500;
+        }
+
+        .file-item.active {
+            background: #2E3440;
+            border-left: 2px solid #88C0D0;
+        }
+
+        .workflow-step {
+            padding: 8px 10px;
+            margin-bottom: 4px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+        }
+
+        .workflow-step.completed {
+            color: #A3BE8C;
+        }
+
+        .workflow-step.current {
+            background: #2E3440;
+            color: #88C0D0;
+            border-left: 3px solid #88C0D0;
+            font-weight: 500;
+        }
+
+        .workflow-step.upcoming {
+            color: #4C566A;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .content-header {
+            background: #3B4252;
+            padding: 10px 16px;
+            border-bottom: 1px solid #4C566A;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .content-title {
+            font-size: 13px;
+            color: #88C0D0;
+            font-weight: 500;
+        }
+
+        .content-meta {
+            font-size: 11px;
+            color: #81A1C1;
+        }
+
+        .terminal-view {
+            flex: 1;
+            padding: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            overflow-y: auto;
+            color: #D8DEE9;
+        }
+
+        .terminal-prompt {
+            color: #88C0D0;
+        }
+
+        .terminal-success {
+            color: #A3BE8C;
+        }
+
+        .terminal-error {
+            color: #BF616A;
+        }
+
+        .artifact-view {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            background: #2E3440;
+        }
+
+        .artifact-header {
+            margin-bottom: 20px;
+        }
+
+        .artifact-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #D8DEE9;
+            margin-bottom: 8px;
+        }
+
+        .artifact-subtitle {
+            font-size: 13px;
+            color: #81A1C1;
+        }
+
+        .artifact-content {
+            font-size: 14px;
+            line-height: 1.7;
+            color: #D8DEE9;
+        }
+
+        .artifact-content h2 {
+            font-size: 18px;
+            color: #88C0D0;
+            margin-top: 24px;
+            margin-bottom: 12px;
+        }
+
+        .artifact-content h3 {
+            font-size: 16px;
+            color: #88C0D0;
+            margin-top: 16px;
+            margin-bottom: 8px;
+        }
+
+        .artifact-content p {
+            margin-bottom: 12px;
+            color: #D8DEE9;
+        }
+
+        .artifact-content ul {
+            margin-left: 20px;
+            margin-bottom: 12px;
+        }
+
+        .artifact-content li {
+            color: #D8DEE9;
+            margin-bottom: 6px;
+        }
+
+        .split-view {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .split-top {
+            flex: 2;
+            border-bottom: 2px solid #4C566A;
+        }
+
+        .split-bottom {
+            flex: 1;
+        }
+
+        /* Right Sidebar - Sessions */
+        .right-sidebar {
+            width: 260px;
+            background: #3B4252;
+            border-left: 1px solid #4C566A;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sessions-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .session-item {
+            padding: 14px 16px;
+            border-bottom: 1px solid #4C566A;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .session-item:hover {
+            background: #434C5E;
+        }
+
+        .session-item.active {
+            background: #2E3440;
+            border-left: 3px solid #88C0D0;
+        }
+
+        .session-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .status-active { background: #A3BE8C; }
+        .status-waiting { background: #EBCB8B; }
+        .status-idle { background: #88C0D0; }
+        .status-error { background: #BF616A; }
+
+        .session-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #D8DEE9;
+        }
+
+        .session-phase {
+            font-size: 11px;
+            color: #81A1C1;
+            margin-bottom: 4px;
+            padding-left: 20px;
+        }
+
+        .session-time {
+            font-size: 11px;
+            color: #4C566A;
+            padding-left: 20px;
+        }
+
+        .story-progress {
+            margin-top: 8px;
+            padding-left: 20px;
+        }
+
+        .story-item {
+            font-size: 10px;
+            color: #81A1C1;
+            margin-bottom: 3px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .story-item .icon {
+            font-size: 11px;
+        }
+
+        .resize-handle {
+            width: 4px;
+            background: transparent;
+            cursor: ew-resize;
+            transition: background 0.2s;
+            position: relative;
+        }
+
+        .resize-handle:hover {
+            background: #88C0D0;
+        }
+
+        .resize-handle::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: -4px;
+            right: -4px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Workflow diagram styles */
+        .workflow-diagram {
+            padding: 16px;
+            overflow: auto;
+            flex: 1;
+        }
+
+        .workflow-svg-container {
+            background: #2E3440;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #4C566A;
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .workflow-placeholder {
+            text-align: center;
+            color: #81A1C1;
+        }
+
+        .workflow-placeholder .icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        .workflow-step-item {
+            padding: 10px 12px;
+            margin-bottom: 6px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .workflow-step-item:hover {
+            background: #434C5E;
+        }
+
+        .workflow-step-item.clickable {
+            cursor: pointer;
+        }
+
+        .workflow-step-item.clickable:hover {
+            background: #434C5E;
+            border-left: 3px solid #88C0D0;
+        }
+
+        .workflow-step-item .step-status {
+            font-size: 14px;
+        }
+
+        .workflow-actions {
+            padding: 12px;
+            border-top: 1px solid #4C566A;
+            background: #3B4252;
+        }
+
+        .workflow-action-btn {
+            width: 100%;
+            padding: 8px 12px;
+            background: #2E3440;
+            border: 1px solid #4C566A;
+            border-radius: 4px;
+            color: #88C0D0;
+            font-size: 12px;
+            cursor: pointer;
+            margin-bottom: 6px;
+            transition: all 0.2s;
+        }
+
+        .workflow-action-btn:hover {
+            background: #434C5E;
+            border-color: #88C0D0;
+        }
+
+        .workflow-action-btn:last-child {
+            margin-bottom: 0;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Claude Container - Final Design Direction</h1>
+        <p>Context-aware three-panel layout with intelligent focus shifting</p>
+        <p style="font-size: 12px; color: #4C566A;">Toggle between left sidebar views and click phases to see adaptations</p>
+    </div>
+
+    <div class="view-selector">
+        <button class="view-btn active" onclick="toggleLeftView('files')">📁 Files View</button>
+        <button class="view-btn" onclick="toggleLeftView('workflow')">🗺️ Workflow View</button>
+    </div>
+
+    <div class="phase-selector">
+        <button class="phase-btn active" onclick="showPhase('brainstorm')">Brainstorming Phase</button>
+        <button class="phase-btn" onclick="showPhase('prd')">PRD Creation Phase</button>
+        <button class="phase-btn" onclick="showPhase('ux')">UX Design Phase</button>
+        <button class="phase-btn" onclick="showPhase('dev')">Development Phase</button>
+    </div>
+
+    <div class="mockup-container">
+        <div id="phase-info" class="phase-info">
+            <strong>Brainstorming Phase:</strong> Terminal-focused layout for conversational interaction
+        </div>
+
+        <div class="app-container">
+            <div class="top-bar">
+                <div class="logo">Claude Container</div>
+                <div class="top-actions">
+                    <button class="btn btn-primary">+ New Session</button>
+                    <button class="btn btn-stop">■ STOP</button>
+                    <button class="btn btn-secondary">⚙</button>
+                </div>
+            </div>
+
+            <div class="main-layout">
+                <!-- Left Sidebar: Files & Workflow -->
+                <div class="left-sidebar">
+                    <!-- Tab Switcher -->
+                    <div class="sidebar-tabs">
+                        <button class="sidebar-tab active" id="files-tab" onclick="switchSidebarTab('files')">Files</button>
+                        <button class="sidebar-tab" id="workflow-tab" onclick="switchSidebarTab('workflow')">Workflow</button>
+                    </div>
+
+                    <!-- Files View -->
+                    <div id="files-view" class="sidebar-section" style="flex: 1; display: flex; flex-direction: column;">
+                        <div style="flex: 1; border-bottom: 1px solid #4C566A; display: flex; flex-direction: column;">
+                            <div class="sidebar-header">Workspace Files</div>
+                            <div class="sidebar-content" id="files-content">
+                                <div class="file-item folder">📁 docs</div>
+                                <div class="file-item" style="padding-left: 24px;">📄 brainstorming.md</div>
+                                <div class="file-item" style="padding-left: 24px;">📄 prd.md</div>
+                                <div class="file-item folder">📁 src</div>
+                                <div class="file-item folder">📁 .bmad</div>
+                            </div>
+                        </div>
+
+                        <div style="flex: 1; display: flex; flex-direction: column;">
+                            <div class="sidebar-header">BMAD Progress</div>
+                            <div class="sidebar-content" id="workflow-progress">
+                                <div class="workflow-step completed">
+                                    <span>✓</span>
+                                    <span>Project Setup</span>
+                                </div>
+                                <div class="workflow-step current">
+                                    <span>→</span>
+                                    <span>Brainstorming</span>
+                                </div>
+                                <div class="workflow-step upcoming">
+                                    <span>○</span>
+                                    <span>Product Brief</span>
+                                </div>
+                                <div class="workflow-step upcoming">
+                                    <span>○</span>
+                                    <span>PRD Creation</span>
+                                </div>
+                                <div class="workflow-step upcoming">
+                                    <span>○</span>
+                                    <span>Architecture</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Workflow View (simple indicator in sidebar) -->
+                    <div id="workflow-view" class="sidebar-section hidden" style="flex: 1; display: flex; flex-direction: column;">
+                        <div style="padding: 20px; text-align: center; color: #81A1C1;">
+                            <div style="font-size: 48px; margin-bottom: 12px; opacity: 0.5;">🗺️</div>
+                            <div style="font-size: 13px;">Workflow diagram displayed in main area →</div>
+                        </div>
+
+                        <div style="flex: 1;"></div>
+
+                        <div class="workflow-actions">
+                            <button class="workflow-action-btn">🎯 Course Correct</button>
+                            <button class="workflow-action-btn">📊 Workflow Status</button>
+                            <button class="workflow-action-btn">✅ Implementation Readiness</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="resize-handle"></div>
+
+                <!-- Main Content Area -->
+                <div class="main-content" id="main-content">
+                    <!-- Content changes based on phase -->
+                </div>
+
+                <div class="resize-handle"></div>
+
+                <!-- Right Sidebar: Sessions -->
+                <div class="right-sidebar">
+                    <div class="sidebar-header">Active Sessions</div>
+                    <div class="sessions-list">
+                        <div class="session-item active">
+                            <div class="session-header">
+                                <span class="status-dot status-active"></span>
+                                <span class="session-name">auth-system</span>
+                            </div>
+                            <div class="session-phase">Brainstorming Phase</div>
+                            <div class="session-time">Active • 2m ago</div>
+                        </div>
+
+                        <div class="session-item">
+                            <div class="session-header">
+                                <span class="status-dot status-waiting"></span>
+                                <span class="session-name">payment-flow</span>
+                            </div>
+                            <div class="session-phase">Architecture Phase</div>
+                            <div class="session-time">Waiting • 8m ago</div>
+                        </div>
+
+                        <div class="session-item">
+                            <div class="session-header">
+                                <span class="status-dot status-active"></span>
+                                <span class="session-name">dashboard-ui</span>
+                            </div>
+                            <div class="session-phase">Development Phase</div>
+                            <div class="session-time">Active • 15m ago</div>
+                            <div class="story-progress">
+                                <div class="story-item">
+                                    <span class="icon" style="color: #A3BE8C;">✓</span>
+                                    <span>Story 1: Layout</span>
+                                </div>
+                                <div class="story-item">
+                                    <span class="icon" style="color: #A3BE8C;">✓</span>
+                                    <span>Story 2: Nav</span>
+                                </div>
+                                <div class="story-item">
+                                    <span class="icon" style="color: #88C0D0;">→</span>
+                                    <span>Story 3: Widgets</span>
+                                </div>
+                                <div class="story-item">
+                                    <span class="icon" style="color: #4C566A;">○</span>
+                                    <span>Story 4: Charts</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="session-item">
+                            <div class="session-header">
+                                <span class="status-dot status-idle"></span>
+                                <span class="session-name">api-gateway</span>
+                            </div>
+                            <div class="session-phase">PRD Phase</div>
+                            <div class="session-time">Idle • 45m ago</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-top: 40px; padding: 30px; max-width: 1000px; margin-left: auto; margin-right: auto; background: #1a1a1a; border-radius: 8px; border: 1px solid #333;">
+        <h3 style="color: #88C0D0; margin-bottom: 16px; font-size: 18px;">Layout Behavior by Phase</h3>
+
+        <div style="margin-bottom: 20px;">
+            <div style="color: #88C0D0; font-weight: 600; margin-bottom: 8px;">Brainstorming Phase:</div>
+            <div style="color: #D8DEE9; font-size: 14px; line-height: 1.6;">Terminal-dominant (100%). Conversational interaction is primary. Left sidebar shows workflow progress, right sidebar shows all sessions.</div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <div style="color: #88C0D0; font-weight: 600; margin-bottom: 8px;">PRD/Architecture/UX Phases:</div>
+            <div style="color: #D8DEE9; font-size: 14px; line-height: 1.6;">Artifact-dominant (70% artifact viewer, 30% terminal at bottom). Documents being created are front and center. Terminal visible for quick feedback.</div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <div style="color: #88C0D0; font-weight: 600; margin-bottom: 8px;">Development Phase:</div>
+            <div style="color: #D8DEE9; font-size: 14px; line-height: 1.6;">Terminal-dominant with story progress visible in session list (right sidebar). Story checklist shows what's done/in-progress/pending.</div>
+        </div>
+
+        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #333;">
+            <div style="color: #81A1C1; font-size: 13px; line-height: 1.6;">
+                <strong style="color: #88C0D0;">Key Design Decisions:</strong><br><br>
+                • <strong>Left sidebar:</strong> Work context (files you're reviewing, workflow progress)<br>
+                • <strong>Right sidebar:</strong> Session management (where you go to context-switch)<br>
+                • <strong>Main area:</strong> Adapts based on BMAD phase (terminal vs artifacts)<br>
+                • <strong>All panels:</strong> Resizable with drag handles for custom layouts
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle left sidebar between Files and Workflow views
+        function switchSidebarTab(view) {
+            const filesView = document.getElementById('files-view');
+            const workflowView = document.getElementById('workflow-view');
+            const filesTab = document.getElementById('files-tab');
+            const workflowTab = document.getElementById('workflow-tab');
+            const mainContent = document.getElementById('main-content');
+
+            if (view === 'files') {
+                filesView.classList.remove('hidden');
+                workflowView.classList.add('hidden');
+                filesTab.classList.add('active');
+                workflowTab.classList.remove('active');
+                // Restore phase content
+                mainContent.innerHTML = phases.brainstorm.content;
+            } else {
+                filesView.classList.add('hidden');
+                workflowView.classList.remove('hidden');
+                filesTab.classList.remove('active');
+                workflowTab.classList.add('active');
+                // Show workflow diagram in main area
+                mainContent.innerHTML = workflowDiagramContent;
+            }
+        }
+
+        // Toggle view selector buttons (top level)
+        function toggleLeftView(view) {
+            // Update view buttons
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Switch sidebar tab
+            switchSidebarTab(view);
+        }
+
+        // Workflow diagram content for main area
+        const workflowDiagramContent = `
+            <div class="content-header">
+                <div class="content-title">BMAD Workflow Map - Interactive Navigation</div>
+                <div class="content-meta">Click steps to navigate • Current: Brainstorming</div>
+            </div>
+            <div style="flex: 1; padding: 24px; overflow: auto; background: #2E3440;">
+                <div class="workflow-svg-container" style="max-width: 1200px; margin: 0 auto; min-height: 600px;">
+                    <div class="workflow-placeholder">
+                        <div class="icon">🗺️</div>
+                        <div style="font-size: 18px; margin-bottom: 12px; color: #88C0D0; font-weight: 600;">BMAD Workflow Diagram</div>
+                        <div style="font-size: 14px; margin-bottom: 20px; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.6;">
+                            Interactive SVG workflow diagram would be loaded here from:<br>
+                            <code style="background: #3B4252; padding: 4px 8px; border-radius: 4px; font-size: 11px; color: #88C0D0;">
+                                https://raw.githubusercontent.com/bmad-code-org/BMAD-METHOD/main/src/modules/bmm/docs/images/workflow-method-greenfield.svg
+                            </code>
+                        </div>
+                        <div style="font-size: 12px; color: #81A1C1; margin-bottom: 24px;">
+                            The diagram shows the complete BMAD process flow with:
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; max-width: 800px; margin: 0 auto; text-align: left;">
+                            <div style="background: #3B4252; padding: 16px; border-radius: 6px; border-left: 3px solid #A3BE8C;">
+                                <div style="color: #A3BE8C; font-weight: 600; margin-bottom: 6px;">✓ Completed Steps</div>
+                                <div style="font-size: 11px; color: #81A1C1;">Green checkmarks, step names in green</div>
+                            </div>
+                            <div style="background: #3B4252; padding: 16px; border-radius: 6px; border-left: 3px solid #88C0D0;">
+                                <div style="color: #88C0D0; font-weight: 600; margin-bottom: 6px;">→ Current Step</div>
+                                <div style="font-size: 11px; color: #81A1C1;">Pulsing blue border, highlighted</div>
+                            </div>
+                            <div style="background: #3B4252; padding: 16px; border-radius: 6px; border-left: 3px solid #D8DEE9;">
+                                <div style="color: #D8DEE9; font-weight: 600; margin-bottom: 6px;">○ Available Next</div>
+                                <div style="font-size: 11px; color: #81A1C1;">Clickable, hover shows "Click to start"</div>
+                            </div>
+                            <div style="background: #3B4252; padding: 16px; border-radius: 6px; border-left: 3px solid #4C566A;">
+                                <div style="color: #4C566A; font-weight: 600; margin-bottom: 6px;">○ Future Steps</div>
+                                <div style="font-size: 11px; color: #81A1C1;">Grayed out, not yet available</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 32px; padding: 20px; background: #3B4252; border-radius: 8px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                            <div style="font-size: 13px; color: #88C0D0; font-weight: 600; margin-bottom: 12px;">Workflow Navigation</div>
+                            <div style="font-size: 12px; color: #D8DEE9; line-height: 1.7;">
+                                • <strong>Hover</strong> over any step to see description<br>
+                                • <strong>Click</strong> available steps to jump workflows<br>
+                                • <strong>Zoom/Pan</strong> controls for detailed view<br>
+                                • Updates in <strong>real-time</strong> as Claude progresses
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const phases = {
+            brainstorm: {
+                info: '<strong>Brainstorming Phase:</strong> Terminal-focused layout for conversational interaction',
+                content: `
+                    <div class="content-header">
+                        <div class="content-title">Terminal - auth-system</div>
+                        <div class="content-meta">Brainstorming Phase • Active</div>
+                    </div>
+                    <div class="terminal-view">
+                        <div class="terminal-prompt">$ claude "Start brainstorming authentication system"</div>
+                        <div class="terminal-success">✓ Session initialized: auth-system</div>
+                        <div style="color: #88C0D0; margin-top: 8px;">→ Beginning BMAD brainstorming workflow...</div>
+                        <div style="color: #D8DEE9; margin-top: 16px;">Let's explore authentication patterns for your application.</div>
+                        <div style="color: #D8DEE9; margin-top: 12px;">What type of users will need to authenticate?</div>
+                        <div style="color: #81A1C1; margin-top: 8px; margin-left: 16px;">1. End users (customers)</div>
+                        <div style="color: #81A1C1; margin-left: 16px;">2. Admin users</div>
+                        <div style="color: #81A1C1; margin-left: 16px;">3. API clients</div>
+                        <div style="color: #81A1C1; margin-left: 16px;">4. All of the above</div>
+                        <div class="terminal-prompt" style="margin-top: 20px;">▊</div>
+                    </div>
+                `,
+                workflow: `
+                    <div class="workflow-step completed">
+                        <span>✓</span>
+                        <span>Project Setup</span>
+                    </div>
+                    <div class="workflow-step current">
+                        <span>→</span>
+                        <span>Brainstorming</span>
+                    </div>
+                    <div class="workflow-step upcoming">
+                        <span>○</span>
+                        <span>Product Brief</span>
+                    </div>
+                    <div class="workflow-step upcoming">
+                        <span>○</span>
+                        <span>PRD Creation</span>
+                    </div>
+                `
+            },
+            prd: {
+                info: '<strong>PRD Creation Phase:</strong> Artifact viewer (70%) + Terminal (30%) - Document is front and center',
+                content: `
+                    <div class="split-view">
+                        <div class="split-top">
+                            <div class="content-header">
+                                <div class="content-title">PRD Document - auth-system-prd.md</div>
+                                <div class="content-meta">Last updated: 30s ago</div>
+                            </div>
+                            <div class="artifact-view">
+                                <div class="artifact-header">
+                                    <div class="artifact-title">Authentication System - Product Requirements</div>
+                                    <div class="artifact-subtitle">Version 1.0 • Generated 2025-11-23</div>
+                                </div>
+                                <div class="artifact-content">
+                                    <h2>Executive Summary</h2>
+                                    <p>The authentication system will provide secure, scalable user authentication for web and mobile applications. Supporting multiple authentication methods including password-based, social OAuth, and API tokens.</p>
+
+                                    <h3>Success Criteria</h3>
+                                    <ul>
+                                        <li>Users can register and login within 30 seconds</li>
+                                        <li>Support for 100,000 concurrent authenticated sessions</li>
+                                        <li>99.9% uptime SLA for authentication service</li>
+                                        <li>WCAG 2.1 AA compliance for login/registration flows</li>
+                                    </ul>
+
+                                    <h3>Core Features</h3>
+                                    <ul>
+                                        <li><strong>JWT-based authentication:</strong> Stateless token management</li>
+                                        <li><strong>Multi-factor authentication (MFA):</strong> TOTP and SMS</li>
+                                        <li><strong>OAuth 2.0 integration:</strong> Google, GitHub, Microsoft</li>
+                                        <li><strong>Password policies:</strong> Configurable complexity requirements</li>
+                                        <li><strong>Session management:</strong> Token refresh and revocation</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="split-bottom">
+                            <div class="content-header" style="background: #3B4252;">
+                                <div class="content-title" style="font-size: 12px;">Terminal</div>
+                                <div class="content-meta">Monitoring PRD generation</div>
+                            </div>
+                            <div class="terminal-view" style="padding: 12px; font-size: 12px;">
+                                <div class="terminal-prompt">$ claude "Create PRD from brainstorming"</div>
+                                <div class="terminal-success">✓ PRD workflow started</div>
+                                <div style="color: #88C0D0; margin-top: 6px;">→ Analyzing brainstorming results...</div>
+                                <div class="terminal-success" style="margin-top: 6px;">✓ Generated: docs/auth-system-prd.md</div>
+                                <div style="color: #D8DEE9; margin-top: 8px;">Review the PRD above. Any changes needed?</div>
+                                <div class="terminal-prompt" style="margin-top: 12px;">▊</div>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                workflow: `
+                    <div class="workflow-step completed">
+                        <span>✓</span>
+                        <span>Brainstorming</span>
+                    </div>
+                    <div class="workflow-step current">
+                        <span>→</span>
+                        <span>PRD Creation</span>
+                    </div>
+                    <div class="workflow-step upcoming">
+                        <span>○</span>
+                        <span>Architecture</span>
+                    </div>
+                    <div class="workflow-step upcoming">
+                        <span>○</span>
+                        <span>UX Design</span>
+                    </div>
+                `
+            },
+            ux: {
+                info: '<strong>UX Design Phase:</strong> Design artifacts (70%) + Terminal (30%) - Visual designs are primary focus',
+                content: `
+                    <div class="split-view">
+                        <div class="split-top">
+                            <div class="content-header">
+                                <div class="content-title">UX Design Artifacts - ux-color-themes.html</div>
+                                <div class="content-meta">4 theme options generated</div>
+                            </div>
+                            <div class="artifact-view" style="background: #1a1a1a; padding: 0;">
+                                <iframe src="about:blank" style="width: 100%; height: 100%; border: none; background: white;"></iframe>
+                                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+                                    <div style="font-size: 48px; margin-bottom: 16px;">🎨</div>
+                                    <div style="color: #88C0D0; font-size: 18px; margin-bottom: 8px;">Color Theme Preview</div>
+                                    <div style="color: #81A1C1; font-size: 13px;">Interactive HTML artifact showing 4 theme options</div>
+                                    <div style="color: #4C566A; font-size: 12px; margin-top: 12px;">In actual app: full HTML render with theme comparisons</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="split-bottom">
+                            <div class="content-header" style="background: #3B4252;">
+                                <div class="content-title" style="font-size: 12px;">Terminal</div>
+                                <div class="content-meta">UX Design conversation</div>
+                            </div>
+                            <div class="terminal-view" style="padding: 12px; font-size: 12px;">
+                                <div class="terminal-success">✓ Generated: ux-color-themes.html</div>
+                                <div style="color: #D8DEE9; margin-top: 8px;">I've created 4 color theme options. Open the file above to see them.</div>
+                                <div style="color: #D8DEE9; margin-top: 6px;">Which theme direction resonates most?</div>
+                                <div class="terminal-prompt" style="margin-top: 12px;">▊</div>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                workflow: `
+                    <div class="workflow-step completed">
+                        <span>✓</span>
+                        <span>PRD Creation</span>
+                    </div>
+                    <div class="workflow-step current">
+                        <span>→</span>
+                        <span>UX Design</span>
+                    </div>
+                    <div class="workflow-step upcoming">
+                        <span>○</span>
+                        <span>Architecture</span>
+                    </div>
+                    <div class="workflow-step upcoming">
+                        <span>○</span>
+                        <span>Epic Planning</span>
+                    </div>
+                `
+            },
+            dev: {
+                info: '<strong>Development Phase:</strong> Terminal-focused with story progress in session sidebar',
+                content: `
+                    <div class="content-header">
+                        <div class="content-title">Terminal - auth-system</div>
+                        <div class="content-meta">Development • Story 3 of 5</div>
+                    </div>
+                    <div class="terminal-view">
+                        <div class="terminal-prompt">$ claude "Implement Story 3: JWT token service"</div>
+                        <div class="terminal-success">✓ Story 3: JWT Token Service</div>
+                        <div style="color: #88C0D0; margin-top: 8px;">→ Implementing JWT generation and validation...</div>
+                        <div style="color: #D8DEE9; margin-top: 12px;">Creating src/auth/jwt-service.ts</div>
+                        <div style="color: #4C566A; margin-top: 6px;">│ Adding JWT sign method</div>
+                        <div style="color: #4C566A;">│ Adding JWT verify method</div>
+                        <div style="color: #4C566A;">│ Adding refresh token logic</div>
+                        <div class="terminal-success" style="margin-top: 10px;">✓ Created: src/auth/jwt-service.ts</div>
+                        <div style="color: #D8DEE9; margin-top: 12px;">Writing tests: tests/auth/jwt-service.test.ts</div>
+                        <div style="color: #4C566A; margin-top: 6px;">│ Test: should generate valid JWT</div>
+                        <div style="color: #4C566A;">│ Test: should verify JWT signature</div>
+                        <div style="color: #4C566A;">│ Test: should reject expired tokens</div>
+                        <div class="terminal-success" style="margin-top: 10px;">✓ All tests passing (3/3)</div>
+                        <div style="color: #88C0D0; margin-top: 12px;">→ Story 3 complete. Moving to Story 4...</div>
+                        <div class="terminal-prompt" style="margin-top: 16px;">▊</div>
+                    </div>
+                `,
+                workflow: `
+                    <div class="workflow-step completed">
+                        <span>✓</span>
+                        <span>Epic Planning</span>
+                    </div>
+                    <div class="workflow-step current">
+                        <span>→</span>
+                        <span>Development</span>
+                    </div>
+                    <div class="workflow-step upcoming">
+                        <span>○</span>
+                        <span>Code Review</span>
+                    </div>
+                    <div class="workflow-step upcoming">
+                        <span>○</span>
+                        <span>Deployment</span>
+                    </div>
+                `
+            }
+        };
+
+        function showPhase(phaseName) {
+            const phase = phases[phaseName];
+
+            // Update phase info
+            document.getElementById('phase-info').innerHTML = phase.info;
+
+            // Update main content
+            document.getElementById('main-content').innerHTML = phase.content;
+
+            // Update workflow progress (in Files view)
+            document.getElementById('workflow-progress').innerHTML = phase.workflow;
+
+            // Update active button
+            document.querySelectorAll('.phase-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        // Initialize with brainstorming phase
+        document.getElementById('main-content').innerHTML = phases.brainstorm.content;
+    </script>
+</body>
+</html>

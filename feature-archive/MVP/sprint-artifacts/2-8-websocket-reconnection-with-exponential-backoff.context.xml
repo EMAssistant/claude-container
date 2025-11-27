@@ -1,0 +1,270 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>8</storyId>
+    <title>WebSocket Reconnection with Exponential Backoff</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/2-8-websocket-reconnection-with-exponential-backoff.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>the frontend to automatically reconnect to the WebSocket when the connection drops</iWant>
+    <soThat>temporary network issues don't require manual page refresh (FR65)</soThat>
+    <tasks>
+      - Task 1: Implement exponential backoff reconnection logic in useWebSocket hook (AC: #1, #2, #3)
+        - Add state variables for reconnection tracking (attempt count, delay, isReconnecting)
+        - Implement exponential backoff calculation: Math.min(Math.pow(2, attemptCount) * 1000, 30000)
+        - Add WebSocket onclose and onerror event handlers
+        - Create attemptReconnect() function with setTimeout and delay doubling
+        - Track total reconnection time to detect 5-minute threshold
+        - Reset backoff delay to 1s on successful reconnection
+      - Task 2: Create ConnectionStatus banner component (AC: #1, #4, #5)
+        - Design banner component with status states: reconnecting, connected, failed
+        - Implement yellow warning banner for "Reconnecting..." state
+        - Implement green success banner for "Connected" state with 2s auto-dismiss
+        - Implement red error banner for "Please refresh page" with Retry button
+        - Position banner at top of UI (fixed position, z-index above other content)
+        - Add Retry button click handler to reset reconnection state
+      - Task 3: Re-attach to active sessions after reconnection (AC: #4)
+        - Store list of attached sessionIds in useWebSocket hook state
+        - On WebSocket onopen after disconnect, iterate attached sessions
+        - Re-send { type: 'session.attach', sessionId } for each session
+        - Verify terminal output resumes for all sessions after reattach
+      - Task 4: Handle backend output queuing during disconnect (AC: #4)
+        - Backend: Implement 1MB output buffer per session during disconnect
+        - Backend: On client reconnect, flush queued output to catch up
+        - Backend: Drop oldest data if buffer exceeds 1MB (prevent memory exhaustion)
+        - Test that terminal receives queued output after reconnection
+      - Task 5: Add reconnection state to SessionContext (AC: #1, #4)
+        - Add reconnecting: boolean field to SessionContext
+        - Add connectionStatus: 'connected' | 'reconnecting' | 'failed' field
+        - Update context when WebSocket state changes
+        - Components subscribe to context to show connection status UI
+      - Task 6: Integration testing for reconnection scenarios (AC: #1-#5)
+        - Test: Normal disconnect → reconnect in 1s → success
+        - Test: Disconnect → fail 1st attempt → retry in 2s → success
+        - Test: Multiple failures with increasing delays (4s, 8s, 16s, 30s max)
+        - Test: Successful reconnection resets delay to 1s for next disconnect
+        - Test: 5 minutes of failures triggers "Please refresh" message
+        - Test: Retry button resets backoff and attempts immediate reconnection
+        - Test: Re-attached sessions resume streaming after reconnect
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC#1: Given the WebSocket connection is active, when the connection drops unexpectedly (network hiccup, backend restart), then the frontend:
+      - Detects disconnect via ws.onclose or ws.onerror event
+      - Displays "Connection lost. Reconnecting..." banner (yellow warning)
+      - Waits 1 second
+      - Attempts reconnection
+
+    AC#2: Given the first reconnection attempt fails, when the reconnection fails, then the frontend waits 2 seconds and retries
+
+    AC#3: Given subsequent reconnection failures occur, when reconnection continues to fail, then the wait time doubles on each failure: 4s, 8s, 16s, with maximum 30s
+
+    AC#4: Given reconnection succeeds after one or more failures, when the WebSocket connection is re-established, then the banner changes to "Connected" (green, auto-dismisses after 2s), and the frontend re-sends session.attach messages for all active sessions, and terminal output resumes streaming
+
+    AC#5: Given reconnection fails continuously for 5 minutes, when the 5-minute threshold is reached, then the frontend shows "Connection lost. Please refresh page." with a "Retry" button, and clicking Retry resets the backoff and attempts immediate reconnection
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification: Multi-Session Parallel Development</title>
+        <section>NFR-REL-3: WebSocket Resilience</section>
+        <snippet>Automatic reconnection with exponential backoff (1s to 30s max). Frontend displays "Reconnecting..." banner during disconnection. On reconnect, frontend re-sends session.attach for all active sessions. Backend queues output during disconnect (up to 1MB buffer per session). After 5 minutes failed reconnection, prompt user to refresh page.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification: Multi-Session Parallel Development</title>
+        <section>Workflow 4: WebSocket Reconnection</section>
+        <snippet>WebSocket connection drops → Frontend useWebSocket detects ws.onclose event → Displays banner: "Connection lost. Reconnecting..." → Exponential backoff loop: Attempt 1: Wait 1s → try reconnect, Attempt 2: Wait 2s → try reconnect, Attempt 3: Wait 4s → try reconnect, Attempt 4: Wait 8s → try reconnect, Attempt N: Wait min(2^N, 30)s → try reconnect. Reconnection succeeds: ws.onopen event → Frontend resets backoff delay to 1s → Re-sends session.attach for all active sessions → Updates banner: "Connected" (green, auto-dismiss after 2s) → Terminal output resumes streaming. If reconnection fails for 5 minutes continuously: Frontend shows: "Connection lost. Please refresh page." with [Retry] button.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Communication Patterns - Reconnection pattern</section>
+        <snippet>Exponential backoff pattern: let reconnectDelay = 1000; // Start at 1s. function reconnect() { setTimeout(() => { ws = new WebSocket(url); ws.onopen = () => { reconnectDelay = 1000; }; // Reset on success. ws.onerror = () => { reconnectDelay = Math.min(reconnectDelay * 2, 30000); // Max 30s. reconnect(); }; }, reconnectDelay); }</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>ADR-004: WebSocket Library (ws) Over Socket.io</section>
+        <snippet>Use ws library instead of Socket.io for WebSocket communication. Lower-level control for PTY streaming. Must implement reconnection logic manually. No built-in message acknowledgment (acceptable for terminal streaming).</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <file>
+        <path>frontend/src/hooks/useWebSocket.ts</path>
+        <kind>hook</kind>
+        <symbol>useWebSocket</symbol>
+        <lines>1-124</lines>
+        <reason>Existing WebSocket hook with basic reconnection (exponential backoff already implemented). Needs enhancement to track attached sessions, display connection banners, implement 5-minute timeout, and queue session re-attachments after reconnection.</reason>
+      </file>
+      <file>
+        <path>frontend/src/hooks/useWebSocket.ts</path>
+        <kind>hook</kind>
+        <symbol>reconnectDelayRef</symbol>
+        <lines>23-44</lines>
+        <reason>Current exponential backoff implementation: starts at 1s, doubles on failure (max 30s). This is the core pattern to maintain while adding 5-minute timeout detection and session re-attachment logic.</reason>
+      </file>
+      <file>
+        <path>frontend/src/components/Terminal.tsx</path>
+        <kind>component</kind>
+        <symbol>Terminal</symbol>
+        <lines>132-136</lines>
+        <reason>Terminal component displays disconnection state with a red "Disconnected" badge. This pattern should be replaced with the new ConnectionBanner component that shows reconnection status and retry button.</reason>
+      </file>
+      <file>
+        <path>backend/src/server.ts</path>
+        <kind>server</kind>
+        <symbol>sessionOutputHistory</symbol>
+        <lines>111-115</lines>
+        <reason>Backend already implements output history buffering (100KB per session). This mechanism can be extended to queue output during disconnection (up to 1MB), then flush on reconnection. Need to ensure this buffer persists during WebSocket disconnect/reconnect cycles.</reason>
+      </file>
+      <file>
+        <path>backend/src/server.ts</path>
+        <kind>server</kind>
+        <symbol>WebSocket connection handler</symbol>
+        <lines>437-481</lines>
+        <reason>Connection handler shows reconnection pattern: when client reconnects, existing session is updated with new connectionId and output history is replayed. This pattern should be extended for multi-session scenario where each session needs to receive session.attach message from client.</reason>
+      </file>
+      <file>
+        <path>backend/src/types.ts</path>
+        <kind>types</kind>
+        <symbol>ClientMessage, ServerMessage</symbol>
+        <lines>64-76</lines>
+        <reason>WebSocket message type definitions. Need to add session.attach message type for multi-session reconnection protocol.</reason>
+      </file>
+      <file>
+        <path>frontend/src/types.ts</path>
+        <kind>types</kind>
+        <symbol>Session</symbol>
+        <lines>3-9</lines>
+        <reason>Frontend Session type definition. May need connectionStatus field to track WebSocket connection state per session.</reason>
+      </file>
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="react">^19.2.0</package>
+        <package name="@xterm/xterm">^5.5.0</package>
+        <package name="ws">^8.14.0</package>
+        <package name="winston">^3.11.0</package>
+        <package name="uuid">^9.0.0</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - WebSocket Lifecycle Pattern: [connecting] → connected → attached (per session) → streaming. disconnected → reconnecting → connected.
+    - Reconnection Pattern: Exponential backoff starting at 1s, doubling on each failure: 1s, 2s, 4s, 8s, 16s, capped at 30s maximum. Reset to 1s on successful connection.
+    - 5-Minute Timeout: Track cumulative reconnection time. If total exceeds 5 minutes (300000ms), transition to "failed" state and show "Please refresh page" message with Retry button.
+    - Session Re-attachment: On reconnection, frontend must re-send { type: 'session.attach', sessionId } for all active sessions to re-subscribe to PTY output streams.
+    - Output Buffering: Backend queues up to 1MB output per session during disconnect. On reconnect, flush queued output to catch up client. Drop oldest data if buffer exceeds 1MB (FIFO eviction).
+    - Connection Status UI: Display banner at top of UI (fixed position, z-index: 1000). Yellow for "Reconnecting...", green for "Connected" (auto-dismiss 2s), red for "Please refresh page" with Retry button.
+    - No Duplicate Session Attachments: Prevent sending duplicate session.attach messages on rapid connect/disconnect cycles. Debounce reconnection logic (wait 100ms before starting backoff).
+    - Logging: Log all WebSocket lifecycle events (disconnect, reconnection attempts, reconnection success, 5-minute timeout) with structured data (attempt count, delay, total downtime).
+    - Error Handling: WebSocket onerror and onclose events trigger identical reconnection logic. Distinguish between clean close (code 1000) and abnormal close for logging purposes.
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>useWebSocket hook - reconnection API</name>
+      <kind>React hook</kind>
+      <signature>
+        interface UseWebSocketReturn {
+          isConnected: boolean
+          reconnecting: boolean
+          connectionStatus: 'connected' | 'reconnecting' | 'failed'
+          send: (message: WebSocketMessage) => void
+          sendInput: (sessionId: string, data: string) => void
+          sendInterrupt: (sessionId: string) => void
+          on: (type: string, callback: (message: WebSocketMessage) => void) => () => void
+          retryConnection: () => void  // Manual retry for "Please refresh" state
+        }
+      </signature>
+      <path>frontend/src/hooks/useWebSocket.ts</path>
+    </interface>
+    <interface>
+      <name>WebSocket Message: session.attach</name>
+      <kind>WebSocket protocol</kind>
+      <signature>
+        type SessionAttachMessage = {
+          type: 'session.attach'
+          sessionId: string
+        }
+      </signature>
+      <path>backend/src/types.ts (needs to be added)</path>
+    </interface>
+    <interface>
+      <name>ConnectionBanner component</name>
+      <kind>React component</kind>
+      <signature>
+        interface ConnectionBannerProps {
+          connectionStatus: 'connected' | 'reconnecting' | 'failed'
+          onRetry?: () => void  // Called when user clicks Retry button
+        }
+        export function ConnectionBanner({ connectionStatus, onRetry }: ConnectionBannerProps): JSX.Element
+      </signature>
+      <path>frontend/src/components/ConnectionBanner.tsx (new file)</path>
+    </interface>
+    <interface>
+      <name>SessionContext - connection state</name>
+      <kind>React context</kind>
+      <signature>
+        interface SessionContextValue {
+          sessions: Session[]
+          activeSessionId: string | null
+          isConnected: boolean
+          reconnecting: boolean
+          connectionStatus: 'connected' | 'reconnecting' | 'failed'
+          // ... other session management methods
+        }
+      </signature>
+      <path>frontend/src/context/SessionContext.tsx (to be created in Story 2.1)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Frontend tests use Vitest with @testing-library/react for component tests. Backend tests use Jest with ts-jest. E2E tests use Playwright for WebSocket scenarios. All WebSocket tests should mock WebSocket API using vi.spyOn or manual mocks. Test reconnection scenarios by simulating connection drops (ws.close()), verify exponential backoff timing with fake timers (vi.useFakeTimers()), and validate message ordering after reconnection.
+    </standards>
+
+    <locations>
+      - frontend/src/hooks/useWebSocket.test.ts
+      - frontend/src/components/ConnectionBanner.test.tsx
+      - backend/src/server.test.ts (WebSocket reconnection tests)
+      - e2e/websocket-reconnection.spec.ts
+    </locations>
+
+    <ideas>
+      <test id="AC1">
+        Unit test (useWebSocket): Mock WebSocket with immediate close. Verify onclose handler triggers reconnection. Assert "Reconnecting..." state set. Verify first reconnection attempt after 1s (using fake timers).
+      </test>
+      <test id="AC2">
+        Unit test (useWebSocket): Mock failed reconnection (ws.onerror on first attempt). Verify delay doubles to 2s for second attempt. Assert reconnection retry triggered after 2s timeout.
+      </test>
+      <test id="AC3">
+        Unit test (useWebSocket): Simulate multiple failures (4 consecutive reconnection failures). Verify delays: 4s, 8s, 16s, 30s (capped). Assert Math.min(Math.pow(2, attemptCount) * 1000, 30000) calculation correct.
+      </test>
+      <test id="AC4">
+        Integration test: Simulate disconnect → reconnect cycle. Verify session.attach messages sent for all active sessions (using spy on ws.send). Assert terminal output resumes (mock terminal.output messages received). Verify "Connected" banner auto-dismisses after 2s.
+      </test>
+      <test id="AC5">
+        Unit test (useWebSocket): Track cumulative reconnection time. Fast-forward 5 minutes of failed attempts (using fake timers). Verify connectionStatus transitions to 'failed'. Assert "Please refresh" UI displayed. Test Retry button resets backoff and attempts immediate reconnection.
+      </test>
+      <test id="Backend-Buffering">
+        Backend integration test: Simulate WebSocket disconnect while PTY outputs data. Verify output buffered (up to 1MB). Reconnect WebSocket. Assert buffered output flushed to client. Test buffer eviction (FIFO) when exceeds 1MB.
+      </test>
+      <test id="E2E-Reconnection">
+        E2E test (Playwright): Start container, open UI, create session. Kill backend WebSocket server. Verify "Reconnecting..." banner appears. Restart backend. Verify "Connected" banner, terminal output resumes. Test full round-trip with Claude CLI command.
+      </test>
+    </ideas>
+  </tests>
+</story-context>

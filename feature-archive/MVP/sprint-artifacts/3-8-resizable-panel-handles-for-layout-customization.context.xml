@@ -1,0 +1,227 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>8</storyId>
+    <title>Resizable Panel Handles for Layout Customization</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/3-8-resizable-panel-handles-for-layout-customization.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer using Claude Container</asA>
+    <iWant>to resize the panels by dragging handles between them</iWant>
+    <soThat>I can customize my workspace layout to focus on terminal or artifacts based on my current task</soThat>
+    <tasks>
+      - Install and configure shadcn/ui Resizable component (AC: #1-3, #6-7)
+      - Implement left sidebar resizable panel (AC: #1, #6)
+      - Implement artifact/terminal split resize (AC: #2, #6)
+      - Add visual feedback for drag interactions (AC: #7)
+      - Implement localStorage persistence (AC: #4, #5)
+      - Add keyboard accessibility (AC: #8)
+      - Testing (AC: All)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC3.14" priority="high">
+      Left sidebar resizable with constraints (200-400px width range). Right content area resizable with constraints (artifact/terminal split respects min/max). Draggable panel dividers visible and responsive (&lt;50ms drag feedback).
+    </criterion>
+    <criterion id="AC3.15" priority="high">
+      Panel sizes persist to localStorage on resize. Reload page restores panel sizes from localStorage.
+    </criterion>
+    <criterion id="6" priority="medium">
+      Layout constraints enforced: minimum widths prevent panels from becoming unusable.
+    </criterion>
+    <criterion id="7" priority="medium">
+      Visual feedback during drag: cursor changes, divider highlights.
+    </criterion>
+    <criterion id="8" priority="medium">
+      Keyboard accessibility: dividers focusable and adjustable with arrow keys.
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification - Workflow Visibility & Document Review</title>
+        <section>Detailed Design - Data Models and Contracts</section>
+        <snippet>Defines LayoutState interface with leftSidebarWidth (200-400px), rightSidebarWidth (200-400px), mainContentMode ('terminal'|'artifact'|'split'), and splitRatio (0.3-0.7). This story implements the resizable panel mechanism for these layout properties.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Non-Functional Requirements - Performance</section>
+        <snippet>NFR-PERF-2 requires UI responsiveness with interactions &lt;200ms. Specifically: "Tab switching &lt;50ms", which applies to drag feedback for resizable handles. Must maintain smooth UX during panel resize.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>System Architecture Alignment</section>
+        <snippet>Uses shadcn/ui Resizable component (based on Radix UI). Epic 3 extends React Context API with LayoutContext for layout state management. CSS transitions (350ms ease-out) for layout animations.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Technology Stack</title>
+        <section>Frontend Stack</section>
+        <snippet>Project uses shadcn/ui (accessible component primitives), React 19 with Context API for state management, Tailwind CSS 4.0. Components follow flat structure in components/ directory with co-located tests.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture-decisions.md</path>
+        <title>ADR-005: React Context API Over Zustand/Redux</title>
+        <section>Decision and Rationale</section>
+        <snippet>Uses React Context API for state management with separate contexts per domain to prevent re-render issues. LayoutContext should be extended to include panel dimensions with custom hooks like usePanelSizes() for consumers.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>frontend/src/components/ui/resizable.tsx</path>
+        <kind>component</kind>
+        <symbol>ResizablePanelGroup, ResizablePanel, ResizableHandle</symbol>
+        <lines>1-44</lines>
+        <reason>Existing shadcn/ui Resizable component wrapper around react-resizable-panels. Already imported and ready to use. Provides ResizablePanelGroup, ResizablePanel, and ResizableHandle with Oceanic Calm styling.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/App.tsx</path>
+        <kind>component</kind>
+        <symbol>App</symbol>
+        <lines>1-100</lines>
+        <reason>Main application layout where resizable panels will be integrated. Currently has fixed layout with SessionTabs and Terminal. Need to wrap sections with ResizablePanelGroup/Panel components.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/types.ts</path>
+        <kind>types</kind>
+        <symbol>Session</symbol>
+        <lines>all</lines>
+        <reason>Type definitions file. May need to add LayoutState interface and panel size types for TypeScript safety.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/SessionList.test.tsx</path>
+        <kind>test</kind>
+        <symbol>SessionList tests</symbol>
+        <lines>all</lines>
+        <reason>Example of Vitest + Testing Library test patterns in this project. Follow similar structure for resizable panel tests.</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <frontend>
+        <dependency name="react-resizable-panels" version="^3.0.6">Already installed. Core library for resizable panel functionality.</dependency>
+        <dependency name="react" version="^19.2.0">React framework.</dependency>
+        <dependency name="lucide-react" version="^0.554.0">Icon library - GripVertical icon used in ResizableHandle.</dependency>
+        <dependency name="@radix-ui/react-slot" version="^1.2.4">Radix UI primitive used by shadcn components.</dependency>
+        <dependency name="class-variance-authority" version="^0.7.1">Styling utility for shadcn/ui components.</dependency>
+        <dependency name="clsx" version="^2.1.1">Conditional className utility.</dependency>
+        <dependency name="tailwind-merge" version="^3.4.0">Tailwind class merging utility.</dependency>
+        <dependency name="vitest" version="^4.0.13">Test framework.</dependency>
+        <dependency name="@testing-library/react" version="^16.3.0">React testing utilities.</dependency>
+        <dependency name="@testing-library/user-event" version="^14.6.1">User interaction simulation for tests.</dependency>
+      </frontend>
+      <backend>
+        <note>No backend changes required for this story</note>
+      </backend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture" source="docs/architecture.md">
+      Use React Context API (ADR-005) for state management. Create or extend LayoutContext to store panel dimensions. Avoid Zustand/Redux per architecture decision.
+    </constraint>
+    <constraint type="architecture" source="docs/architecture.md">
+      Follow component structure: PascalCase for components (e.g., ResizablePanelLayout.tsx), co-located tests with .test.tsx suffix, hooks with 'use' prefix (e.g., usePanelSizes.ts).
+    </constraint>
+    <constraint type="performance" source="docs/sprint-artifacts/tech-spec-epic-3.md">
+      Drag feedback must be &lt;50ms per NFR-PERF-2. Use CSS transforms for smooth animations (350ms ease-out). Avoid JavaScript-based animation for performance.
+    </constraint>
+    <constraint type="ui" source="docs/architecture.md">
+      Use shadcn/ui components and Oceanic Calm color scheme. Maintain WCAG AA accessibility standards. Components must be keyboard accessible.
+    </constraint>
+    <constraint type="testing" source="docs/architecture.md">
+      Target 50%+ frontend component coverage with Vitest. Write unit tests for utility functions, visual tests for drag interactions, E2E tests for persistence.
+    </constraint>
+    <constraint type="persistence" source="docs/sprint-artifacts/tech-spec-epic-3.md">
+      Use localStorage for panel size persistence (per LayoutState model). Store as JSON with graceful fallback to defaults if corrupted. Follow atomic write patterns where applicable.
+    </constraint>
+    <constraint type="layout" source="docs/sprint-artifacts/tech-spec-epic-3.md">
+      Left sidebar: 200-400px constraints. Artifact/Terminal split: 30-70% ratio range (0.3-0.7). Enforce minimum sizes to prevent unusable panels.
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>ResizablePanelGroup</name>
+      <kind>React Component</kind>
+      <signature>ResizablePanelGroup({ direction, className, children, onLayout? })</signature>
+      <path>frontend/src/components/ui/resizable.tsx</path>
+      <description>Container for resizable panels. Set direction='horizontal' for left-right split, 'vertical' for top-bottom. onLayout callback receives size array when panels resize.</description>
+    </interface>
+    <interface>
+      <name>ResizablePanel</name>
+      <kind>React Component</kind>
+      <signature>ResizablePanel({ defaultSize?, minSize?, maxSize?, children })</signature>
+      <path>frontend/src/components/ui/resizable.tsx</path>
+      <description>Individual panel within ResizablePanelGroup. Sizes are percentages (0-100) or absolute pixels. Use minSize/maxSize for constraints.</description>
+    </interface>
+    <interface>
+      <name>ResizableHandle</name>
+      <kind>React Component</kind>
+      <signature>ResizableHandle({ withHandle?, className? })</signature>
+      <path>frontend/src/components/ui/resizable.tsx</path>
+      <description>Draggable divider between panels. Set withHandle={true} to show grip icon. Automatically keyboard accessible (focusable, arrow keys adjust).</description>
+    </interface>
+    <interface>
+      <name>localStorage API</name>
+      <kind>Browser API</kind>
+      <signature>localStorage.setItem(key: string, value: string); localStorage.getItem(key: string): string | null</signature>
+      <path>Browser native</path>
+      <description>Use for persisting panel sizes. Wrap in try/catch for quota exceeded errors. Store as JSON string. Key suggestion: 'claude-container-panel-sizes'</description>
+    </interface>
+    <interface>
+      <name>PanelGroup.onLayout</name>
+      <kind>Event Callback</kind>
+      <signature>(sizes: number[]) =&gt; void</signature>
+      <path>react-resizable-panels</path>
+      <description>Callback triggered when panel sizes change. Receives array of panel sizes (percentages). Use to persist to localStorage.</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Frontend tests use Vitest + React Testing Library + jsdom environment (per vitest.config.ts). Test files co-located with components (.test.tsx suffix). Testing patterns: render component, simulate user interactions with userEvent, assert with jest-dom matchers. Mock localStorage in tests (jsdom provides it). Visual tests verify styling/layout, unit tests verify logic, E2E tests (if needed) with Playwright.
+    </standards>
+
+    <locations>
+      frontend/src/components/**/*.test.tsx
+      frontend/src/hooks/**/*.test.ts
+      frontend/src/lib/**/*.test.ts
+      frontend/src/App.test.tsx
+    </locations>
+
+    <ideas>
+      <test ac="AC3.14, AC3.15">
+        Test localStorage persistence: Render component, drag handle to new size, unmount, remount, verify size restored from localStorage.
+      </test>
+      <test ac="AC3.14">
+        Test constraint enforcement: Attempt to drag beyond min/max bounds, verify panel stops at constraint limit (200px min, 400px max for sidebar).
+      </test>
+      <test ac="AC3.15">
+        Test localStorage fallback: Mock corrupted JSON in localStorage, verify component uses default sizes without crashing.
+      </test>
+      <test ac="AC3.14">
+        Test resize callback: Mock onLayout callback, simulate drag, verify callback receives updated size array.
+      </test>
+      <test ac="AC3.8">
+        Test keyboard accessibility: Focus on ResizableHandle (tab), press arrow keys, verify panel size changes.
+      </test>
+      <test ac="AC3.7">
+        Visual test: Render ResizableHandle, verify cursor changes on hover (col-resize or row-resize CSS).
+      </test>
+      <test ac="All">
+        E2E test: Load app, drag sidebar to 350px, reload page, verify sidebar is still 350px (persistence flow).
+      </test>
+    </ideas>
+  </tests>
+</story-context>

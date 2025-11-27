@@ -1,0 +1,298 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>9</storyId>
+    <title>Crash Isolation Between Sessions</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24T22:30:00.000Z</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/2-9-crash-isolation-between-sessions.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>Claude crashes in one session to not affect other running sessions</iWant>
+    <soThat>I can continue working on other features while debugging the crashed session</soThat>
+    <tasks>
+      - Task 1: Implement PTY process crash detection (AC: #1, #2)
+        - Subtask 1.1: Register onExit() callback for each PTY process in PTYManager
+        - Subtask 1.2: Pass exit code and signal to callback when PTY terminates
+        - Subtask 1.3: Call sessionManager.updateSessionStatus(sessionId, 'error') on crash
+        - Subtask 1.4: Log error with sessionId, exitCode, signal, and lastActivity timestamp
+        - Subtask 1.5: Verify other sessions' PTY processes remain unaffected
+      - Task 2: Implement session status update protocol (AC: #2, #3)
+        - Subtask 2.1: Update SessionManager to support "error" status in Session interface
+        - Subtask 2.2: Send session.status WebSocket message to all connected clients
+        - Subtask 2.3: Include optional reason field in message (e.g., "Process crashed")
+        - Subtask 2.4: Persist error status to /workspace/.claude-container-sessions.json
+        - Subtask 2.5: Test status update propagation to frontend
+      - Task 3: Frontend error state rendering (AC: #3)
+        - Subtask 3.1: Update SessionList component to render red dot for error status
+        - Subtask 3.2: Update SessionTabs component to show red indicator on errored tab
+        - Subtask 3.3: Display "Process exited with code X. Click to restart." message in Terminal
+        - Subtask 3.4: Make restart message clickable (triggers session.resume)
+        - Subtask 3.5: Apply Oceanic Calm error color (#BF616A) per UX design
+      - Task 4: Manual restart mechanism (AC: #4, #6)
+        - Subtask 4.1: Add session.resume WebSocket message handler in backend
+        - Subtask 4.2: Verify session exists and is in error/idle state before resuming
+        - Subtask 4.3: Spawn new PTY with same sessionId and worktreePath
+        - Subtask 4.4: Update session status from "error" to "active"
+        - Subtask 4.5: Send status update to frontend via WebSocket
+        - Subtask 4.6: Test that restarted PTY has access to previous worktree state
+      - Task 5: Concurrent streaming integrity validation (AC: #5)
+        - Subtask 5.1: Create integration test with 4 concurrent sessions
+        - Subtask 5.2: Generate high-volume output in all 4 sessions
+        - Subtask 5.3: Force crash in session 2 mid-output
+        - Subtask 5.4: Verify sessions 1, 3, 4 continue receiving output
+        - Subtask 5.5: Measure terminal latency for active sessions (must be &lt;100ms)
+      - Task 6: Testing and documentation (AC: #1-6)
+        - Subtask 6.1: Write unit tests for PTYManager.onExit callback
+        - Subtask 6.2: Write unit tests for SessionManager.updateSessionStatus
+        - Subtask 6.3: Write integration test for crash → restart flow
+        - Subtask 6.4: Test concurrent session isolation (crash one, verify others OK)
+        - Subtask 6.5: Update Architecture doc with crash isolation design
+        - Subtask 6.6: Document error recovery process in troubleshooting guide
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC1: Independent PTY Process Isolation
+    - Given 3 sessions are active: session-1, session-2, session-3
+    - When the PTY process for session-2 crashes (e.g., Claude CLI segfault)
+    - Then the ptyProcess.onExit() callback fires for session-2 only
+    - And sessions 1 and 3 PTY processes continue running unaffected
+    - And no system-wide error state is triggered
+
+    AC2: Backend Crash Detection and Status Update
+    - Given a session PTY crashes with exit code and signal
+    - When the backend detects the crash via ptyProcess.onExit() callback
+    - Then the backend logs error with details: "PTY crashed for session-2: exitCode=1, signal=SIGSEGV"
+    - And the backend updates session-2 status to "error" in SessionManager
+    - And the backend sends WebSocket message: { type: 'session.status', sessionId: 'session-2', status: 'error' }
+    - And the session metadata is persisted to JSON with error status
+
+    AC3: Frontend Error State Visualization
+    - Given a session crashes and backend sends error status update
+    - When the frontend receives the session.status WebSocket message
+    - Then the session-2 tab displays red error dot (color: #BF616A from Oceanic Calm palette)
+    - And the session-2 terminal displays: "Process exited with code 1. Click to restart."
+    - And the session list shows session-2 with red status indicator
+    - And sessions 1 and 3 continue displaying normal status (green/blue)
+
+    AC4: Manual Session Restart Capability
+    - Given a session is in error state with crashed PTY
+    - When the user clicks the "restart" message in the crashed session's terminal
+    - Then the frontend sends { type: 'session.resume', sessionId: 'session-2' } via WebSocket
+    - And the backend spawns a new PTY process for session-2
+    - And the new PTY uses the same worktree path as before
+    - And Claude CLI loads in the same worktree with previous files intact
+    - And the session status updates to "active"
+
+    AC5: Concurrent Session Streaming Integrity
+    - Given 4 sessions are outputting terminal data simultaneously
+    - When session 2 crashes mid-output
+    - Then sessions 1, 3, and 4 continue receiving their PTY output streams without interruption
+    - And no terminal output is lost or cross-contaminated
+    - And WebSocket routing continues to deliver messages to correct sessions
+    - And terminal latency remains &lt;100ms for active sessions (NFR-PERF-4)
+
+    AC6: Error State Analysis and Recovery
+    - Given a session has crashed and been restarted
+    - When Claude CLI loads in the restarted session
+    - Then the user can type: "Analyze what's been done and continue"
+    - And Claude reads the worktree state (git status, file contents)
+    - And Claude provides analysis of work completed before crash
+    - And the user can decide how to proceed (manual resume per FR67)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification: Multi-Session Parallel Development</title>
+        <section>NFR-REL-2: Crash Isolation</section>
+        <snippet>Claude CLI crash in one session shall not affect other sessions. PTY process crash detected via onExit callback. Session status updated to 'error', user notified. Other sessions continue running normally. Manual restart mechanism provided.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>WebSocket Protocol Extensions</section>
+        <snippet>Server → Client: { type: 'session.status', sessionId: string, status: SessionStatus, reason?: string }, { type: 'terminal.exit', sessionId: string, exitCode: number, signal?: string }. Client → Server: { type: 'session.resume', sessionId: string }</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>Session Status State Machine</section>
+        <snippet>Status transitions: active → error (PTY crash), error → active (user clicks restart), active → stopped (user destroys session), idle → active (session resume after container restart)</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>Workflow 6: Crash Isolation</section>
+        <snippet>Session 2's PTY process crashes → Backend detects ptyProcess.onExit → Logs error → Updates status to 'error' → Sends session.status message → Frontend shows red dot and restart message → Sessions 1,3,4 continue normally → User clicks restart → New PTY spawns in same worktree</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Error Handling & Recovery</section>
+        <snippet>Crash isolation between sessions. WebSocket auto-reconnect with exponential backoff. Container restart recovery via session JSON. Manual resume after crashes.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>backend/src/ptyManager.ts</path>
+        <kind>service</kind>
+        <symbol>PTYManager</symbol>
+        <lines>64-302</lines>
+        <reason>PTYManager class with onExit() callback registration (lines 246-267). Need to wire this to sessionManager for crash detection. Already has proper error logging via winston.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/src/ptyManager.ts</path>
+        <kind>method</kind>
+        <symbol>PTYManager.onExit</symbol>
+        <lines>246-267</lines>
+        <reason>Callback registration for PTY process exit. Currently logs exit code/signal. Need to extend to call sessionManager.updateSessionStatus('error') and send WebSocket session.status message.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/src/server.ts</path>
+        <kind>function</kind>
+        <symbol>setupPtyOutputStreaming</symbol>
+        <lines>301-341</lines>
+        <reason>Currently handles PTY exit by sending error message and cleaning up session. Need to update to support error state retention and manual restart instead of immediate cleanup.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/src/types.ts</path>
+        <kind>interface</kind>
+        <symbol>SessionData</symbol>
+        <lines>82-89</lines>
+        <reason>Current session structure. Will be replaced/extended by Epic 2's Session interface from sessionManager.ts (Story 2.1) which includes status: SessionStatus field.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/src/types.ts</path>
+        <kind>type</kind>
+        <symbol>ServerMessage</symbol>
+        <lines>73-76</lines>
+        <reason>WebSocket message types. Need to extend with: SessionStatusMessage (type: 'session.status'), TerminalExitMessage (type: 'terminal.exit'), SessionResumeMessage (type: 'session.resume').</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/Terminal.tsx</path>
+        <kind>component</kind>
+        <symbol>Terminal</symbol>
+        <lines>12-140</lines>
+        <reason>Terminal component with xterm.js integration. Need to add error state handling: detect terminal.exit message, display "Process exited. Click to restart.", send session.resume on click.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/Terminal.tsx</path>
+        <kind>effect</kind>
+        <symbol>WebSocket output handler</symbol>
+        <lines>118-128</lines>
+        <reason>Currently only handles terminal.output messages. Need to add handler for terminal.exit and session.status messages to trigger error UI state.</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <backend>
+        <package name="express" version="^4.18.0" />
+        <package name="node-pty" version="^1.0.0" />
+        <package name="uuid" version="^9.0.0" />
+        <package name="winston" version="^3.11.0" />
+        <package name="ws" version="^8.14.0" />
+      </backend>
+      <frontend>
+        <package name="react" version="^19.2.0" />
+        <package name="react-dom" version="^19.2.0" />
+        <package name="@xterm/xterm" version="^5.5.0" />
+        <package name="@xterm/addon-fit" version="^0.10.0" />
+        <package name="@xterm/addon-web-links" version="^0.11.0" />
+        <package name="@radix-ui/react-dialog" version="^1.1.15" />
+        <package name="@radix-ui/react-tabs" version="^1.1.13" />
+        <package name="lucide-react" version="^0.554.0" />
+      </frontend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - MUST use node-pty's onExit callback for crash detection - do not poll process status
+    - MUST NOT auto-restart crashed sessions - manual restart only per FR67 (prevents infinite crash loops)
+    - MUST preserve worktree state across crash/restart - user analyzes before resuming
+    - MUST use atomic write pattern for session JSON persistence (temp file + rename)
+    - MUST use Oceanic Calm error color #BF616A for all error indicators
+    - MUST maintain OS-level process isolation - each session's PTY is independent
+    - MUST handle PTY exit gracefully without affecting other sessions' WebSocket streams
+    - MUST update SessionStatus enum to include 'error' state (from Epic 2 design)
+    - MUST send WebSocket session.status message on crash before cleanup
+    - MUST log crash details with winston structured logging (sessionId, exitCode, signal, timestamp)
+    - MUST validate session exists before resuming (prevent resume of destroyed sessions)
+    - MUST test concurrent session streaming during crash (AC5 performance requirement)
+    - MUST NOT use SIGINT for restart - spawn fresh PTY with same worktreePath
+    - Session persistence: /workspace/.claude-container-sessions.json (atomic writes)
+    - Frontend: React 19 Context API for session state management
+    - Backend: Map&lt;sessionId, Session&gt; for O(1) session lookups
+    - Testing: Integration tests with real PTY processes (not mocks) per Story 1-12 patterns
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>SessionStatus (TypeScript Enum)</name>
+      <kind>TypeScript Type</kind>
+      <signature>type SessionStatus = 'active' | 'waiting' | 'idle' | 'error' | 'stopped'</signature>
+      <path>backend/src/types.ts (to be updated in Story 2.1)</path>
+    </interface>
+    <interface>
+      <name>session.status WebSocket Message</name>
+      <kind>WebSocket Protocol</kind>
+      <signature>{ type: 'session.status', sessionId: string, status: SessionStatus, reason?: string }</signature>
+      <path>Server → Client message (backend/src/types.ts)</path>
+    </interface>
+    <interface>
+      <name>terminal.exit WebSocket Message</name>
+      <kind>WebSocket Protocol</kind>
+      <signature>{ type: 'terminal.exit', sessionId: string, exitCode: number, signal?: string }</signature>
+      <path>Server → Client message (backend/src/types.ts)</path>
+    </interface>
+    <interface>
+      <name>session.resume WebSocket Message</name>
+      <kind>WebSocket Protocol</kind>
+      <signature>{ type: 'session.resume', sessionId: string }</signature>
+      <path>Client → Server message (backend/src/types.ts)</path>
+    </interface>
+    <interface>
+      <name>PTYManager.onExit</name>
+      <kind>Method Signature</kind>
+      <signature>onExit(ptyProcess: IPty, callback: (event: { exitCode: number; signal?: number }) =&gt; void): void</signature>
+      <path>backend/src/ptyManager.ts</path>
+    </interface>
+    <interface>
+      <name>SessionManager.updateSessionStatus</name>
+      <kind>Method Signature</kind>
+      <signature>updateSessionStatus(sessionId: string, status: SessionStatus): void</signature>
+      <path>backend/src/sessionManager.ts (Story 2.1)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Backend: Jest + TypeScript for unit and integration tests. Frontend: Vitest for component tests. E2E: Playwright for multi-session crash scenarios. Winston logger configured for structured JSON logging. Test patterns from Story 1-12: Use real PTY processes with mock crash scenarios (kill process), not mocked node-pty. Integration tests verify isolation by running 3+ concurrent sessions and forcing crash in one. Unit tests mock SessionManager and WebSocket to isolate PTYManager crash detection logic.
+    </standards>
+
+    <locations>
+      - backend/src/__tests__/ptyManager.test.ts (unit tests for onExit callback)
+      - backend/src/__tests__/sessionManager.test.ts (unit tests for updateSessionStatus)
+      - backend/src/__tests__/integration/crash-isolation.test.ts (integration test: 3 sessions, crash one, verify others unaffected)
+      - frontend/src/components/__tests__/Terminal.test.tsx (unit test: error state rendering)
+      - e2e/crash-isolation.spec.ts (Playwright E2E: E2E-3 from tech spec)
+    </locations>
+
+    <ideas>
+      - Unit Test: PTYManager.onExit callback fires when PTY exits (AC1) - Mock IPty, call onExit, verify callback invoked with exitCode/signal
+      - Unit Test: SessionManager.updateSessionStatus changes status to 'error' (AC2) - Create session, call updateSessionStatus('error'), verify session.status updated
+      - Integration Test: Crash isolation between 3 sessions (AC1, AC5) - Spawn 3 PTY processes, kill process 2, verify processes 1 and 3 still outputting
+      - Integration Test: Crash → Status Update → Persist (AC2) - Crash PTY, verify session.status WebSocket sent, verify JSON persistence includes error status
+      - Integration Test: Manual restart flow (AC4, AC6) - Crash session, send session.resume, verify new PTY spawned with same worktreePath, verify files intact
+      - Frontend Unit Test: Error state rendering (AC3) - Mock session.status message with status='error', verify red dot rendered, verify restart message displayed
+      - E2E Test: 4 concurrent sessions with crash (AC5) - Create 4 sessions via UI, generate output in all 4, force crash in session-2, verify sessions 1/3/4 unaffected, click restart, verify session-2 recovers
+      - Performance Test: Terminal latency during crash (AC5) - 4 sessions streaming output, crash one, measure latency of remaining 3 sessions (must be &lt;100ms)
+    </ideas>
+  </tests>
+</story-context>

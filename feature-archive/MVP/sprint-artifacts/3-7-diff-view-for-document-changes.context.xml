@@ -1,0 +1,251 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.7</storyId>
+    <title>Diff View for Document Changes</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/3-7-diff-view-for-document-changes.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>to see what changed in a document since I last viewed it</iWant>
+    <soThat>I can quickly review Claude's updates without reading the entire file (FR46-FR47)</soThat>
+    <tasks>
+      - Implement diff cache management (AC: 2, 8, 9) with useDiffCache.ts hook, localStorage operations, error handling
+      - Add diff calculation library and utilities (AC: 1, 6) - install diff npm package, create diffUtils.ts with calculateDiff function
+      - Create DiffView component (AC: 1, 5, 7) with line-by-line rendering, color coding, optional line numbers, context lines
+      - Extend ArtifactViewer with diff functionality (AC: 1, 3, 4) - add state tracking, toggle button, update badge, view mode switching
+      - Integrate with file watcher for update detection (AC: 4) - subscribe to file.changed WebSocket messages
+      - Handle session-specific diff tracking (AC: 9) - include sessionId in cache key, session isolation
+      - Write integration tests (AC: All) - full workflow testing, cache persistence, session isolation
+      - Update documentation - DiffView component API, diffUtils functions
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC 3.12: Diff view shows additions/deletions with color-coded backgrounds (red #BF616A for deletions with strikethrough, green #A3BE8C for additions) and toggle button "Show Diff"
+
+    AC 3.13: Diff tracks "last viewed" timestamp - localStorage cache stores last viewed content and timestamp per file path, updates on file close/reopen
+
+    AC3: Diff toggle interface - "Hide Diff" or "Show Current" button switches back to full rendered markdown
+
+    AC4: Document update badge - Blue badge with "Updated" text appears in file viewer header when file modified
+
+    AC5: Line numbers (optional) - Diff view optionally displays line numbers on left side
+
+    AC6: Diff calculation accuracy - Additions and deletions correctly identified line-by-line using diff library algorithm
+
+    AC7: Context preservation - Diff view includes unchanged lines surrounding changes (at least 3 lines before/after) for context
+
+    AC8: Cache management - localStorage gracefully handles corruption/unavailability by resetting cache silently without crashing
+
+    AC9: Multi-session isolation - Diff tracking is session-specific, last viewed timestamp and content tracked independently per session's worktree files
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/sprint-artifacts/tech-spec-epic-3.md" title="Epic 3 Technical Specification" section="Diff View for Document Changes">
+        Tech spec defines DiffCacheEntry interface: { filePath, lastViewedContent, lastViewedAt, sessionId }. Specifies diff calculation using diff library line-by-line comparison. Colors: Oceanic Calm palette - Green #A3BE8C (additions), Red #BF616A (deletions). Integration extends ArtifactViewer component from Story 3.5.
+      </doc>
+
+      <doc path="docs/architecture.md" title="System Architecture" section="ADR-007: react-markdown for Markdown Rendering">
+        Use react-markdown for safe markdown rendering (XSS prevention). Diff view should render markdown diffs as text-based comparisons, not rendered HTML diffs. Clean integration with React component tree.
+      </doc>
+
+      <doc path="docs/architecture.md" title="System Architecture" section="ADR-011: Markdown Plugins">
+        Use remark-gfm + rehype-highlight for markdown rendering. Consider syntax highlighting for unchanged context lines in diff view.
+      </doc>
+
+      <doc path="docs/architecture.md" title="System Architecture" section="ADR-006: Chokidar for File System Watching">
+        Chokidar watches /workspace/**/*.md for changes. Backend sends { type: 'file.changed', path, event: 'change' } WebSocket message. ArtifactViewer subscribes to file change events. Extend subscription to trigger update badge when current file changes.
+      </doc>
+
+      <doc path="docs/architecture.md" title="System Architecture" section="WebSocket Protocol">
+        File system change notification: { type: 'file.changed', path: string, event: 'add' | 'change' | 'unlink', timestamp: string }. ArtifactViewer component already subscribes to these events from Story 3.5.
+      </doc>
+
+      <doc path="docs/epics/epic-3-workflow-visibility.md" title="Epic 3 Stories" section="Story 3.7: Diff View for Document Changes">
+        Complete story specification with acceptance criteria, technical notes, and UX patterns. References FR46-47 from PRD. Diff algorithm using diff library, localStorage cache with sessionId:filePath key format.
+      </doc>
+    </docs>
+
+    <code>
+      <artifact path="frontend/src/components/Terminal.tsx" kind="component" symbol="Terminal" lines="" reason="Example of existing component structure and patterns to follow for DiffView component" />
+
+      <artifact path="frontend/src/components/SessionList.tsx" kind="component" symbol="SessionList" lines="" reason="Example of component with real-time updates via WebSocket - similar pattern needed for file change detection in ArtifactViewer" />
+
+      <artifact path="frontend/src/hooks/useWebSocket.ts" kind="hook" symbol="useWebSocket" lines="" reason="WebSocket hook for subscribing to file.changed messages. ArtifactViewer will use this to detect document updates" />
+
+      <artifact path="frontend/src/components/ui/badge.tsx" kind="ui-component" symbol="Badge" lines="" reason="shadcn/ui Badge component for displaying 'Updated' indicator in artifact viewer header" />
+
+      <artifact path="frontend/src/components/ui/button.tsx" kind="ui-component" symbol="Button" lines="" reason="shadcn/ui Button component for 'Show Diff' / 'Show Current' toggle button" />
+
+      <artifact path="frontend/package.json" kind="config" symbol="dependencies" lines="15-36" reason="Current frontend dependencies - will need to add 'diff' and '@types/diff' packages" />
+    </code>
+
+    <dependencies>
+      <frontend>
+        <existing>
+          react@19.2.0
+          react-dom@19.2.0
+          @xterm/xterm@5.5.0
+          lucide-react@0.554.0
+          tailwind-merge@3.4.0
+          clsx@2.1.1
+          @radix-ui/react-dialog@1.1.15
+          @radix-ui/react-tabs@1.1.13
+          @radix-ui/react-toast@1.2.15
+        </existing>
+        <required>
+          diff@^5.x - Line-by-line diff calculation library
+          @types/diff - TypeScript definitions for diff library
+        </required>
+      </frontend>
+
+      <backend>
+        <existing>
+          express@4.18.0
+          ws@8.14.0
+          winston@3.11.0
+        </existing>
+        <note>No new backend dependencies required - file watching with chokidar already exists from earlier stories</note>
+      </backend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Use react-markdown for safe markdown rendering - no dangerouslySetInnerHTML (ADR-007)
+    - Diff view renders plain text comparisons, not rendered HTML diffs (XSS prevention)
+    - Follow Oceanic Calm color palette: Green #A3BE8C (additions), Red #BF616A (deletions), Blue #88C0D0 (update badge)
+    - localStorage cache key format: ${sessionId}:${filePath} for session isolation
+    - DiffCacheEntry interface: { filePath: string; sessionId: string; lastViewedContent: string; lastViewedAt: string; }
+    - All localStorage operations must be wrapped in try/catch for graceful error handling
+    - Context preservation: Include 3 lines before/after changes in diff view
+    - File paths must be project-relative (not absolute) in all artifacts
+    - Component naming: PascalCase (DiffView.tsx, ArtifactViewer.tsx)
+    - Hook naming: camelCase with 'use' prefix (useDiffCache.ts)
+    - Utility modules: camelCase (diffUtils.ts)
+    - Test files: Same name as source with .test. suffix (DiffView.test.tsx, useDiffCache.test.ts)
+    - Use Vitest for frontend unit/integration tests
+    - Follow existing component structure patterns from Terminal.tsx and SessionList.tsx
+    - WebSocket message subscription pattern from useWebSocket hook
+    - shadcn/ui components for UI primitives (Badge, Button)
+  </constraints>
+
+  <interfaces>
+    <interface name="DiffCacheEntry" kind="TypeScript interface">
+      <signature>
+        interface DiffCacheEntry {
+          filePath: string;
+          sessionId: string;
+          lastViewedContent: string;
+          lastViewedAt: string; // ISO 8601 timestamp
+        }
+      </signature>
+      <path>frontend/src/hooks/useDiffCache.ts</path>
+      <note>To be created - localStorage cache entry structure</note>
+    </interface>
+
+    <interface name="DiffChange" kind="TypeScript interface">
+      <signature>
+        interface DiffChange {
+          type: 'add' | 'delete' | 'unchanged';
+          line: string;
+          lineNumber: number;
+        }
+      </signature>
+      <path>frontend/src/lib/diffUtils.ts</path>
+      <note>To be created - diff calculation result structure</note>
+    </interface>
+
+    <interface name="DiffViewProps" kind="React component props">
+      <signature>
+        interface DiffViewProps {
+          oldContent: string;
+          newContent: string;
+          fileName: string;
+          showLineNumbers?: boolean;
+        }
+      </signature>
+      <path>frontend/src/components/DiffView.tsx</path>
+      <note>To be created - DiffView component props</note>
+    </interface>
+
+    <interface name="file.changed WebSocket message" kind="WebSocket protocol">
+      <signature>
+        {
+          type: 'file.changed',
+          path: string,
+          event: 'add' | 'change' | 'unlink',
+          timestamp: string
+        }
+      </signature>
+      <path>Backend WebSocket server</path>
+      <note>Existing from Story 3.1 - ArtifactViewer will subscribe to detect document updates</note>
+    </interface>
+
+    <interface name="useDiffCache hook API" kind="React custom hook">
+      <signature>
+        function useDiffCache(sessionId: string) {
+          return {
+            getCachedContent: (filePath: string) => DiffCacheEntry | null;
+            setCachedContent: (filePath: string, content: string) => void;
+            clearCache: (filePath?: string) => void;
+          }
+        }
+      </signature>
+      <path>frontend/src/hooks/useDiffCache.ts</path>
+      <note>To be created - hook for managing diff cache in localStorage</note>
+    </interface>
+
+    <interface name="calculateDiff function" kind="Utility function">
+      <signature>
+        function calculateDiff(
+          oldContent: string,
+          newContent: string
+        ): DiffChange[]
+      </signature>
+      <path>frontend/src/lib/diffUtils.ts</path>
+      <note>To be created - uses diff library for line-by-line comparison</note>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Use Vitest for frontend unit and integration tests (vitest.config.ts alongside vite.config.ts). Follow describe/it/expect syntax. Testing library: @testing-library/react for component tests, @testing-library/user-event for interactions, @testing-library/jest-dom for assertions. Co-locate tests with .test.tsx/.test.ts suffix. Mock localStorage for cache tests. Mock WebSocket for file change detection tests.
+    </standards>
+
+    <locations>
+      frontend/src/components/*.test.tsx - Component tests
+      frontend/src/hooks/*.test.ts - Hook tests
+      frontend/src/lib/*.test.ts - Utility function tests
+    </locations>
+
+    <ideas>
+      AC 3.12: Component test - DiffView renders deleted lines with red background and strikethrough, added lines with green background
+
+      AC 3.13: Unit test - useDiffCache updates timestamp on setCachedContent call, retrieves correct cached content
+
+      AC3: Integration test - Toggle button switches between diff view and normal markdown rendering
+
+      AC4: Component test - ArtifactViewer shows blue "Updated" badge when file.changed message received for current file
+
+      AC5: Component test - DiffView optionally displays line numbers when showLineNumbers prop is true
+
+      AC6: Unit test - calculateDiff correctly identifies additions, deletions, and unchanged lines for various markdown inputs
+
+      AC7: Unit test - calculateDiff includes 3 context lines before/after changes
+
+      AC8: Unit test - useDiffCache handles localStorage corruption gracefully, resets cache on parse error without throwing
+
+      AC9: Integration test - Session switch loads correct cached content per sessionId, cache keys are session-isolated
+
+      Full workflow integration test: Mock file.changed event → ArtifactViewer shows badge → user clicks Show Diff → DiffView renders changes → user closes file → cache updated with timestamp
+
+      Error scenarios: localStorage quota exceeded (LRU eviction), localStorage unavailable (graceful degradation), corrupted cache entry (silent reset)
+    </ideas>
+  </tests>
+</story-context>

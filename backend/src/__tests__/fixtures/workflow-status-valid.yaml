@@ -1,0 +1,24 @@
+# Valid BMAD workflow status file
+# This represents a workflow in progress at the PRD creation phase
+
+generated: "2025-11-24"
+project: "test-project"
+project_type: "software"
+selected_track: "bmad-method"
+field_type: "greenfield"
+workflow_path: "method-greenfield.yaml"
+
+workflow_status:
+  # Phase 0: Discovery (Optional)
+  brainstorm-project: "docs/brainstorming-session-results.md"
+  research: skipped
+  product-brief: skipped
+
+  # Phase 1: Planning
+  prd: required
+  validate-prd: optional
+  create-design: conditional
+
+  # Phase 2: Solutioning
+  create-architecture: required
+  create-epics-and-stories: required

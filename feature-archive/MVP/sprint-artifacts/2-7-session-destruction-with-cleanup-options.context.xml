@@ -1,0 +1,328 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>7</storyId>
+    <title>Session Destruction with Cleanup Options</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/2-7-session-destruction-with-cleanup-options.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>to destroy sessions that are complete or errored</iWant>
+    <soThat>I can reclaim resources and clean up git worktrees if desired</soThat>
+    <tasks>
+      <task id="1" description="Backend API for Session Destruction" ac="2, 3, 6">
+        <subtask>Implement DELETE /api/sessions/:id endpoint with optional cleanup query parameter</subtask>
+        <subtask>Add validation to verify session exists before destruction</subtask>
+        <subtask>Implement graceful PTY shutdown: SIGTERM → 5s timeout → SIGKILL</subtask>
+        <subtask>Add session cleanup from sessionManager in-memory registry</subtask>
+        <subtask>Update /workspace/.claude-container-sessions.json using atomic write pattern</subtask>
+        <subtask>Return appropriate HTTP status codes (200, 404, 500)</subtask>
+      </task>
+      <task id="2" description="Git Worktree Cleanup Integration" ac="3, 5">
+        <subtask>Add removeWorktree() method to WorktreeManager class</subtask>
+        <subtask>Execute git worktree remove /workspace/.worktrees/&lt;session-id&gt; via simple-git</subtask>
+        <subtask>Handle git worktree removal errors (uncommitted changes, file locks)</subtask>
+        <subtask>Log error details including git stderr output</subtask>
+        <subtask>Verify worktree directory is deleted after successful removal</subtask>
+        <subtask>Ensure branch remains after worktree cleanup (don't delete branch)</subtask>
+      </task>
+      <task id="3" description="Frontend Confirmation Dialog Component" ac="1">
+        <subtask>Create SessionDestroyDialog.tsx using shadcn/ui Dialog component</subtask>
+        <subtask>Add dialog title: "Destroy Session?"</subtask>
+        <subtask>Display session name in message: "Session '{name}' will be terminated..."</subtask>
+        <subtask>Add checkbox control: "Delete git worktree" (unchecked by default)</subtask>
+        <subtask>Style "Destroy" button as destructive (red theme from Oceanic Calm palette)</subtask>
+        <subtask>Add "Cancel" button to dismiss dialog without action</subtask>
+        <subtask>Wire up dialog to session destroy API call</subtask>
+      </task>
+      <task id="4" description="Session Tab Close Button Integration" ac="1, 4">
+        <subtask>Add X close button to session tabs (visible on hover)</subtask>
+        <subtask>Trigger SessionDestroyDialog when X is clicked</subtask>
+        <subtask>Pass session name and ID to dialog component</subtask>
+        <subtask>Handle dialog result (cancel vs confirm)</subtask>
+        <subtask>Update UI state after successful destruction</subtask>
+      </task>
+      <task id="5" description="Frontend State Management for Destruction" ac="4">
+        <subtask>Remove destroyed session from SessionContext sessions array</subtask>
+        <subtask>Switch active session to another session if current was destroyed</subtask>
+        <subtask>Handle case when last session is destroyed (show empty state)</subtask>
+        <subtask>Display toast notification: "Session '{name}' destroyed"</subtask>
+        <subtask>Use shadcn/ui Toast component for notification</subtask>
+      </task>
+      <task id="6" description="Error Handling and User Feedback" ac="5">
+        <subtask>Handle 404 errors (session not found) with error toast</subtask>
+        <subtask>Handle 500 errors (worktree cleanup failed) with detailed message</subtask>
+        <subtask>Display error message with manual cleanup instructions</subtask>
+        <subtask>Log all errors to browser console for debugging</subtask>
+        <subtask>Keep dialog open on error to allow retry</subtask>
+      </task>
+      <task id="7" description="Testing" ac="All ACs">
+        <subtask>Unit test: SessionManager.destroySession() removes session</subtask>
+        <subtask>Unit test: WorktreeManager.removeWorktree() executes git command</subtask>
+        <subtask>Unit test: Graceful PTY shutdown (SIGTERM → SIGKILL after timeout)</subtask>
+        <subtask>Integration test: DELETE /api/sessions/:id without cleanup</subtask>
+        <subtask>Integration test: DELETE /api/sessions/:id with cleanup=true</subtask>
+        <subtask>Integration test: Worktree removal error handling</subtask>
+        <subtask>E2E test: Full destroy flow from UI (click X → confirm → verify tab removed)</subtask>
+        <subtask>E2E test: Destroy with worktree cleanup verified via filesystem check</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC-1" title="Confirmation Dialog Display">
+      <given>a session with ID id1 exists</given>
+      <when>the user clicks the X button on the tab</when>
+      <then>a confirmation dialog appears with:
+        - Title: "Destroy Session?"
+        - Message: "Session 'feature-auth' will be terminated. Git worktree and branch will remain."
+        - Checkbox: "Delete git worktree" (unchecked by default)
+        - Buttons: "Cancel" | "Destroy" (red/destructive style)
+      </then>
+    </criterion>
+
+    <criterion id="AC-2" title="Session Destruction Without Worktree Cleanup">
+      <given>the confirmation dialog is displayed</given>
+      <when>the user clicks "Destroy" with checkbox unchecked</when>
+      <then>the backend:
+        1. Sends SIGTERM to PTY process (graceful shutdown, 5s timeout)
+        2. If PTY doesn't exit, sends SIGKILL
+        3. Removes session from in-memory registry
+        4. Updates /workspace/.claude-container-sessions.json using atomic write
+        5. Worktree remains at /workspace/.worktrees/id1
+        6. Branch feature/feature-auth remains
+      </then>
+    </criterion>
+
+    <criterion id="AC-3" title="Session Destruction With Worktree Cleanup">
+      <given>the confirmation dialog is displayed</given>
+      <when>the user clicks "Destroy" with checkbox checked</when>
+      <then>the backend additionally executes git worktree remove (FR15)</then>
+      <and>the worktree directory is deleted</and>
+      <and>the branch still remains (user can merge/delete manually per FR20)</and>
+    </criterion>
+
+    <criterion id="AC-4" title="UI State Update After Destruction">
+      <given>session destruction succeeds</given>
+      <when>the backend confirms destruction</when>
+      <then>the tab disappears from the UI</then>
+      <and>the UI switches to another active session (or empty state if last session)</and>
+      <and>a toast notification shows: "Session 'feature-auth' destroyed"</and>
+    </criterion>
+
+    <criterion id="AC-5" title="Error Handling for Worktree Cleanup Failures">
+      <given>worktree cleanup is requested</given>
+      <when>the git worktree remove command fails (e.g., uncommitted changes, file locks)</when>
+      <then>the system logs the error with details</then>
+      <and>displays error message to user with manual cleanup instructions</and>
+      <and>session is still removed from registry (partial cleanup acceptable)</and>
+    </criterion>
+
+    <criterion id="AC-6" title="Graceful PTY Process Termination">
+      <given>a PTY process is running for a session</given>
+      <when>session destruction is initiated</when>
+      <then>the system sends SIGTERM to the PTY process</then>
+      <and>waits 5 seconds for graceful exit</and>
+      <and>if process still running after 5s, sends SIGKILL</and>
+      <and>tracks cleanup via ptyProcess.onExit() callback (FR71)</and>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/sprint-artifacts/tech-spec-epic-2.md" title="Epic Technical Specification: Multi-Session Parallel Development" section="Session Management">
+        Tech spec defines SessionManager.destroySession(sessionId, cleanup) method, PTYManager.killPTY(sessionId) for graceful termination, WorktreeManager.removeWorktree(sessionId) for cleanup, and atomic write pattern for JSON persistence.
+      </doc>
+      <doc path="docs/sprint-artifacts/tech-spec-epic-2.md" title="Epic Technical Specification" section="WebSocket Protocol Extensions">
+        Defines session.destroyed message type sent after successful destruction. Backend sends { type: 'session.destroyed', sessionId } after cleanup. No session.detach needed before destruction.
+      </doc>
+      <doc path="docs/sprint-artifacts/tech-spec-epic-2.md" title="Epic Technical Specification" section="REST API Contracts">
+        DELETE /api/sessions/:id endpoint with optional cleanup query parameter. Returns 200 on success, 404 if session not found, 500 on cleanup errors.
+      </doc>
+      <doc path="docs/architecture.md" title="System Architecture" section="ADR-008: simple-git for Git Worktree Management">
+        Use simple-git library for worktree operations via git.raw(['worktree', 'remove', path]). Error handling via git exit codes and stderr parsing.
+      </doc>
+      <doc path="docs/architecture.md" title="System Architecture" section="ADR-009: Flat JSON File for Session Persistence">
+        Atomic write pattern for session JSON: write to temp file, then rename. Prevents corruption during updates.
+      </doc>
+    </docs>
+
+    <code>
+      <file path="backend/src/server.ts" kind="server" symbol="createSession, activeSessions" lines="130-162, 105" reason="Current session creation and activeSessions Map. Destruction logic will mirror this structure and remove from Map.">
+      </file>
+      <file path="backend/src/server.ts" kind="server" symbol="gracefulShutdown" lines="612-635" reason="Demonstrates graceful shutdown pattern with SIGTERM handling and 5s timeout. Same pattern needed for per-session PTY termination.">
+      </file>
+      <file path="backend/src/ptyManager.ts" kind="service" symbol="PTYManager.kill" lines="186-201" reason="Current PTY kill method sends SIGTERM or SIGINT. Need to enhance with timeout logic: SIGTERM → wait 5s → SIGKILL if still running.">
+      </file>
+      <file path="backend/src/ptyManager.ts" kind="service" symbol="PTYManager.onExit" lines="246-267" reason="PTY exit callback registration. Story will use this to track graceful shutdown completion and trigger cleanup.">
+      </file>
+      <file path="backend/src/types.ts" kind="types" symbol="ClientMessage, ServerMessage" lines="65-76" reason="WebSocket message types. Need to add session.destroy request and session.destroyed response types for Epic 2.">
+      </file>
+      <file path="frontend/src/components/ui/dialog.tsx" kind="component" symbol="Dialog" lines="all" reason="shadcn/ui Dialog component for SessionDestroyDialog. Use for confirmation modal with title, description, and action buttons.">
+      </file>
+      <file path="frontend/src/components/ui/button.tsx" kind="component" symbol="Button" lines="all" reason="shadcn/ui Button component with variant='destructive' for red "Destroy" button styling from Oceanic Calm palette.">
+      </file>
+      <file path="frontend/src/components/Terminal.tsx" kind="component" symbol="Terminal" lines="all" reason="Reference for WebSocket integration pattern. SessionDestroyDialog will follow similar pattern for sending destroy messages.">
+      </file>
+    </code>
+
+    <dependencies>
+      <backend>
+        <dependency name="express" version="^4.18.0" usage="REST endpoint for DELETE /api/sessions/:id">
+        </dependency>
+        <dependency name="node-pty" version="^1.0.0" usage="PTY process termination with SIGTERM/SIGKILL signals">
+        </dependency>
+        <dependency name="uuid" version="^9.0.0" usage="Session ID generation (existing)">
+        </dependency>
+        <dependency name="winston" version="^3.11.0" usage="Structured logging for destruction events and errors">
+        </dependency>
+        <dependency name="ws" version="^8.14.0" usage="WebSocket session.destroyed message broadcasting">
+        </dependency>
+        <dependency name="simple-git" usage="NEW DEPENDENCY - git worktree remove command execution for optional cleanup">
+        </dependency>
+      </backend>
+      <frontend>
+        <dependency name="@radix-ui/react-dialog" version="^1.1.15" usage="Dialog primitive for SessionDestroyDialog confirmation modal">
+        </dependency>
+        <dependency name="@radix-ui/react-slot" version="^1.2.4" usage="Required by shadcn/ui Button component">
+        </dependency>
+        <dependency name="lucide-react" version="^0.554.0" usage="X icon for tab close button">
+        </dependency>
+        <dependency name="react" version="^19.2.0" usage="Component framework">
+        </dependency>
+        <dependency name="class-variance-authority" version="^0.7.1" usage="Button variant styling (destructive style)">
+        </dependency>
+      </frontend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">
+      Session destruction must call SessionManager.destroySession(sessionId, cleanup) method. Session registry update must use atomic write pattern for JSON persistence (temp file + rename). Reference: Tech Spec "SessionManager Public API" section.
+    </constraint>
+    <constraint type="architecture">
+      Use PTYManager.killPTY(sessionId) for graceful process termination. Implement timeout mechanism: SIGTERM → wait 5s → SIGKILL if needed. Register cleanup via ptyProcess.onExit() callback per FR71. Reference: Tech Spec "PTYManager Public API" section.
+    </constraint>
+    <constraint type="architecture">
+      Use WorktreeManager.removeWorktree(sessionId) method. Method executes git worktree remove via simple-git library. Error handling critical: worktree removal can fail with uncommitted changes. Reference: Architecture ADR-008.
+    </constraint>
+    <constraint type="protocol">
+      Backend sends { type: 'session.destroyed', sessionId } after successful destruction via WebSocket. Frontend listens for this event to update UI state. No session.detach needed before destruction (backend handles cleanup). Reference: Tech Spec "WebSocket Protocol Extensions".
+    </constraint>
+    <constraint type="ui-pattern">
+      Destroy button uses red/destructive styling from Oceanic Calm palette (#BF616A). Confirmation dialog required (no accidental destroys). Checkbox defaults to unchecked (preserve worktree unless user explicitly opts in). Reference: UX spec "Button Patterns - Destructive Actions" section 7.1.
+    </constraint>
+    <constraint type="error-handling">
+      Common case: User has uncommitted changes in worktree. Git error: "fatal: 'remove' cannot be used with uncomitted changes". User-facing message: "Could not delete worktree: uncommitted changes detected. Remove manually: git worktree remove /workspace/.worktrees/{id}". Log full git stderr for debugging.
+    </constraint>
+    <constraint type="testing">
+      Unit tests: Mock PTY spawn/kill operations, mock git worktree commands, verify session removal, verify atomic JSON write. Integration tests: Real PTY processes, real git worktree operations, verify filesystem deletion. E2E tests: Playwright automation of full flow.
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="DELETE /api/sessions/:id" kind="REST">
+      <signature>
+DELETE /api/sessions/:id?cleanup=true|false
+Request Query: { cleanup?: 'true' }  // Optional: delete worktree
+Response 200: { success: true }
+Response 404: { error: 'Session not found', code: 'NOT_FOUND' }
+Response 500: { error: 'Worktree cleanup failed', code: 'CLEANUP_ERROR', details: string }
+      </signature>
+      <path>backend/src/server.ts</path>
+    </interface>
+
+    <interface name="SessionManager.destroySession" kind="class-method">
+      <signature>
+async destroySession(sessionId: string, cleanup?: boolean): Promise&lt;void&gt;
+// Destroys session and optionally cleans up worktree
+// Throws error if session not found or cleanup fails
+      </signature>
+      <path>backend/src/sessionManager.ts (TO BE CREATED in Story 2.1)</path>
+    </interface>
+
+    <interface name="WorktreeManager.removeWorktree" kind="class-method">
+      <signature>
+async removeWorktree(sessionId: string): Promise&lt;void&gt;
+// Executes: git worktree remove /workspace/.worktrees/&lt;session-id&gt;
+// Throws error with git stderr if removal fails
+      </signature>
+      <path>backend/src/worktreeManager.ts (TO BE CREATED in Story 2.2)</path>
+    </interface>
+
+    <interface name="PTYManager.killPTY" kind="class-method">
+      <signature>
+async killPTY(sessionId: string): Promise&lt;void&gt;
+// Enhanced version with timeout:
+// 1. Send SIGTERM to PTY process
+// 2. Wait 5 seconds for graceful exit (via onExit callback)
+// 3. If still running, send SIGKILL
+// 4. Return after process exits
+      </signature>
+      <path>backend/src/ptyManager.ts (ENHANCE existing kill method)</path>
+    </interface>
+
+    <interface name="session.destroyed WebSocket message" kind="WebSocket">
+      <signature>
+// Server → Client
+{
+  type: 'session.destroyed',
+  sessionId: string
+}
+      </signature>
+      <path>backend/src/types.ts (ADD to ServerMessage union type)</path>
+    </interface>
+
+    <interface name="SessionDestroyDialog Component" kind="React-Component">
+      <signature>
+interface SessionDestroyDialogProps {
+  sessionId: string;
+  sessionName: string;
+  isOpen: boolean;
+  onClose: () =&gt; void;
+  onConfirm: (cleanup: boolean) =&gt; void;
+}
+
+function SessionDestroyDialog(props: SessionDestroyDialogProps): JSX.Element
+      </signature>
+      <path>frontend/src/components/SessionDestroyDialog.tsx (TO BE CREATED)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Backend tests use Jest with TypeScript. Mock PTY operations with stubs. Mock git commands using simple-git mocks. Integration tests use real processes and git operations. Frontend tests use Vitest with @testing-library/react. E2E tests use Playwright for full flow validation. Test coverage targets: Backend critical paths 70%+, Frontend 50%+.
+    </standards>
+
+    <locations>
+      <location>backend/src/**/*.test.ts - Backend unit and integration tests</location>
+      <location>frontend/src/**/*.test.tsx - Frontend component tests</location>
+      <location>tests/e2e/**/*.spec.ts - Playwright E2E tests</location>
+    </locations>
+
+    <ideas>
+      <idea ac="AC-2">
+        Unit test: SessionManager.destroySession(sessionId, cleanup=false) removes session from in-memory Map, writes updated JSON using atomic pattern (temp + rename), verifies worktree NOT deleted, verifies branch remains.
+      </idea>
+      <idea ac="AC-3">
+        Integration test: Full destroy with cleanup=true. Create real session with git worktree, call destroy API, verify PTY killed, verify worktree directory deleted from filesystem, verify branch still exists via git branch -a.
+      </idea>
+      <idea ac="AC-6">
+        Unit test: Mock PTY process that doesn't respond to SIGTERM. Verify killPTY waits 5 seconds then sends SIGKILL. Use fake timers to control timeout. Assert SIGTERM sent first, SIGKILL sent after 5s.
+      </idea>
+      <idea ac="AC-5">
+        Integration test: Create worktree with uncommitted changes. Call destroy with cleanup=true. Verify git worktree remove fails. Verify error message includes "uncommitted changes" and manual cleanup command. Verify session still removed from registry (partial cleanup).
+      </idea>
+      <idea ac="AC-1">
+        Component test: Render SessionDestroyDialog with mock props. Verify title, message with session name, checkbox unchecked by default, Cancel/Destroy buttons. Click checkbox, verify state toggles. Click Cancel, verify onClose called. Click Destroy, verify onConfirm called with cleanup boolean.
+      </idea>
+      <idea ac="AC-4">
+        E2E test: Create 3 sessions. Click X on session-2 tab. Verify dialog appears. Click Destroy (no cleanup). Verify session-2 tab disappears. Verify UI switches to session-1 or session-3. Verify toast notification shows "Session 'session-2' destroyed".
+      </idea>
+    </ideas>
+  </tests>
+</story-context>

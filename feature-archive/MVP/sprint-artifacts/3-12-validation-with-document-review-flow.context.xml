@@ -1,0 +1,415 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>12</storyId>
+    <title>Validation with Document Review Flow</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/3-12-validation-with-document-review-flow.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer managing multiple parallel Claude sessions</asA>
+    <iWant>to validate the complete document review workflow with real BMAD artifacts</iWant>
+    <soThat>I'm confident I can monitor sessions and review generated documents at a glance</soThat>
+    <tasks>
+      - Task 1: Prepare validation environment (AC: #1-#12)
+      - Task 2: Validate document review flow end-to-end (AC: #2, #9)
+      - Task 3: Validate multi-session monitoring (AC: #1, #3)
+      - Task 4: Validate workflow progress component (AC: #4)
+      - Task 5: Validate artifact rendering quality (AC: #5)
+      - Task 6: Validate diff view functionality (AC: #6)
+      - Task 7: Validate layout customization (AC: #7)
+      - Task 8: Validate file tree real-time updates (AC: #8)
+      - Task 9: Validate performance (AC: #10)
+      - Task 10: Stress testing (AC: #11)
+      - Task 11: Create validation script and report template (AC: #12)
+      - Task 12: Execute validation and document results
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. AC3.20: 4 sessions monitored at a glance - Given 2+ sessions active with different BMAD workflows, user can view workflow progress, file trees, and artifacts for each session independently. PRD Sprint 3 success criteria met.
+
+    2. Complete Document Review Flow - Session running PRD creation workflow completes PRD, file tree shows prd.md, layout auto-shifts to artifact-dominant (70/30), artifact viewer displays rendered markdown with tables/formatting, terminal remains visible at 30%.
+
+    3. Multi-Session Context Switching - Switching between sessions updates terminal output, file tree shows correct worktree, workflow progress shows correct current step, session state preserved.
+
+    4. Workflow Progress Visibility - Completed steps show ✓ (green #A3BE8C), current step shows → (blue #88C0D0) with highlighted background, pending steps show ○ (gray #4C566A), updates automatically when Claude advances steps.
+
+    5. Artifact Rendering Quality - Documents render correctly with GFM (tables, task lists, strikethrough), syntax-highlighted code blocks, proper headings/lists/links, Oceanic Calm code theme matching terminal.
+
+    6. Diff View Functionality - Document updates show "Document updated" indicator and "Show Diff" button, diff displays added lines (green background), deleted lines (red background + strikethrough), unchanged lines as context.
+
+    7. Layout Customization - Panel resize handles constrained to ranges, sizes persist from localStorage across refreshes, smooth dragging with no lag.
+
+    8. File Tree Real-Time Updates - New files appear in tree within 1 second (500ms debounce + render), chokidar integration batches rapid changes, folder expand/collapse state persists.
+
+    9. Interactive Feedback Loop - User can view artifact (70% height) while terminal visible (30%), type feedback, Claude updates document, diff view shows changes.
+
+    10. Performance Validation - File tree <100ms for 500 files, markdown rendering <500ms for 100KB file, layout animation 350ms CSS transition, file change notification <200ms end-to-end, sidebar toggle <50ms.
+
+    11. Stress Testing - File tree smooth scrolling (60fps) with 100+ files, large markdown files (500KB) render within 500ms, rapid file changes batched and UI remains responsive.
+
+    12. End-to-End Validation Script - Create validation script, document test scenarios, include checklist of all ACs, provide sample BMAD workflows, report template for validation results.
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic Technical Specification: Workflow Visibility & Document Review</title>
+        <section>Overview</section>
+        <snippet>Epic 3 delivers real-time visibility into BMAD workflow progress and generated artifacts through the browser interface. Enables developers to manage 4 parallel sessions at a glance: understanding where each Claude instance is in the BMAD process, reviewing generated artifacts immediately, and providing contextual feedback.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic Technical Specification: Workflow Visibility & Document Review</title>
+        <section>Acceptance Criteria (Authoritative)</section>
+        <snippet>AC3.20: 4 sessions monitored at a glance - PRD Sprint 3 success criteria met: "Can monitor 4 sessions at a glance and view all generated artifacts"</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic Technical Specification: Workflow Visibility & Document Review</title>
+        <section>Non-Functional Requirements - Performance</section>
+        <snippet>NFR-PERF-2: Tab switching <50ms. File tree rendering <100ms for 500 files. Markdown rendering <500ms for 100KB file. Layout animation 350ms CSS transition. File change notification <200ms end-to-end.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic Technical Specification: Workflow Visibility & Document Review</title>
+        <section>Test Strategy Summary</section>
+        <snippet>E2E Tests: Document review flow (Session runs → creates PRD → layout shifts → user views artifact), Multi-session monitoring (2 sessions active → switch between → each shows correct files), Diff view workflow (Claude updates document → user clicks diff → sees changes).</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-3-workflow-visibility.md</path>
+        <title>Epic 3: Workflow Visibility & Document Review</title>
+        <section>Story 3.12: Validation with Document Review Flow</section>
+        <snippet>Validate the complete document review workflow with real BMAD artifacts. Prerequisites: All stories in Epic 3 (complete visibility system). Test with REAL BMAD workflows generating actual documents. Validation success criteria from PRD Sprint 3.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Performance Considerations</section>
+        <snippet>Critical Performance Requirements: NFR-PERF-1 Terminal <100ms latency, NFR-PERF-2 UI responsiveness <50ms tab switching <200ms interactions, NFR-PERF-3 Session startup <5 seconds, NFR-PERF-4 4 concurrent sessions without degradation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>FR Category to Architecture Mapping - Workflow Visualization</section>
+        <snippet>FR37-FR42 implemented by WorkflowProgress.tsx, WorkflowDiagram.tsx, statusParser.ts. Parse BMAD YAML status files. Visual indicators: ✓ completed, → current (highlighted), ○ upcoming. Clickable steps for navigation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>FR Category to Architecture Mapping - Document Viewing</section>
+        <snippet>FR43-FR48 implemented by ArtifactViewer.tsx, FileTree.tsx, fileWatcher.ts, react-markdown. File tree navigation with chokidar file watching. Markdown rendering with syntax highlighting. Diff toggle (show changes since last view).</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic-2-retrospective.md</path>
+        <title>Epic 2 Retrospective</title>
+        <section>Lessons Learned</section>
+        <snippet>Comprehensive test coverage (96%+) prevented regressions. TypeScript strict mode caught edge cases early. Session isolation verified through testing. Context splitting prevents re-renders.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>backend/src/statusParser.ts</path>
+        <kind>module</kind>
+        <symbol>parseWorkflowStatus</symbol>
+        <lines>N/A</lines>
+        <reason>BMAD YAML status file parser - critical for workflow progress validation (AC #4)</reason>
+      </file>
+      <file>
+        <path>backend/src/fileWatcher.ts</path>
+        <kind>module</kind>
+        <symbol>FileWatcher</symbol>
+        <lines>N/A</lines>
+        <reason>Chokidar-based file watching for real-time updates - validates AC #8 (file tree updates within 1 second)</reason>
+      </file>
+      <file>
+        <path>frontend/src/components/WorkflowProgress.tsx</path>
+        <kind>component</kind>
+        <symbol>WorkflowProgress</symbol>
+        <lines>N/A</lines>
+        <reason>Displays workflow step indicators (✓ → ○) - validates AC #4 (workflow progress visibility)</reason>
+      </file>
+      <file>
+        <path>frontend/src/components/FileTree.tsx</path>
+        <kind>component</kind>
+        <symbol>FileTree</symbol>
+        <lines>N/A</lines>
+        <reason>Hierarchical workspace file browser - validates AC #8 (real-time updates and performance)</reason>
+      </file>
+      <file>
+        <path>frontend/src/components/ArtifactViewer.tsx</path>
+        <kind>component</kind>
+        <symbol>ArtifactViewer</symbol>
+        <lines>N/A</lines>
+        <reason>Markdown rendering with react-markdown - validates AC #5 (rendering quality) and AC #10 (performance <500ms for 100KB)</reason>
+      </file>
+      <file>
+        <path>frontend/src/components/DiffView.tsx</path>
+        <kind>component</kind>
+        <symbol>DiffView</symbol>
+        <lines>N/A</lines>
+        <reason>Document change tracking and diff display - validates AC #6 (diff view functionality)</reason>
+      </file>
+      <file>
+        <path>frontend/src/context/LayoutContext.tsx</path>
+        <kind>context</kind>
+        <symbol>LayoutContext</symbol>
+        <lines>N/A</lines>
+        <reason>Layout mode management (terminal/artifact/split) - validates AC #2 (auto-shift to artifact-dominant), AC #7 (layout customization)</reason>
+      </file>
+      <file>
+        <path>frontend/src/context/SessionContext.tsx</path>
+        <kind>context</kind>
+        <symbol>SessionContext</symbol>
+        <lines>N/A</lines>
+        <reason>Session state management - validates AC #3 (multi-session context switching and state preservation)</reason>
+      </file>
+      <file>
+        <path>backend/src/sessionManager.ts</path>
+        <kind>module</kind>
+        <symbol>SessionManager</symbol>
+        <lines>N/A</lines>
+        <reason>Session lifecycle management from Epic 2 - ensures session isolation for multi-session validation (AC #1, #3)</reason>
+      </file>
+      <file>
+        <path>backend/src/ptyManager.ts</path>
+        <kind>module</kind>
+        <symbol>PTYManager</symbol>
+        <lines>N/A</lines>
+        <reason>PTY process management from Epic 1 - terminal functionality for interactive feedback loop (AC #9)</reason>
+      </file>
+    </code>
+    <dependencies>
+      <node>
+        <package name="react-markdown" version="^9.x">Markdown rendering (AC #5)</package>
+        <package name="remark-gfm" version="^4.x">GitHub Flavored Markdown support (AC #5)</package>
+        <package name="rehype-highlight" version="^7.x">Syntax highlighting for code blocks (AC #5)</package>
+        <package name="highlight.js" version="^11.x">Syntax highlighting themes - Oceanic Calm (AC #5)</package>
+        <package name="diff" version="^5.x">Line-by-line diff calculation (AC #6)</package>
+        <package name="react-window" version="^1.x">Virtual scrolling for large file trees (AC #10, #11)</package>
+        <package name="chokidar" version="^4.x">File system watching (AC #8)</package>
+        <package name="js-yaml" version="^4.x">YAML parsing for BMAD status files (AC #4)</package>
+        <package name="xterm" version="^5.x">Terminal emulator from Epic 1 (AC #9)</package>
+        <package name="react" version="^19.x">Frontend framework</package>
+        <package name="vite" version="^6.x">Build tool and dev server</package>
+        <package name="vitest" version="latest">Frontend testing framework</package>
+        <package name="playwright" version="latest">E2E testing framework (AC #12)</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - **Validation Story**: This is a validation story, not implementation. Focus is on testing existing Epic 3 functionality, not building new features.
+    - **Real BMAD Workflows Required**: Must test with actual BMAD workflows (PRD creation, architecture, epic planning) generating real markdown documents.
+    - **Performance NFRs are Critical**: All performance targets must be measured and documented. Violations must be flagged for optimization before Epic 3 completion.
+    - **Multi-Session Testing**: Minimum 2 sessions required for validation, ideally test with 3-4 sessions to validate design limit.
+    - **Comprehensive Coverage**: All 12 acceptance criteria must be validated and documented. Cannot skip any AC.
+    - **Documentation Artifacts**: Must create validation script (epic-3-validation-script.md) and report template (epic-3-validation-report-template.md) as deliverables.
+    - **From Architecture**: File tree rendering <100ms for 500 files requires virtual scrolling. Markdown rendering <500ms for 100KB file. Layout animation 350ms CSS transition (no JavaScript animation). File change notification <200ms end-to-end.
+    - **From Tech Spec**: Chokidar debounce 500ms to batch rapid updates. Oceanic Calm color scheme: Green #A3BE8C (completed), Blue #88C0D0 (current), Gray #4C566A (pending), Red #BF616A (deletions in diff).
+    - **From Epic 2 Lessons**: Comprehensive test coverage (96%+) prevents regressions - validation must be thorough. TypeScript strict mode catches edge cases - verify type safety in all components.
+    - **Testing Frameworks**: Use Chrome DevTools Performance tab for timing measurements, React DevTools Profiler for component render times, Network tab for WebSocket latency.
+    - **Stress Testing Scenarios**: 100+ markdown files in workspace, 500KB PRD with complex formatting, rapid file changes (multiple docs written quickly).
+    - **localStorage Usage**: Panel sizes, diff cache (last viewed content), sidebar view preference - all must persist and be validated.
+    - **React Context API**: Separate contexts (SessionContext, LayoutContext, WorkflowContext) prevent re-renders - validate context splitting effectiveness.
+    - **shadcn/ui Components**: Tabs (sidebar toggle), Resizable (panel handles), DropdownMenu (settings) - validate accessibility and keyboard controls.
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>WorkflowState</name>
+      <kind>TypeScript interface</kind>
+      <signature>
+        interface WorkflowState {
+          currentStep: string;
+          completedSteps: string[];
+          steps: WorkflowStep[];
+        }
+        interface WorkflowStep {
+          name: string;
+          status: 'completed' | 'in_progress' | 'pending';
+          displayName?: string;
+        }
+      </signature>
+      <path>backend/src/types.ts (or statusParser.ts)</path>
+    </interface>
+    <interface>
+      <name>FileTreeNode</name>
+      <kind>TypeScript interface</kind>
+      <signature>
+        interface FileTreeNode {
+          name: string;
+          path: string;
+          type: 'file' | 'directory';
+          children?: FileTreeNode[];
+          lastModified: string; // ISO 8601 timestamp
+        }
+      </signature>
+      <path>backend/src/types.ts</path>
+    </interface>
+    <interface>
+      <name>LayoutState</name>
+      <kind>TypeScript interface</kind>
+      <signature>
+        interface LayoutState {
+          leftSidebarView: 'files' | 'workflow';
+          leftSidebarWidth: number; // 200-400px
+          rightSidebarWidth: number; // 200-400px
+          mainContentMode: 'terminal' | 'artifact' | 'split';
+          splitRatio: number; // 0.3-0.7
+          isLeftCollapsed: boolean;
+          isRightCollapsed: boolean;
+        }
+      </signature>
+      <path>frontend/src/context/LayoutContext.tsx</path>
+    </interface>
+    <interface>
+      <name>DiffCacheEntry</name>
+      <kind>localStorage schema</kind>
+      <signature>
+        interface DiffCacheEntry {
+          filePath: string;
+          lastViewedContent: string;
+          lastViewedAt: string; // ISO 8601 timestamp
+        }
+      </signature>
+      <path>localStorage (frontend)</path>
+    </interface>
+    <interface>
+      <name>WebSocket Messages - workflow.updated</name>
+      <kind>WebSocket protocol</kind>
+      <signature>
+        {
+          type: 'workflow.updated',
+          sessionId: string,
+          workflow: WorkflowState
+        }
+      </signature>
+      <path>backend/src/server.ts, frontend WebSocket handlers</path>
+    </interface>
+    <interface>
+      <name>WebSocket Messages - file.changed</name>
+      <kind>WebSocket protocol</kind>
+      <signature>
+        {
+          type: 'file.changed',
+          path: string,
+          event: 'add' | 'change' | 'unlink',
+          timestamp: string
+        }
+      </signature>
+      <path>backend/src/server.ts, frontend WebSocket handlers</path>
+    </interface>
+    <interface>
+      <name>WebSocket Messages - layout.shift</name>
+      <kind>WebSocket protocol</kind>
+      <signature>
+        {
+          type: 'layout.shift',
+          mode: 'terminal' | 'artifact' | 'split',
+          trigger: 'file_write' | 'user_input'
+        }
+      </signature>
+      <path>backend/src/server.ts, frontend WebSocket handlers</path>
+    </interface>
+    <interface>
+      <name>GET /api/documents/tree</name>
+      <kind>REST endpoint</kind>
+      <signature>
+        GET /api/documents/tree
+        Response: { tree: FileTreeNode[] }
+      </signature>
+      <path>backend/src/server.ts</path>
+    </interface>
+    <interface>
+      <name>GET /api/documents/:path</name>
+      <kind>REST endpoint</kind>
+      <signature>
+        GET /api/documents/:path
+        Response: string (text/plain for markdown)
+      </signature>
+      <path>backend/src/server.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Epic 3 follows the testing strategy established in Epics 1 and 2:
+      - **Unit Tests (Backend)**: Jest for statusParser, fileWatcher extensions. Target 70%+ coverage.
+      - **Unit Tests (Frontend)**: Vitest for WorkflowProgress, FileTree, ArtifactViewer, DiffView components. Target 50%+ coverage.
+      - **Integration Tests**: Jest/Vitest for WebSocket message flows, file-to-UI update chains.
+      - **E2E Tests**: Playwright for critical user journeys: document review flow, multi-session monitoring, diff view workflow.
+      - **Performance Tests**: Chrome DevTools Performance tab to measure and validate NFR targets (tab switching, file tree rendering, markdown rendering, layout animation, file change notification).
+      - **Stress Tests**: Validate with 100+ files, 500KB markdown documents, rapid file changes.
+
+      Validation Story Specific:
+      - Create validation script (epic-3-validation-script.md) with step-by-step test scenarios
+      - Create validation report template (epic-3-validation-report-template.md) for documenting results
+      - Execute manual validation following script, capture screenshots and performance metrics
+      - Document any bugs, NFR violations, or issues discovered during validation
+    </standards>
+    <locations>
+      backend/__tests__/
+      frontend/src/**/*.test.tsx
+      frontend/src/**/*.test.ts
+      e2e/tests/ (Playwright)
+      docs/sprint-artifacts/epic-3-validation-script.md (to be created)
+      docs/sprint-artifacts/epic-3-validation-report-template.md (to be created)
+      docs/sprint-artifacts/epic-3-validation-results.md (to be created after execution)
+    </locations>
+    <ideas>
+      AC #1 (4 sessions at a glance):
+      - E2E: Create 2+ sessions with different BMAD workflows, switch between them, verify each shows correct state
+
+      AC #2 (Document review flow):
+      - E2E: Run PRD creation workflow, verify file tree updates, layout shifts, artifact renders, terminal visible
+
+      AC #3 (Multi-session switching):
+      - E2E: Switch sessions, verify terminal updates, file tree updates, workflow progress updates, state preserved
+
+      AC #4 (Workflow progress):
+      - Unit: Test WorkflowProgress component renders correct indicators per status
+      - Integration: YAML file change → workflow.updated WebSocket → UI update
+
+      AC #5 (Artifact rendering):
+      - Unit: Test ArtifactViewer renders GFM features (tables, task lists, code blocks)
+      - Visual: Verify syntax highlighting and Oceanic Calm theme
+
+      AC #6 (Diff view):
+      - Unit: Test diff calculation (added lines green, deleted lines red)
+      - Integration: File change → diff indicator → show diff → correct display
+
+      AC #7 (Layout customization):
+      - Unit: Test panel resize constraints (min/max)
+      - Integration: Resize → localStorage save → reload → sizes restored
+
+      AC #8 (File tree updates):
+      - Integration: Create file → chokidar event → file.changed WebSocket → tree updates within 1 second
+
+      AC #9 (Interactive feedback):
+      - E2E: View artifact at 70%, type in terminal at 30%, Claude responds, diff shows changes
+
+      AC #10 (Performance):
+      - Performance: Measure file tree rendering with 500 files using DevTools (<100ms)
+      - Performance: Measure markdown rendering with 100KB file (<500ms)
+      - Performance: Measure sidebar toggle time (<50ms)
+      - Performance: Measure file change notification latency (<200ms)
+      - Performance: Verify layout animation duration (350ms CSS transition)
+
+      AC #11 (Stress testing):
+      - Stress: Create workspace with 100+ files, measure scrolling performance (60fps)
+      - Stress: Create 500KB markdown file, measure rendering time
+      - Stress: Trigger rapid file changes, verify debounce batching and UI responsiveness
+
+      AC #12 (Validation artifacts):
+      - Documentation: Create epic-3-validation-script.md with step-by-step scenarios
+      - Documentation: Create epic-3-validation-report-template.md with expected vs actual format
+      - Execution: Run through all scenarios, fill out report, capture screenshots and metrics
+    </ideas>
+  </tests>
+</story-context>

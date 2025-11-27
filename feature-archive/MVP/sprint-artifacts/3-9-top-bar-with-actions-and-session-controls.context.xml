@@ -1,0 +1,129 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>9</storyId>
+    <title>Top Bar with Actions and Session Controls</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/3-9-top-bar-with-actions-and-session-controls.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer using Claude Container</asA>
+    <iWant>a top bar with logo, new session button, STOP button, and settings menu</iWant>
+    <soThat>I have quick access to core actions without navigating away from my current workflow</soThat>
+    <tasks>
+      - Create TopBar component structure (56px fixed height, flexbox layout)
+      - Implement logo and title display ("Claude Container", 18px bold, #D8DEE9 color)
+      - Add "+ New Session" button (primary variant, #88C0D0 background, opens SessionModal)
+      - Implement STOP button (destructive variant, #BF616A background, sends SIGINT via WebSocket)
+      - Create Settings dropdown menu (DropdownMenu component, ghost icon button)
+      - Implement "Update BMAD" functionality (POST /api/bmad/update, spawns npx command)
+      - Add visual feedback and states (hover, active, loading, disabled states)
+      - Testing (unit tests, integration tests, visual tests, E2E tests)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. Top bar displays with logo/title, "+ New Session" button, STOP button, and settings icon (visual layout)
+    2. STOP button sends interrupt (SIGINT) to active session when clicked
+    3. "Update BMAD" menu option executes `npx bmad-method install` command
+    4. Top bar has fixed height (56px) and stays visible across all layout modes
+    5. "+ New Session" button opens session creation modal (Story 2.3 component)
+    6. Settings dropdown menu includes "Update BMAD", "Preferences" (future), and "About" options
+    7. Visual feedback: buttons show hover states and loading indicators
+    8. STOP button is always visible (not hidden when no active session, but can be disabled)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/sprint-artifacts/tech-spec-epic-3.md" title="Epic 3 Technical Specification" section="Story 3.9: Top Bar with Actions and Session Controls" snippet="Top bar specification: Height 56px, background #3B4252, layout left-to-right with logo, spacer, buttons. STOP button sends SIGINT to active session only. Update BMAD executes npx bmad-method install in /workspace." />
+      <doc path="docs/epics/epic-3-workflow-visibility.md" title="Epic 3: Workflow Visibility & Document Review" section="Story 3.9: Top Bar with Actions and Session Controls" snippet="Top bar provides quick access to core actions. When user clicks STOP, interrupt is sent to active session. Settings dropdown triggers BMAD update command with progress/success toasts." />
+      <doc path="docs/architecture.md" title="System Architecture" section="WebSocket Protocol" snippet="Client sends terminal.interrupt message with sessionId to backend. Backend calls ptyProcess.kill('SIGINT') to send interrupt to PTY process." />
+      <doc path="docs/architecture.md" title="System Architecture" section="UI Component Library" snippet="shadcn/ui components used throughout: Button (primary/destructive/ghost variants), DropdownMenu, Toast. Tailwind CSS with Oceanic Calm theme colors." />
+      <doc path="docs/architecture.md" title="System Architecture" section="REST Endpoints" snippet="Backend uses Express 4.x with asyncHandler wrapper for error handling. API endpoints prefixed with /api. New endpoint needed: POST /api/bmad/update for BMAD installation command." />
+      <doc path="docs/prd.md" title="Product Requirements Document" section="FR5: Update BMAD Method" snippet="User can update BMAD Method installation via UI button. Backend executes npx bmad-method install in workspace directory." />
+      <doc path="docs/prd.md" title="Product Requirements Document" section="FR27: STOP Button" snippet="Visible STOP button in UI sends SIGINT (Ctrl+C) to Claude PTY process. Must interrupt even unresponsive sessions." />
+    </docs>
+
+    <code>
+      <file path="frontend/src/components/SessionModal.tsx" kind="component" symbol="SessionModal" lines="24-50" reason="Existing modal component for session creation. TopBar's '+ New Session' button opens this modal. Props: open, onOpenChange, onSessionCreated." />
+      <file path="frontend/src/hooks/useWebSocket.ts" kind="hook" symbol="useWebSocket" lines="13-25" reason="WebSocket hook with sendInterrupt() method for sending SIGINT messages. TopBar STOP button uses this to interrupt active session." />
+      <file path="frontend/src/components/ui/button.tsx" kind="ui-component" symbol="Button" lines="1-50" reason="shadcn/ui Button component with variants (primary, destructive, ghost). Used for all TopBar buttons." />
+      <file path="frontend/src/components/ui/dropdown-menu.tsx" kind="ui-component" symbol="DropdownMenu" lines="1-50" reason="shadcn/ui DropdownMenu component for settings menu. Includes DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem." />
+      <file path="frontend/src/components/ui/toast.tsx" kind="ui-component" symbol="useToast" lines="1-50" reason="Toast notification hook for user feedback. Used to show progress/success/error messages for Update BMAD action." />
+      <file path="frontend/src/App.tsx" kind="component" symbol="App" lines="1-50" reason="Root layout component. TopBar should be added as fixed top element above main content area." />
+      <file path="backend/src/server.ts" kind="server" symbol="express app" lines="1-50" reason="Main Express server file. Add new POST /api/bmad/update endpoint using asyncHandler pattern." />
+    </code>
+
+    <dependencies>
+      <frontend>
+        <package name="react" version="^19.2.0" />
+        <package name="lucide-react" version="^0.554.0" note="Icon library for terminal icon and settings icon" />
+        <package name="@radix-ui/react-dialog" version="^1.1.15" note="Used by SessionModal component" />
+        <package name="@radix-ui/react-dropdown-menu" version="^2.1.16" note="Settings dropdown menu primitive" />
+        <package name="@radix-ui/react-toast" version="^1.2.15" note="Toast notifications for feedback" />
+        <package name="class-variance-authority" version="^0.7.1" note="Button variant styling" />
+        <package name="tailwind-merge" version="^3.4.0" note="Tailwind class merging utility" />
+        <package name="clsx" version="^2.1.1" note="Conditional class names" />
+      </frontend>
+      <backend>
+        <package name="express" version="^4.18.0" note="HTTP server for REST endpoints" />
+        <package name="winston" version="^3.11.0" note="Logging for BMAD update command output" />
+      </backend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - TopBar must have exactly 56px fixed height (not responsive) per tech spec
+    - Background color must be #3B4252 (Oceanic Calm dark background)
+    - Button colors: primary #88C0D0 (blue), destructive #BF616A (red), ghost #81A1C1 (gray)
+    - Logo/title text color: #D8DEE9, 18px bold font
+    - Layout: Logo (left-aligned) → flex-grow spacer → "+ New Session" → STOP → Settings (right-aligned)
+    - STOP button sends interrupt ONLY to currently active session (not all sessions)
+    - STOP button must be always visible but can be disabled when no active session exists
+    - Update BMAD command must execute in /workspace directory (not container root)
+    - Command output streamed to logs only (not shown in terminal UI)
+    - Button interactions must complete in <200ms per NFR-PERF-2
+    - Dropdown menu open/close must be <50ms
+    - Follow existing shadcn/ui component patterns (import from @/components/ui/)
+    - Use existing useWebSocket hook for WebSocket communication (do not create new WebSocket connection)
+    - Toast notifications must use existing toast system (useToast hook)
+    - All file paths in code must use @ alias for src directory (configured in vite.config.ts)
+  </constraints>
+
+  <interfaces>
+    <interface name="WebSocket sendInterrupt" kind="function" signature="sendInterrupt: (sessionId: string) => void" path="frontend/src/hooks/useWebSocket.ts" note="Send SIGINT to specific session via WebSocket" />
+    <interface name="SessionModal" kind="component" signature="SessionModalProps { open: boolean; onOpenChange: (open: boolean) => void; onSessionCreated: (session: Session) => void }" path="frontend/src/components/SessionModal.tsx" note="Modal for creating new sessions" />
+    <interface name="POST /api/bmad/update" kind="REST endpoint" signature="POST /api/bmad/update → { success: boolean, message: string }" path="backend/src/server.ts" note="New endpoint to be created. Executes npx bmad-method install in /workspace" />
+    <interface name="Button variants" kind="component prop" signature="variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'" path="frontend/src/components/ui/button.tsx" note="shadcn/ui Button component variants" />
+    <interface name="useToast" kind="hook" signature="toast({ title: string, description?: string, variant?: 'default' | 'destructive' }) => void" path="frontend/src/components/ui/toast.tsx" note="Show toast notifications" />
+  </interfaces>
+
+  <tests>
+    <standards>
+      Frontend uses Vitest with React Testing Library and jsdom for unit/integration tests. Test files colocated with components using .test.tsx suffix. Backend uses Jest with ts-jest for TypeScript support. Testing patterns established in Epic 1 and Epic 2: render components, fire user events, assert on DOM state. Mock WebSocket connections and HTTP requests using Vitest/Jest mocking. E2E tests use Playwright (not in scope for unit tests).
+    </standards>
+
+    <locations>
+      - frontend/src/components/TopBar.test.tsx (to be created)
+      - frontend/src/components/**/*.test.tsx (existing pattern)
+      - backend/src/server.test.ts (extend with new endpoint tests)
+      - backend/tests/integration/*.test.ts (existing integration test location)
+    </locations>
+
+    <ideas>
+      <test ac="1" idea="Unit test: TopBar renders all elements (logo, + New Session, STOP, settings icon). Use Testing Library getByText, getByRole." />
+      <test ac="2" idea="Unit test: STOP button click calls sendInterrupt with active session ID. Mock useWebSocket hook." />
+      <test ac="2" idea="Integration test: STOP button sends WebSocket message to backend, backend calls ptyProcess.kill('SIGINT')." />
+      <test ac="3" idea="Integration test: Update BMAD menu item triggers POST /api/bmad/update, backend spawns npx process, returns success/failure." />
+      <test ac="4" idea="Visual test: TopBar has 56px height in all layout modes. Test with different viewport sizes." />
+      <test ac="5" idea="Unit test: + New Session button click sets modal open state, SessionModal renders with open=true." />
+      <test ac="6" idea="Unit test: Settings dropdown opens on click, shows menu items (Update BMAD, Preferences, About)." />
+      <test ac="7" idea="Visual test: Hover states render correctly for all buttons. Test active/disabled states." />
+      <test ac="8" idea="Unit test: STOP button disabled when no active session, enabled when session active. Test session status transitions." />
+      <test ac="3" idea="Unit test: Toast notifications appear during BMAD update (loading → success/error). Mock toast hook." />
+    </ideas>
+  </tests>
+</story-context>

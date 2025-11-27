@@ -1,0 +1,152 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>10</storyId>
+    <title>Empty State UI for First-Time Users</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/3-10-empty-state-ui-for-first-time-users.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a new user launching Claude Container for the first time</asA>
+    <iWant>to see a welcoming empty state with clear next steps</iWant>
+    <soThat>I understand how to create my first session and get started quickly</soThat>
+    <tasks>
+      - Task 1: Create EmptyState component (AC: 1, 2, 4, 5, 6, 8)
+      - Task 2: Integrate "Create New Session" button (AC: 3, 7)
+      - Task 3: Implement notification permission banner (AC: 9)
+      - Task 4: Integrate EmptyState into App layout (AC: 8)
+      - Task 5: Write frontend tests (AC: All)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. AC3.18 - Empty state component displays when no sessions exist (from Epic 3 Tech Spec)
+    2. Empty state shows welcoming message explaining Claude Container's purpose
+    3. Empty state includes prominent "Create New Session" call-to-action button
+    4. Empty state displays quick start guide or feature highlights
+    5. Component is visually aligned with Oceanic Calm theme
+    6. Empty state is responsive and centers in available space
+    7. Clicking "Create New Session" button opens SessionModal
+    8. Empty state is conditionally rendered only when `sessions.length === 0`
+    9. Notification permission banner appears on first load if not granted (AC3.19 from tech spec)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/sprint-artifacts/tech-spec-epic-3.md" title="Epic 3 Technical Specification" section="Acceptance Criteria">
+        AC3.18: Empty state shows on first load - No sessions → welcoming empty state with Create button.
+        AC3.19: Notification permission requested - First load shows permission banner if not granted.
+      </doc>
+      <doc path="docs/sprint-artifacts/tech-spec-epic-3.md" title="Epic 3 Technical Specification" section="Overview">
+        Epic 3 delivers real-time visibility into BMAD workflow progress and generated artifacts. Empty state is foundational UX for first-time users.
+      </doc>
+      <doc path="docs/architecture.md" title="Architecture" section="Technology Stack - Frontend">
+        React 19 with TypeScript, shadcn/ui component library, Tailwind CSS 4.0 for styling. Oceanic Calm theme colors defined.
+      </doc>
+      <doc path="docs/architecture.md" title="Architecture" section="Consistency Rules - Oceanic Calm Theme">
+        Background: #2E3440, Text: #D8DEE9, Accent Blue: #88C0D0, Accent Green: #A3BE8C, Yellow: #EBCB8B
+      </doc>
+      <doc path="docs/architecture-decisions.md" title="Architecture Decision Records" section="ADR-006: React Frontend with xterm.js">
+        React component-based architecture. shadcn/ui for accessible UI primitives.
+      </doc>
+    </docs>
+    <code>
+      <file path="frontend/src/App.tsx" kind="component" symbol="App" lines="15-225" reason="Main app layout - will need modification to add conditional empty state rendering">
+        Contains session management state, modal handling, and main layout structure. Shows pattern for integrating new components.
+      </file>
+      <file path="frontend/src/components/SessionModal.tsx" kind="component" symbol="SessionModal" lines="53-200" reason="Session creation modal that empty state's CTA button will trigger">
+        Provides interface for creating new sessions. EmptyState button will call setSessionModalOpen(true).
+      </file>
+      <file path="frontend/src/components/ui/button.tsx" kind="ui-component" symbol="Button" reason="shadcn/ui Button component for CTA button styling">
+        Pre-built button component with variants (default, destructive, outline, etc.) and sizes.
+      </file>
+      <file path="frontend/src/components/ui/dialog.tsx" kind="ui-component" symbol="Dialog" reason="Dialog primitives from shadcn/ui - may be useful for notification banner">
+        Radix UI dialog components for modals and overlays.
+      </file>
+      <file path="frontend/src/components/ConnectionBanner.tsx" kind="component" symbol="ConnectionBanner" reason="Example of banner component pattern for notification permission banner">
+        Shows pattern for creating informational banners at top of viewport.
+      </file>
+    </code>
+    <dependencies>
+      <frontend>
+        <package name="react" version="^19.2.0" reason="Core framework" />
+        <package name="react-dom" version="^19.2.0" reason="React rendering" />
+        <package name="@radix-ui/react-dialog" version="^1.1.15" reason="Dialog primitives for modals" />
+        <package name="@radix-ui/react-slot" version="^1.2.4" reason="shadcn/ui composition" />
+        <package name="lucide-react" version="^0.554.0" reason="Icon library for UI elements" />
+        <package name="clsx" version="^2.1.1" reason="Conditional class names" />
+        <package name="tailwind-merge" version="^3.4.0" reason="Merge Tailwind classes" />
+        <package name="tailwindcss" version="^4.1.17" reason="Styling framework" />
+      </frontend>
+      <frontend-dev>
+        <package name="vitest" version="^4.0.13" reason="Test framework" />
+        <package name="@testing-library/react" version="^16.3.0" reason="React component testing" />
+        <package name="@testing-library/jest-dom" version="^6.9.1" reason="DOM assertions" />
+        <package name="@testing-library/user-event" version="^14.6.1" reason="User interaction simulation" />
+      </frontend-dev>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Component must be named EmptyState.tsx following PascalCase convention for React components
+    - Place in flat components directory: frontend/src/components/
+    - Use Oceanic Calm theme colors from architecture (#2E3440 background, #D8DEE9 text, #88C0D0 or #A3BE8C accent)
+    - Must use shadcn/ui Button component, not custom button implementation
+    - Conditional rendering based on sessions.length === 0 in App.tsx
+    - NotificationBanner must check Notification.permission API status
+    - Store notification banner dismissal in localStorage to prevent re-prompting
+    - Notification permission setup only - actual sending happens in Epic 4 Story 4.3
+    - Follow existing import pattern: external deps first, then @/ imports, then types
+    - Component should be responsive and center in viewport using Tailwind utilities
+  </constraints>
+
+  <interfaces>
+    <interface name="SessionModalProps" kind="component-props" signature="{ open: boolean, onOpenChange: (open: boolean) => void, onSessionCreated: (session: Session) => void }" path="frontend/src/components/SessionModal.tsx">
+      Props for SessionModal component - EmptyState button will trigger via onOpenChange callback
+    </interface>
+    <interface name="Notification API" kind="browser-api" signature="Notification.permission: 'default' | 'granted' | 'denied'; Notification.requestPermission(): Promise<string>">
+      Browser Notification API for permission handling in NotificationBanner component
+    </interface>
+    <interface name="localStorage API" kind="browser-api" signature="localStorage.setItem(key: string, value: string); localStorage.getItem(key: string): string | null">
+      Browser localStorage for persisting notification banner dismissal state
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Frontend tests use Vitest with @testing-library/react. Tests co-located with components using .test.tsx suffix.
+      Unit tests verify component rendering, user interactions, and conditional logic.
+      Follow AAA pattern (Arrange, Act, Assert). Use screen queries and user-event for interactions.
+    </standards>
+    <locations>
+      - frontend/src/components/*.test.tsx (co-located with components)
+      - Run tests with: npm test (in frontend directory)
+    </locations>
+    <ideas>
+      <test ac="1,8" description="Verify EmptyState renders when sessions array is empty">
+        Render App component with empty sessions array, assert EmptyState is visible and main layout is not visible
+      </test>
+      <test ac="1,8" description="Verify EmptyState does not render when sessions exist">
+        Render App component with one or more sessions, assert EmptyState is not visible and main layout is visible
+      </test>
+      <test ac="2,4,5" description="Verify EmptyState content and styling">
+        Render EmptyState component, assert welcome message present, feature highlights present, Oceanic Calm theme classes applied
+      </test>
+      <test ac="3,7" description="Verify Create New Session button triggers modal">
+        Render EmptyState with mock onOpenCreateModal callback, click button, assert callback was called
+      </test>
+      <test ac="9" description="Verify NotificationBanner requests permission">
+        Mock Notification.requestPermission, render NotificationBanner, click "Allow" button, assert requestPermission called
+      </test>
+      <test ac="9" description="Verify NotificationBanner dismissal persists">
+        Render NotificationBanner, click dismiss, assert localStorage.setItem called with dismissal key
+      </test>
+      <test ac="9" description="Verify NotificationBanner only shows when permission is default">
+        Mock Notification.permission as "granted", render NotificationBanner, assert banner is hidden
+      </test>
+    </ideas>
+  </tests>
+</story-context>

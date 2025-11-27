@@ -1,0 +1,25 @@
+# Generated sprint status file for testing
+# Story 6.1: Sprint Status YAML Parser
+
+generated: 2025-11-24
+project: claude-container
+project_key: claude-container
+tracking_system: file-system
+story_location: docs/sprint-artifacts
+
+development_status:
+  # Epic 4: Production Stability & Polish
+  epic-4: contexted
+  4-1-session-status-tracking: done
+  4-2-session-attention-badges: done
+  4-15-multiple-sessions-on-same-branch: done
+  4-16-session-list-hydration: review
+  4-17-cross-tab-sync: in-progress
+  4-18-active-session-destroy-protection: drafted
+  epic-4-retrospective: optional
+
+  # Epic 6: Interactive Workflow Tracker
+  epic-6: contexted
+  6-1-sprint-status-yaml-parser: backlog
+  6-2-artifact-path-derivation: backlog
+  6-3-sprint-tracker-component: backlog

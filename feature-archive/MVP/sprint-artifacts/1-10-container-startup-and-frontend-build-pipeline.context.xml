@@ -1,0 +1,243 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.10</storyId>
+    <title>Container Startup and Frontend Build Pipeline</title>
+    <status>ready-for-dev</status>
+    <generatedAt>2025-11-24T00:00:00.000Z</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-10-container-startup-and-frontend-build-pipeline.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>a single `docker run` command that starts the container and serves the UI</iWant>
+    <soThat>setup is simple and matches the "zero configuration startup" requirement (NFR-USE-1)</soThat>
+    <tasks>
+      - [ ] Task 1: Implement multi-stage Dockerfile (AC: #1, #4)
+        - [ ] Subtask 1.1: Create backend stage with npm dependencies
+        - [ ] Subtask 1.2: Create frontend build stage with Vite build
+        - [ ] Subtask 1.3: Copy frontend dist to backend stage
+        - [ ] Subtask 1.4: Optimize layer caching for faster rebuilds
+
+      - [ ] Task 2: Configure Express to serve static files (AC: #2)
+        - [ ] Subtask 2.1: Add express.static middleware for `/app/frontend/dist`
+        - [ ] Subtask 2.2: Configure index.html serving for root path
+        - [ ] Subtask 2.3: Handle SPA routing (serve index.html for unknown paths)
+
+      - [ ] Task 3: Implement health check endpoint (AC: #5)
+        - [ ] Subtask 3.1: Create `/api/health` GET endpoint in server.ts
+        - [ ] Subtask 3.2: Return JSON with status and uptime
+        - [ ] Subtask 3.3: Add basic health check test
+
+      - [ ] Task 4: Configure Docker CMD for startup (AC: #3, #4)
+        - [ ] Subtask 4.1: Set WORKDIR to /app/backend
+        - [ ] Subtask 4.2: Set CMD to start Node.js backend server
+        - [ ] Subtask 4.3: Verify initial Claude session spawns on startup
+
+      - [ ] Task 5: Test end-to-end startup flow (AC: #1, #2, #3, #4, #5)
+        - [ ] Subtask 5.1: Build Docker image and measure build time
+        - [ ] Subtask 5.2: Run container and measure startup time (&lt;30s)
+        - [ ] Subtask 5.3: Access browser UI and verify terminal loads
+        - [ ] Subtask 5.4: Verify WebSocket connection established
+        - [ ] Subtask 5.5: Test health check endpoint responds
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. **AC1: Frontend Built During Image Creation**
+       - Given the Dockerfile includes frontend build steps
+       - When the container is built with `docker build -t claude-container .`
+       - Then the frontend is built during container image creation
+       - And the production assets are available at `/app/frontend/dist`
+
+    2. **AC2: Backend Serves Frontend Assets**
+       - Given the container is running
+       - When the backend server starts on port 3000
+       - Then the Express backend serves frontend assets from `/app/frontend/dist`
+       - And when a browser accesses `http://localhost:3000`
+       - Then the React UI loads and displays the terminal
+
+    3. **AC3: WebSocket Connection Established**
+       - Given the React UI has loaded in the browser
+       - When the Terminal component mounts
+       - Then the WebSocket connects to the backend successfully
+       - And Claude CLI is ready to receive commands
+
+    4. **AC4: Startup Time Requirement Met**
+       - Given the Docker image is built
+       - When the container starts with `docker run`
+       - Then the entire startup completes within 30 seconds (NFR-PERF-3)
+       - And the browser can access the UI and see the terminal
+
+    5. **AC5: Health Check Endpoint**
+       - Given the backend server is running
+       - When a client makes a GET request to `/api/health`
+       - Then the endpoint returns `{ status: 'ok', uptime: &lt;number&gt; }`
+       - And the response indicates the backend is operational
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>Non-Functional Requirements - Performance</section>
+        <snippet>NFR-PERF-3: Session Startup - New session creation (worktree + Claude spawn) shall complete within 5 seconds. Container initial startup shall complete within 30 seconds. Rationale: Delays in session creation interrupt flow; startup time acceptable as one-time cost</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>Non-Functional Requirements - Usability</section>
+        <snippet>NFR-USE-1: Zero Configuration Startup - Single `docker run` command starts entire system. No separate configuration files or setup steps required. Rationale: Simple startup critical for daily-use infrastructure</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic Technical Specification: Foundation & Single-Session Terminal</title>
+        <section>Dependencies</section>
+        <snippet>Multi-Stage Docker Build Strategy: Separate build dependencies from runtime dependencies to reduce final image size. Frontend built once during image creation (not on every container start). Backend serves static files via Express: `app.use(express.static('/app/frontend/dist'))`. Build optimization: apt-get packages first → language runtimes → npm install → source code (maximize cache hits)</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic Technical Specification: Foundation & Single-Session Terminal</title>
+        <section>Implementation</section>
+        <snippet>Backend Static File Serving: Express middleware serves frontend: `app.use(express.static('/app/frontend/dist'))`. SPA routing support: Unknown paths should serve index.html (client-side routing). API endpoints use `/api` prefix to avoid conflicts with static files</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic Technical Specification: Foundation & Single-Session Terminal</title>
+        <section>Workflows and Sequencing</section>
+        <snippet>Container Startup Sequence: Container Start → Express Initializes → WebSocket Server Starts → Claude PTY Spawns → Frontend Loaded in Browser → WebSocket Connects → Terminal Ready. Performance: Container startup to Claude prompt visible: &lt;30 seconds target. Express initialization + PTY spawn + WebSocket ready: ~10-15 seconds typical. Frontend load: Vite optimized bundle (&lt;500KB gzipped) + code splitting for &lt;3s initial render</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Deployment Architecture</section>
+        <snippet>Deployment Steps: 1. Build Docker image: `docker build -t claude-container:latest .` 2. Run container: `docker run -d --name claude-container -p 3000:3000 -v $(pwd):/workspace -v ~/.config/claude-code:/config/.claude-code:ro --restart unless-stopped claude-container:latest` 3. Access UI: `open http://localhost:3000`</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Project Structure</section>
+        <snippet>Container lifecycle: Startup - Backend starts → Loads sessions from JSON → Spawns WebSocket server → Serves frontend. Restart - Sessions restored from JSON, PTY processes not restored (user resumes manually). Shutdown - Graceful shutdown sends SIGTERM to PTY processes → Saves session state → Closes WebSocket connections</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture-decisions.md</path>
+        <title>Architecture Decision Records</title>
+        <section>ADR-010: Maximum 4 Concurrent Sessions</section>
+        <snippet>Docker Container Optimization: Layer caching - Dockerfile ordered for maximum cache hits (apt-get first, npm install mid, COPY source last). Multi-stage build - Separate build stage for npm dependencies (smaller final image). Base image - Ubuntu 22.04 LTS (balance between size and compatibility)</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-1-foundation.md</path>
+        <title>Epic 1: Foundation & Single-Session Terminal</title>
+        <section>Story 1.10: Container Startup and Frontend Build Pipeline</section>
+        <snippet>Prerequisites: All previous stories in Epic 1. Technical Notes: Multi-stage Docker build to separate build dependencies from runtime. Frontend built once during image creation (not on every container start). Backend serves static files via Express. Health check endpoint: `GET /api/health` returns `{ status: 'ok' }`. Docker CMD starts backend server which spawns initial Claude session</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>Dockerfile</path>
+        <kind>dockerfile</kind>
+        <symbol>Multi-stage build</symbol>
+        <lines>all</lines>
+        <reason>Core artifact - needs to be created with multi-stage build for backend and frontend, implementing the build pipeline described in acceptance criteria</reason>
+      </artifact>
+      <artifact>
+        <path>backend/src/server.ts</path>
+        <kind>service</kind>
+        <symbol>Express server initialization</symbol>
+        <lines>all</lines>
+        <reason>Backend entry point that must serve static frontend files and implement health check endpoint as per AC2 and AC5</reason>
+      </artifact>
+      <artifact>
+        <path>backend/package.json</path>
+        <kind>config</kind>
+        <symbol>Backend dependencies</symbol>
+        <lines>all</lines>
+        <reason>Defines Express and other backend dependencies needed for static file serving and health endpoint</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/vite.config.ts</path>
+        <kind>config</kind>
+        <symbol>Vite build configuration</symbol>
+        <lines>all</lines>
+        <reason>Frontend build configuration for production bundle optimization (&lt;500KB gzipped target)</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/package.json</path>
+        <kind>config</kind>
+        <symbol>Frontend dependencies</symbol>
+        <lines>all</lines>
+        <reason>Defines React, Vite, and frontend build dependencies</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <express>^4.18.0</express>
+        <ws>^8.14.0</ws>
+        <node-pty>^1.0.0</node-pty>
+        <winston>^3.11.0</winston>
+      </node>
+      <node-frontend>
+        <react>^19.0.0</react>
+        <react-dom>^19.0.0</react-dom>
+        <vite>^6.0.0</vite>
+        <typescript>^5.3.0</typescript>
+        <tailwindcss>^4.0.0</tailwindcss>
+        <xterm>^5.3.0</xterm>
+      </node-frontend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - **Multi-Stage Docker Build Required**: Separate frontend build stage from backend runtime to minimize final image size
+    - **Layer Caching Optimization**: Dockerfile must order commands for maximum cache hits (apt-get first → language runtimes → npm install → source code)
+    - **Static File Serving Pattern**: Backend serves frontend via `express.static('/app/frontend/dist')` middleware
+    - **SPA Routing Support**: Unknown paths must serve index.html for client-side React routing
+    - **API Prefix Convention**: All REST endpoints use `/api` prefix to avoid conflicts with static files
+    - **Performance Constraint**: Total startup time from `docker run` to browser-visible terminal must be &lt;30 seconds (NFR-PERF-3)
+    - **Frontend Bundle Size**: Production bundle must be &lt;500KB gzipped with code splitting
+    - **Health Endpoint Required**: `/api/health` must return JSON with status and uptime
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Health Check Endpoint</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /api/health → { status: 'ok', uptime: number }</signature>
+      <path>backend/src/server.ts</path>
+    </interface>
+    <interface>
+      <name>Static File Serving</name>
+      <kind>Express middleware</kind>
+      <signature>app.use(express.static('/app/frontend/dist'))</signature>
+      <path>backend/src/server.ts</path>
+    </interface>
+    <interface>
+      <name>SPA Fallback Route</name>
+      <kind>Express route</kind>
+      <signature>app.get('*', (req, res) => res.sendFile('/app/frontend/dist/index.html'))</signature>
+      <path>backend/src/server.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Integration testing for Docker build and container startup. Use Docker commands to build image, measure build time, start container, and validate startup time. Health endpoint validation using curl or HTTP client. End-to-end smoke test covering build → run → browser access → terminal visible flow. Performance measurement using shell timers and performance.now() for latency validation.
+    </standards>
+    <locations>
+      - Docker build tests: CI/CD pipeline or manual shell scripts
+      - Health endpoint tests: backend/__tests__/ or integration test suite
+      - E2E startup flow: manual validation or Playwright E2E tests
+    </locations>
+    <ideas>
+      - **AC1 Test**: Run `docker build --no-cache -t claude-container:test .` and verify `/app/frontend/dist` exists in built image
+      - **AC2 Test**: Start container, curl `http://localhost:3000` and verify HTML with React root div is returned
+      - **AC3 Test**: Load UI in browser, verify WebSocket connection via browser DevTools Network tab
+      - **AC4 Test**: Measure time from `docker run` to browser showing Claude prompt using shell script timer, verify &lt;30s
+      - **AC5 Test**: curl `http://localhost:3000/api/health` and verify JSON response with status 'ok' and numeric uptime field
+      - **Build Time Test**: Measure Docker build duration, optimize if exceeds reasonable threshold (target: &lt;5 minutes)
+      - **Bundle Size Test**: Check frontend/dist bundle sizes after Vite build, verify gzipped total &lt;500KB
+    </ideas>
+  </tests>
+</story-context>

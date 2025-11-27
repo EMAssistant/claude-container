@@ -1,0 +1,301 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>6</storyId>
+    <title>Multiple WebSocket Connections per Client</title>
+    <status>ready-for-dev</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/2-6-multiple-websocket-connections-per-client.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>each session to stream terminal output independently via WebSocket</iWant>
+    <soThat>all 4 sessions can run concurrently without interference</soThat>
+    <tasks>
+      - Task 1: Extend WebSocket protocol for session attach/detach
+        - Subtask 1.1: Define TypeScript types for session.attach and session.detach messages in backend/src/types.ts
+        - Subtask 1.2: Implement message handlers in backend/src/server.ts WebSocket handler
+        - Subtask 1.3: Create Map&lt;WebSocket, Set&lt;sessionId&gt;&gt; to track client subscriptions
+        - Subtask 1.4: Validate sessionId exists when attach message received
+
+      - Task 2: Implement session subscription management in PTYManager
+        - Subtask 2.1: Add subscribedClients field to PTYProcess tracking: Map&lt;sessionId, Set&lt;WebSocket&gt;&gt;
+        - Subtask 2.2: Create attachSession(ws: WebSocket, sessionId: string) method in PTYManager
+        - Subtask 2.3: Create detachSession(ws: WebSocket, sessionId: string) method in PTYManager
+        - Subtask 2.4: Update PTY onData callback to route output only to subscribed WebSockets
+
+      - Task 3: Route terminal output by sessionId
+        - Subtask 3.1: Modify PTY onData handler to include sessionId in message payload
+        - Subtask 3.2: Send terminal.output messages only to WebSockets subscribed to that session
+        - Subtask 3.3: Filter by sessionId in WebSocket send loop
+        - Subtask 3.4: Log routing events for debugging (sessionId, message size, subscriber count)
+
+      - Task 4: Frontend session attach on terminal view switch
+        - Subtask 4.1: Update useWebSocket hook to send session.attach when session becomes active
+        - Subtask 4.2: Send session.detach when switching away from session (optional optimization)
+        - Subtask 4.3: Handle attach/detach in Terminal component lifecycle
+        - Subtask 4.4: Ensure xterm.js terminal instances persist across switches (no remount)
+
+      - Task 5: Concurrent streaming validation and performance testing
+        - Subtask 5.1: Create integration test: 4 sessions outputting simultaneously
+        - Subtask 5.2: Measure latency from PTY output to WebSocket send for each session
+        - Subtask 5.3: Verify no cross-contamination (session 1 output never appears in session 2 terminal)
+        - Subtask 5.4: Stress test with high-volume output (e.g., cat large-file.txt in all 4 sessions)
+        - Subtask 5.5: Assert p99 latency &lt;100ms per NFR-PERF-4
+
+      - Task 6: WebSocket cleanup on disconnect
+        - Subtask 6.1: Implement WebSocket onclose handler to remove client from all subscriptions
+        - Subtask 6.2: Clean up Map&lt;WebSocket, Set&lt;sessionId&gt;&gt; entry on disconnect
+        - Subtask 6.3: Log cleanup events (client disconnected, N sessions detached)
+        - Subtask 6.4: Ensure PTY processes continue running even if all clients disconnect
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    **Given** 3 sessions are created with IDs: id1, id2, id3
+    **When** the frontend connects to the WebSocket server
+    **Then** a single WebSocket connection is established
+    **And** when the frontend sends session.attach messages:
+      { "type": "session.attach", "sessionId": "id1" }
+      { "type": "session.attach", "sessionId": "id2" }
+      { "type": "session.attach", "sessionId": "id3" }
+    **Then** the backend subscribes this WebSocket to all 3 PTY processes
+    **And** when PTY for id1 outputs "Hello from session 1"
+    **Then** the backend sends:
+      { "type": "terminal.output", "sessionId": "id1", "data": "Hello from session 1" }
+    **And** only the Terminal component for id1 receives and displays the output
+    **And** terminals for id2 and id3 remain unchanged
+    **And** when all 4 sessions are outputting simultaneously
+    **Then** each terminal receives its own output stream without cross-contamination (FR57)
+    **And** terminal latency remains &lt;100ms for all sessions (NFR-PERF-4)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification: Multi-Session Parallel Development</title>
+        <section>WebSocket Protocol Extensions for Multi-Session</section>
+        <snippet>Implements session.attach and session.detach client messages, terminal.output server messages with sessionId routing, maintains single WebSocket connection per client with session-multiplexed messages.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>PTYManager Public API</section>
+        <snippet>Will use onPTYData(sessionId, callback) to register output callbacks. Routing logic added to existing PTY data flow (non-breaking extension).</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>WebSocket Protocol</section>
+        <snippet>Single WebSocket connection per client (not per session per ADR-004, FR56 clarification). Message routing uses sessionId field to direct output to correct terminal component.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Communication Patterns</section>
+        <snippet>Uses established WebSocket communication pattern (JSON for control, tagged messages for output). PTY process communication pattern maintained (each PTY independent). Heartbeat pattern unchanged.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Performance Considerations - Terminal Streaming</section>
+        <snippet>WebSocket binary frames for terminal output. Buffering: Accumulate PTY output in 16ms chunks before sending (60fps equivalent, balances latency vs. message overhead). Backpressure: Throttle PTY reads if WebSocket buffer full.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>backend/src/types.ts</path>
+        <kind>interfaces</kind>
+        <symbol>ClientMessage, ServerMessage, BaseMessage</symbol>
+        <lines>1-101</lines>
+        <reason>Existing WebSocket message type definitions. Need to extend with session.attach and session.detach message types for multi-session routing.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/src/server.ts</path>
+        <kind>server</kind>
+        <symbol>WebSocket connection handler, activeSessions, outputBuffers</symbol>
+        <lines>95-601</lines>
+        <reason>Core WebSocket server implementation with single session support. Need to add session subscription tracking (Map&lt;WebSocket, Set&lt;sessionId&gt;&gt;) and message routing by sessionId.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/src/server.ts</path>
+        <kind>function</kind>
+        <symbol>setupPtyOutputStreaming</symbol>
+        <lines>301-341</lines>
+        <reason>PTY output streaming setup. Need to modify to route output to multiple subscribed WebSocket clients instead of single connection.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/src/server.ts</path>
+        <kind>function</kind>
+        <symbol>bufferTerminalOutput, flushOutputBuffer</symbol>
+        <lines>203-289</lines>
+        <reason>16ms output buffering logic. Need to extend to send to all subscribed WebSocket clients for a session, not just one.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/src/ptyManager.ts</path>
+        <kind>class</kind>
+        <symbol>PTYManager</symbol>
+        <lines>64-302</lines>
+        <reason>PTY process management. May need to extend with session subscription tracking methods (attachSession, detachSession) if not handled purely in server.ts.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/hooks/useWebSocket.ts</path>
+        <kind>hook</kind>
+        <symbol>useWebSocket</symbol>
+        <lines>18-123</lines>
+        <reason>WebSocket connection management hook. Need to add sendAttach and sendDetach methods for session subscription.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/Terminal.tsx</path>
+        <kind>component</kind>
+        <symbol>Terminal</symbol>
+        <lines>12-140</lines>
+        <reason>Terminal component with xterm.js integration. Need to wire session attach/detach lifecycle when terminal becomes active/inactive.</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="ws" version="^8.14.0">WebSocket library for server-side connections</package>
+        <package name="node-pty" version="^1.0.0">PTY process spawning (existing)</package>
+        <package name="uuid" version="^9.0.0">Session ID generation (existing)</package>
+        <package name="winston" version="^3.11.0">Structured logging (existing)</package>
+        <package name="@xterm/xterm" version="^5.5.0">Terminal emulator (existing)</package>
+        <package name="@xterm/addon-fit" version="^0.10.0">Terminal sizing (existing)</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>
+      <category>Architecture Pattern</category>
+      <rule>Single WebSocket connection per client (not per session) per ADR-004 and FR56. Session multiplexing via sessionId field in messages.</rule>
+    </constraint>
+    <constraint>
+      <category>Message Protocol</category>
+      <rule>All WebSocket messages must follow format: { type: 'resource.action', sessionId: string, ...fields }. Message types: session.attach, session.detach, terminal.output.</rule>
+    </constraint>
+    <constraint>
+      <category>Performance</category>
+      <rule>Terminal output latency must remain &lt;100ms per session (NFR-PERF-4). Maintain existing 16ms buffering strategy for output batching.</rule>
+    </constraint>
+    <constraint>
+      <category>Isolation</category>
+      <rule>No cross-contamination between sessions. Output from session A must never appear in terminal B. Verify via routing by sessionId filter.</rule>
+    </constraint>
+    <constraint>
+      <category>Backend State Management</category>
+      <rule>Track session subscriptions with Map&lt;WebSocket, Set&lt;sessionId&gt;&gt; for client-to-sessions mapping. Track Map&lt;sessionId, Set&lt;WebSocket&gt;&gt; for session-to-clients routing.</rule>
+    </constraint>
+    <constraint>
+      <category>Cleanup</category>
+      <rule>On WebSocket disconnect, remove client from all session subscriptions. PTY processes must continue running (don't terminate on client disconnect).</rule>
+    </constraint>
+    <constraint>
+      <category>Frontend Lifecycle</category>
+      <rule>Send session.attach when terminal component becomes active. Optional: Send session.detach on unmount or switch. xterm.js instances must persist (no remount on tab switch).</rule>
+    </constraint>
+    <constraint>
+      <category>Logging</category>
+      <rule>Log all session attach/detach events with sessionId, WebSocket connection ID, and subscriber count. Use winston structured logging with JSON format.</rule>
+    </constraint>
+    <constraint>
+      <category>Error Handling</category>
+      <rule>Validate sessionId exists before attaching. Return error message if session not found: { type: 'error', message: 'Session not found', code: 'SESSION_NOT_FOUND', sessionId }.</rule>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>session.attach</name>
+      <kind>WebSocket Client → Server Message</kind>
+      <signature>{ type: 'session.attach', sessionId: string }</signature>
+      <path>backend/src/types.ts (to be added)</path>
+    </interface>
+    <interface>
+      <name>session.detach</name>
+      <kind>WebSocket Client → Server Message</kind>
+      <signature>{ type: 'session.detach', sessionId: string }</signature>
+      <path>backend/src/types.ts (to be added)</path>
+    </interface>
+    <interface>
+      <name>terminal.output</name>
+      <kind>WebSocket Server → Client Message</kind>
+      <signature>{ type: 'terminal.output', sessionId: string, data: string }</signature>
+      <path>backend/src/types.ts (existing - already implemented)</path>
+    </interface>
+    <interface>
+      <name>ClientMessage (extended)</name>
+      <kind>TypeScript Union Type</kind>
+      <signature>type ClientMessage = TerminalInputMessage | TerminalInterruptMessage | SessionAttachMessage | SessionDetachMessage | HeartbeatMessage</signature>
+      <path>backend/src/types.ts</path>
+    </interface>
+    <interface>
+      <name>Map&lt;WebSocket, Set&lt;sessionId&gt;&gt;</name>
+      <kind>Backend State Structure</kind>
+      <signature>const clientSubscriptions = new Map&lt;WebSocket, Set&lt;string&gt;&gt;()</signature>
+      <path>backend/src/server.ts (to be added)</path>
+    </interface>
+    <interface>
+      <name>Map&lt;sessionId, Set&lt;WebSocket&gt;&gt;</name>
+      <kind>Backend State Structure</kind>
+      <signature>const sessionSubscribers = new Map&lt;string, Set&lt;WebSocket&gt;&gt;()</signature>
+      <path>backend/src/server.ts (to be added)</path>
+    </interface>
+    <interface>
+      <name>sendAttach(sessionId: string)</name>
+      <kind>Frontend Hook Method</kind>
+      <signature>const sendAttach = useCallback((sessionId: string) =&gt; { send({ type: 'session.attach', sessionId }) }, [send])</signature>
+      <path>frontend/src/hooks/useWebSocket.ts (to be added)</path>
+    </interface>
+    <interface>
+      <name>sendDetach(sessionId: string)</name>
+      <kind>Frontend Hook Method</kind>
+      <signature>const sendDetach = useCallback((sessionId: string) =&gt; { send({ type: 'session.detach', sessionId }) }, [send])</signature>
+      <path>frontend/src/hooks/useWebSocket.ts (to be added)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Backend tests use Jest with ts-jest transformer. Frontend tests use Vitest. Integration tests verify WebSocket protocol flows. E2E tests use Playwright. All test files co-located with source using .test.ts/.test.tsx suffix. Test coverage targets: backend critical paths 70%+, frontend components 50%+. Performance tests measure terminal latency (target &lt;100ms p99).
+    </standards>
+
+    <locations>
+      backend/src/**/*.test.ts
+      frontend/src/**/*.test.tsx
+      e2e/**/*.spec.ts
+    </locations>
+
+    <ideas>
+      <test id="AC-1" title="Single WebSocket, Multiple Sessions">
+        Integration test: Create 3 sessions (id1, id2, id3). Connect single WebSocket. Send session.attach for all 3. Verify backend tracks subscriptions correctly. Check clientSubscriptions Map has 1 WebSocket with Set of 3 sessionIds. Check sessionSubscribers Map has 3 entries, each with Set containing the WebSocket.
+      </test>
+      <test id="AC-2" title="Session Attach Message Handling">
+        Unit test (backend): Send session.attach message with valid sessionId. Verify handleSessionAttach function adds WebSocket to sessionSubscribers[sessionId] Set. Verify clientSubscriptions[ws] Set contains sessionId. Send invalid sessionId, verify error response.
+      </test>
+      <test id="AC-3" title="Terminal Output Routing by SessionId">
+        Integration test: Attach WebSocket to sessions id1 and id2. Trigger PTY output for id1 with "Hello from session 1". Verify WebSocket receives terminal.output message with sessionId=id1 and data="Hello from session 1". Verify no message sent for id2.
+      </test>
+      <test id="AC-4" title="No Cross-Contamination">
+        Integration test: Create 4 sessions. Attach single WebSocket to all 4. Trigger unique output in each PTY ("Session 1", "Session 2", "Session 3", "Session 4"). Verify each terminal.output message has correct sessionId. Verify sessionId filtering prevents mixing.
+      </test>
+      <test id="AC-5" title="Concurrent Streaming Performance">
+        Performance test: Create 4 sessions. Attach WebSocket to all. Simultaneously output 10KB data from each PTY. Measure latency from PTY onData to WebSocket send for each session. Assert p99 latency &lt;100ms. Verify no dropped messages.
+      </test>
+      <test id="AC-6" title="WebSocket Disconnect Cleanup">
+        Integration test: Attach WebSocket to 3 sessions. Close WebSocket connection. Verify onclose handler removes WebSocket from all sessionSubscribers Sets. Verify clientSubscriptions Map entry deleted. Verify PTY processes still running (not terminated).
+      </test>
+      <test id="Task-4" title="Frontend Session Attach Lifecycle">
+        Unit test (frontend): Render Terminal component with sessionId. Verify useWebSocket.sendAttach(sessionId) called when component mounts or becomes active. Unmount component, verify sendDetach called (if implemented). Verify xterm.js instance persists across remounts.
+      </test>
+      <test id="Task-6" title="Session Detach on Cleanup">
+        Integration test: Attach WebSocket to session id1. Send session.detach for id1. Verify backend removes WebSocket from sessionSubscribers[id1]. Verify PTY continues running. Send output from id1, verify WebSocket no longer receives it.
+      </test>
+    </ideas>
+  </tests>
+</story-context>

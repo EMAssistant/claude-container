@@ -1,0 +1,456 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>3</storyId>
+    <title>Session Creation REST API and Modal Dialog</title>
+    <status>ready-for-dev</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/2-3-session-creation-rest-api-and-modal-dialog.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>to create new sessions via a UI dialog with custom names</iWant>
+    <soThat>I can start working on multiple features in parallel</soThat>
+    <tasks>
+### Backend Tasks
+
+- [ ] **Task 1: Create REST endpoint POST /api/sessions** (AC: #1-5)
+  - [ ] Subtask 1.1: Add Express route handler in `backend/src/server.ts`
+  - [ ] Subtask 1.2: Validate request body schema (name, branch optional)
+  - [ ] Subtask 1.3: Implement session name validation regex: `/^[a-zA-Z0-9-]{1,50}$/`
+  - [ ] Subtask 1.4: Call `sessionManager.createSession(name, branch)` to create session
+  - [ ] Subtask 1.5: Handle errors and return appropriate HTTP status codes (400, 409, 500)
+  - [ ] Subtask 1.6: Return JSON response with created session object
+
+- [ ] **Task 2: Integrate worktreeManager and sessionManager** (AC: #2-4)
+  - [ ] Subtask 2.1: Ensure `sessionManager.createSession()` calls `worktreeManager.createWorktree(sessionId, branchName)`
+  - [ ] Subtask 2.2: After worktree creation, call `ptyManager.spawnPTY(sessionId, worktreePath)`
+  - [ ] Subtask 2.3: Handle worktree creation failures (branch exists, git errors)
+  - [ ] Subtask 2.4: Atomic session creation: rollback on failure (cleanup worktree if PTY spawn fails)
+  - [ ] Subtask 2.5: Save session to JSON persistence file using atomic write pattern
+
+- [ ] **Task 3: Implement error handling and user-facing error messages** (AC: #9)
+  - [ ] Subtask 3.1: Map git errors to user-friendly messages (e.g., "Branch already exists")
+  - [ ] Subtask 3.2: Validation errors return 400 with clear message (e.g., "Invalid session name format")
+  - [ ] Subtask 3.3: Max sessions error (4 limit) returns 400 with message: "Maximum 4 sessions supported"
+  - [ ] Subtask 3.4: Log all errors with structured logging (winston)
+
+### Frontend Tasks
+
+- [ ] **Task 4: Create SessionModal component with shadcn/ui Dialog** (AC: #6-9)
+  - [ ] Subtask 4.1: Create `frontend/src/components/SessionModal.tsx` using shadcn Dialog component
+  - [ ] Subtask 4.2: Add session name input field with pre-filled auto-generated name (`feature-YYYY-MM-DD-NNN`)
+  - [ ] Subtask 4.3: Add branch name input field (auto-filled from session name with `feature/` prefix)
+  - [ ] Subtask 4.4: Implement auto-update logic: when session name changes, update branch name
+  - [ ] Subtask 4.5: Add "Cancel" button (closes modal without action)
+  - [ ] Subtask 4.6: Add "Create" button (sends POST request)
+  - [ ] Subtask 4.7: Display loading spinner during session creation (3-5 seconds)
+  - [ ] Subtask 4.8: Display error message in modal if creation fails (red text below inputs)
+
+- [ ] **Task 5: Integrate SessionModal with UI layout** (AC: #6)
+  - [ ] Subtask 5.1: Add "+ New Session" button to UI (location per UX spec - likely top bar or session list)
+  - [ ] Subtask 5.2: Connect button click to open SessionModal
+  - [ ] Subtask 5.3: Pass modal state to SessionContext for session creation
+  - [ ] Subtask 5.4: Close modal on successful creation
+  - [ ] Subtask 5.5: Update SessionContext to add new session to sessions array
+
+- [ ] **Task 6: Implement session creation API call** (AC: #7-9)
+  - [ ] Subtask 6.1: Create API client function `createSession(name, branch)` in frontend
+  - [ ] Subtask 6.2: Send POST request to `/api/sessions` with JSON body
+  - [ ] Subtask 6.3: Handle success response (200) - parse session object and add to context
+  - [ ] Subtask 6.4: Handle error responses (400, 409, 500) - display error message in modal
+  - [ ] Subtask 6.5: Implement loading state management (disable Create button during request)
+
+### Testing Tasks
+
+- [ ] **Task 7: Backend unit tests for session creation endpoint** (AC: All)
+  - [ ] Subtask 7.1: Test valid session creation (200 response, session object returned)
+  - [ ] Subtask 7.2: Test invalid session name (400 response, validation error)
+  - [ ] Subtask 7.3: Test max sessions limit (400 response, error message)
+  - [ ] Subtask 7.4: Test worktree creation failure (500 response, git error)
+  - [ ] Subtask 7.5: Test duplicate branch name (409 response, conflict error)
+
+- [ ] **Task 8: Frontend component tests for SessionModal** (AC: #6-9)
+  - [ ] Subtask 8.1: Test modal opens on "+ New Session" button click
+  - [ ] Subtask 8.2: Test auto-generated name pre-filled in input
+  - [ ] Subtask 8.3: Test branch name auto-updates when session name changes
+  - [ ] Subtask 8.4: Test Create button triggers API call
+  - [ ] Subtask 8.5: Test error message displays on creation failure
+  - [ ] Subtask 8.6: Test modal closes on successful creation
+
+- [ ] **Task 9: Integration test for full session creation flow** (AC: All)
+  - [ ] Subtask 9.1: E2E test: Open modal → Enter name → Click Create → Verify new session tab appears
+  - [ ] Subtask 9.2: E2E test: Create session → Verify worktree exists on filesystem
+  - [ ] Subtask 9.3: E2E test: Create session → Verify PTY process spawned
+  - [ ] Subtask 9.4: E2E test: Create session with duplicate name → Verify error handling
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+**Given** a REST endpoint `POST /api/sessions`
+**When** the frontend sends:
+```json
+{ "name": "feature-auth", "branch": "feature/feature-auth" }
+```
+**Then** the backend:
+1. Validates session name (alphanumeric + dashes, max 50 chars)
+2. Creates git worktree via worktreeManager
+3. Creates session via sessionManager
+4. Spawns PTY process with cwd=worktree path
+5. Returns: `{ session: { id, name, status, ... } }`
+
+**And** when the frontend clicks "+ New Session" button (FR31)
+**Then** a modal dialog opens with:
+- Session name input (pre-filled: "feature-2025-11-24-001")
+- Branch name input (auto-filled from session name)
+- "Cancel" and "Create" buttons
+
+**And** when the user edits the session name
+**Then** the branch name auto-updates to match
+
+**And** when the user clicks "Create"
+**Then** the frontend sends POST to `/api/sessions`
+
+**And** a loading spinner shows "Creating session..." for 3-5 seconds
+
+**And** when creation succeeds
+**Then** the modal closes and the new session appears in the UI
+
+**And** when creation fails (e.g., branch exists, invalid name)
+**Then** an error message displays in the modal (FR68)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic Technical Specification: Multi-Session Parallel Development</title>
+        <section>Detailed Design - Session Creation Workflow</section>
+        <snippet>Complete session creation flow: User clicks "+ New Session" → SessionModal opens with pre-filled name → Backend validates → WorktreeManager creates git worktree → PTYManager spawns Claude CLI → SessionManager persists to JSON → Frontend updates sessions array. Expected completion time: &lt;5 seconds per NFR-PERF-3.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic Technical Specification: Multi-Session Parallel Development</title>
+        <section>Data Models and Contracts - REST API Contracts</section>
+        <snippet>POST /api/sessions - Request: { name?: string, branch?: string }. Response: { session: Session }. Errors: 400 (INVALID_NAME), 400 (MAX_SESSIONS), 500 (GIT_ERROR). Session validation regex: /^[a-zA-Z0-9-]{1,50}$/</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic Technical Specification: Multi-Session Parallel Development</title>
+        <section>Data Models and Contracts - Session Entity</section>
+        <snippet>Session interface: { id: string (UUID v4), name: string, status: SessionStatus, branch: string, worktreePath: string, ptyPid?: number, createdAt: string (ISO 8601), lastActivity: string, currentPhase?: string, metadata?: object }</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Implementation Patterns - Communication Patterns</section>
+        <snippet>REST API endpoints follow /api/resource format. Use plural nouns for collections. Verbs avoided in path (use HTTP methods). Example: POST /api/sessions not /api/create-session. Async operations with try-catch and structured logging.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Implementation Patterns - Error Handling</section>
+        <snippet>User-facing error messages must explain what happened + suggest remediation. Examples: "Session name must be alphanumeric with dashes, max 50 chars", "Maximum 4 sessions supported. Destroy a session to create a new one.", "Branch already exists. Choose a different branch name."</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Implementation Patterns - Format Patterns</section>
+        <snippet>Error Response Format: { type: 'error', message: string, code?: string }. Always use this structure for errors. Session JSON Format must include all required fields with ISO 8601 UTC timestamps.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR31 - Session Creation Button</section>
+        <snippet>The UI shall provide a "+ New Session" button to create new sessions. Pre-filled with auto-generated name format: feature-YYYY-MM-DD-NNN.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR68 - Error Messages</section>
+        <snippet>All error messages shall be clear, actionable, and user-friendly. Examples: validation errors, git conflicts, resource limits.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>NFR-PERF-3 - Session Creation Performance</section>
+        <snippet>Session creation (worktree + PTY spawn) must complete within 5 seconds. Loading spinner displayed during creation. User perceives progress, not blocking.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>backend/src/server.ts</path>
+        <kind>server</kind>
+        <symbol>createSession</symbol>
+        <lines>130-162</lines>
+        <reason>Existing createSession function demonstrates pattern for spawning PTY and creating session data. Will need to extend this to integrate with sessionManager and worktreeManager for Epic 2.</reason>
+      </file>
+      <file>
+        <path>backend/src/server.ts</path>
+        <kind>server</kind>
+        <symbol>Express app initialization</symbol>
+        <lines>48-92</lines>
+        <reason>Express app and middleware setup. Will add POST /api/sessions route handler following existing patterns (express.json middleware, error handling).</reason>
+      </file>
+      <file>
+        <path>backend/src/ptyManager.ts</path>
+        <kind>service</kind>
+        <symbol>PTYManager</symbol>
+        <lines>1-end</lines>
+        <reason>PTY process management service. Session creation will call ptyManager.spawn() with worktree path as cwd. Must ensure PTY process associated with sessionId.</reason>
+      </file>
+      <file>
+        <path>backend/src/types.ts</path>
+        <kind>types</kind>
+        <symbol>Session, ClientMessage, ServerMessage</symbol>
+        <lines>1-end</lines>
+        <reason>TypeScript interfaces for Session entity, WebSocket messages. Will extend with REST API request/response types for POST /api/sessions.</reason>
+      </file>
+      <file>
+        <path>frontend/src/components/Terminal.tsx</path>
+        <kind>component</kind>
+        <symbol>Terminal</symbol>
+        <lines>1-141</lines>
+        <reason>Terminal component demonstrates shadcn/ui patterns and xterm.js integration. SessionModal will follow similar component structure (props, hooks, effects).</reason>
+      </file>
+      <file>
+        <path>frontend/src/hooks/useWebSocket.ts</path>
+        <kind>hook</kind>
+        <symbol>useWebSocket</symbol>
+        <lines>1-end</lines>
+        <reason>WebSocket connection hook. SessionModal will use this hook to send session.create messages (or use REST API). Must coordinate WebSocket session.attach after session creation.</reason>
+      </file>
+      <file>
+        <path>frontend/src/App.tsx</path>
+        <kind>component</kind>
+        <symbol>App</symbol>
+        <lines>1-end</lines>
+        <reason>Root component where SessionContext provider likely exists. Will add "+ New Session" button and SessionModal integration to App layout.</reason>
+      </file>
+    </code>
+    <dependencies>
+      <backend>
+        <package name="express" version="^4.18.0">HTTP server and REST API routes</package>
+        <package name="ws" version="^8.14.0">WebSocket server for real-time communication</package>
+        <package name="node-pty" version="^1.0.0">PTY process spawning for Claude CLI</package>
+        <package name="uuid" version="^9.0.0">Session ID generation (UUID v4)</package>
+        <package name="winston" version="^3.11.0">Structured JSON logging</package>
+        <package name="simple-git" version="latest">Git worktree management (to be installed for Epic 2 Story 2.2)</package>
+      </backend>
+      <frontend>
+        <package name="react" version="^19.2.0">Component framework</package>
+        <package name="@radix-ui/react-dialog" version="^1.1.15">Dialog component for SessionModal</package>
+        <package name="@radix-ui/react-slot" version="^1.2.4">Slot utility for shadcn/ui components</package>
+        <package name="lucide-react" version="^0.554.0">Icon library for UI elements</package>
+        <package name="clsx" version="^2.1.1">Utility class management</package>
+        <package name="tailwind-merge" version="^3.4.0">Tailwind CSS class merging</package>
+      </frontend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+1. **Session Name Validation**: Must use regex `/^[a-zA-Z0-9-]{1,50}$/` - alphanumeric with dashes only, max 50 chars. Examples valid: "feature-auth", "epic-2-story-3". Examples invalid: "feature_auth" (underscore), "feature auth" (space).
+
+2. **Auto-Generated Name Format**: Pattern `feature-YYYY-MM-DD-NNN`. Example: "feature-2025-11-24-001". Counter increments per day. Backend generates default name if not provided.
+
+3. **Maximum Sessions Limit**: Hard limit of 4 concurrent sessions (NFR-SCALE-1). Validation must check session count before creation. Return 400 with message: "Maximum 4 sessions supported. Destroy a session to create a new one."
+
+4. **Atomic Session Creation**: If any step fails (validation, worktree, PTY spawn, JSON persist), rollback ALL changes. Cleanup worktree if PTY spawn fails. All-or-nothing guarantee.
+
+5. **Error Message Standards**: All errors must be user-friendly with clear remediation. Map git stderr to human-readable messages. Log technical details with winston but show simple messages to user.
+
+6. **Session Persistence**: Save to `/workspace/.claude-container-sessions.json` using atomic write pattern (temp file + rename). Prevents corruption. JSON format follows Session interface from tech spec.
+
+7. **Branch Name Derivation**: If branch not provided, derive from session name: `feature/<session-name>`. Example: session "auth-implementation" → branch "feature/auth-implementation".
+
+8. **Loading States**: Display loading spinner for 3-5 seconds during creation. Disable Create button during request to prevent double-submission.
+
+9. **Component Patterns**: SessionModal follows shadcn/ui Dialog component patterns. Use React hooks for state (useState, useEffect). Context API for global session state.
+
+10. **REST vs WebSocket**: Use REST API (POST /api/sessions) for session creation, NOT WebSocket. After creation, send WebSocket session.attach to subscribe to PTY output.
+
+11. **Oceanic Calm Theme**: UI components must follow theme colors. Dialog background: #3B4252, text: #D8DEE9, error text: #BF616A, success: #A3BE8C.
+
+12. **Testing Standards**: Backend tests use Jest with mocked worktreeManager and ptyManager. Frontend tests use Vitest with @testing-library/react. E2E tests with Playwright.
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>POST /api/sessions</name>
+      <kind>REST endpoint</kind>
+      <signature>
+Request: POST /api/sessions
+Content-Type: application/json
+Body: {
+  name?: string,     // Optional, auto-generated if omitted
+  branch?: string    // Optional, derived from name if omitted
+}
+
+Response: 200 OK
+Body: {
+  session: {
+    id: string,              // UUID v4
+    name: string,
+    status: 'active',
+    branch: string,
+    worktreePath: string,
+    ptyPid: number,
+    createdAt: string,       // ISO 8601 UTC
+    lastActivity: string,
+    currentPhase?: string,
+    metadata?: object
+  }
+}
+
+Errors:
+- 400: { error: 'Invalid session name', code: 'INVALID_NAME' }
+- 400: { error: 'Maximum 4 sessions supported', code: 'MAX_SESSIONS' }
+- 500: { error: 'Git worktree creation failed', code: 'GIT_ERROR', details: string }
+      </signature>
+      <path>backend/src/server.ts</path>
+    </interface>
+    <interface>
+      <name>SessionManager.createSession</name>
+      <kind>Backend service method</kind>
+      <signature>
+async createSession(name?: string, branch?: string): Promise&lt;Session&gt;
+
+Parameters:
+- name: Optional session name (auto-generated if omitted)
+- branch: Optional git branch name (derived from name if omitted)
+
+Returns: Promise&lt;Session&gt; - Created session object
+
+Throws:
+- Error('Invalid session name') - Validation failed
+- Error('Maximum sessions reached') - Already 4 sessions
+- Error('Git worktree creation failed: &lt;details&gt;') - Worktree operation failed
+
+Implementation must:
+1. Validate session name (regex check)
+2. Check session count &lt; 4
+3. Generate session ID (UUID v4)
+4. Call worktreeManager.createWorktree(sessionId, branchName)
+5. Call ptyManager.spawnPTY(sessionId, worktreePath)
+6. Create Session object with status='active'
+7. Save to JSON persistence file (atomic write)
+8. Return Session object
+      </signature>
+      <path>backend/src/sessionManager.ts (to be created in Story 2.1)</path>
+    </interface>
+    <interface>
+      <name>WorktreeManager.createWorktree</name>
+      <kind>Backend service method</kind>
+      <signature>
+async createWorktree(sessionId: string, branchName: string): Promise&lt;string&gt;
+
+Parameters:
+- sessionId: Session UUID for worktree directory name
+- branchName: Git branch name (e.g., "feature/feature-auth")
+
+Returns: Promise&lt;string&gt; - Absolute worktree path (/workspace/.worktrees/&lt;sessionId&gt;)
+
+Throws:
+- Error('Branch already exists') - Git error: branch name conflict
+- Error('Git worktree add failed: &lt;git stderr&gt;') - Other git errors
+
+Implementation must:
+1. Validate branch name (git-compatible characters)
+2. Execute: git worktree add -b &lt;branchName&gt; /workspace/.worktrees/&lt;sessionId&gt;
+3. Verify worktree directory created
+4. Return absolute worktree path
+      </signature>
+      <path>backend/src/worktreeManager.ts (to be created in Story 2.2)</path>
+    </interface>
+    <interface>
+      <name>SessionModal Component</name>
+      <kind>React component</kind>
+      <signature>
+interface SessionModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) =&gt; void;
+  onSessionCreated: (session: Session) =&gt; void;
+}
+
+export function SessionModal({ open, onOpenChange, onSessionCreated }: SessionModalProps): JSX.Element
+
+State:
+- sessionName: string (auto-generated default: "feature-YYYY-MM-DD-001")
+- branchName: string (auto-updated from sessionName: "feature/&lt;sessionName&gt;")
+- loading: boolean (during POST request)
+- error: string | null (error message to display)
+
+Behavior:
+- When sessionName changes, auto-update branchName
+- On "Create" click, send POST /api/sessions { name, branch }
+- Display loading spinner during request (disable inputs/buttons)
+- On success: call onSessionCreated(session), close modal
+- On error: display error message in modal (red text), keep modal open
+- On "Cancel" click: close modal without action
+      </signature>
+      <path>frontend/src/components/SessionModal.tsx (to be created)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+**Backend Testing:**
+- Framework: Jest with TypeScript support (ts-jest)
+- Location: `backend/src/**/*.test.ts` (co-located with source files)
+- Patterns: Unit tests for sessionManager methods, mock worktreeManager and ptyManager
+- Integration tests: Full session creation flow with real git worktree (cleanup after test)
+- Coverage target: 80%+ for session creation critical path
+
+**Frontend Testing:**
+- Framework: Vitest with @testing-library/react
+- Location: `frontend/src/**/*.test.tsx` (co-located with components)
+- Patterns: Component tests with user-event simulation, mock fetch API calls
+- Mock REST API responses with MSW or fetch mock
+- Coverage target: 60%+ for SessionModal component
+
+**E2E Testing:**
+- Framework: Playwright
+- Location: `tests/e2e/` (separate directory)
+- Patterns: Full user flow from button click to session creation
+- Verify: Modal opens, inputs work, API called, worktree exists, PTY spawned
+    </standards>
+    <locations>
+- Backend unit tests: backend/src/sessionManager.test.ts
+- Backend integration tests: backend/src/server.test.ts
+- Frontend component tests: frontend/src/components/SessionModal.test.tsx
+- E2E tests: tests/e2e/session-creation.spec.ts
+    </locations>
+    <ideas>
+**Backend Unit Tests (sessionManager.test.ts):**
+- Test: createSession with valid name → returns Session object with UUID, timestamps, status='active'
+- Test: createSession with invalid name (underscore, spaces, too long) → throws validation error
+- Test: createSession when count=4 → throws MAX_SESSIONS error
+- Test: createSession with worktree failure → rollback, no session persisted
+- Test: createSession with PTY spawn failure → cleanup worktree, rollback
+
+**Frontend Component Tests (SessionModal.test.tsx):**
+- Test: Modal opens on "+ New Session" button click
+- Test: Session name input pre-filled with auto-generated name (format: feature-YYYY-MM-DD-001)
+- Test: Branch name auto-updates when session name changes
+- Test: Create button triggers POST /api/sessions with correct body
+- Test: Loading spinner displays during request, inputs disabled
+- Test: Success response closes modal, calls onSessionCreated callback
+- Test: Error response displays error message in modal (red text), keeps modal open
+- Test: Cancel button closes modal without API call
+
+**Integration Tests (server.test.ts):**
+- Test: POST /api/sessions with valid name → 200, session object returned, worktree exists, PTY running
+- Test: POST /api/sessions without name → 200, auto-generated name used
+- Test: POST /api/sessions with duplicate branch → 409, error message
+- Test: POST /api/sessions when 4 sessions exist → 400, MAX_SESSIONS error
+
+**E2E Tests (session-creation.spec.ts):**
+- Test: Full flow: Click "+ New Session" → Enter name "test-session" → Click Create → Verify new session tab appears
+- Test: Create session → Verify worktree exists at /workspace/.worktrees/&lt;session-id&gt;
+- Test: Create session → Verify PTY process spawned with correct cwd
+- Test: Create session with invalid name → Error message displays in modal
+    </ideas>
+  </tests>
+</story-context>

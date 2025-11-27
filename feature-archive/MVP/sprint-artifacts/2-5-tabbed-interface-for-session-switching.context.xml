@@ -1,0 +1,344 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>5</storyId>
+    <title>Tabbed Interface for Session Switching</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/2-5-tabbed-interface-for-session-switching.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>tabs at the top for quick session switching via mouse or keyboard shortcuts</iWant>
+    <soThat>I can navigate between parallel projects instantly (&lt;50ms per NFR-PERF-2)</soThat>
+    <tasks>
+      - Task 1: Create SessionTabs component with shadcn/ui Tabs (AC: #1, #2)
+        - Subtask 1.1: Create frontend/src/components/SessionTabs.tsx using shadcn/ui Tabs component
+        - Subtask 1.2: Style tabs with Oceanic Calm theme colors (active: #2E3440, inactive: #3B4252)
+        - Subtask 1.3: Apply active tab bottom border (2px solid #88C0D0)
+        - Subtask 1.4: Truncate long session names with CSS text-overflow: ellipsis at 120-200px width
+        - Subtask 1.5: Add "+ New Session" tab at the end of tab list
+      - Task 2: Implement tab switching with SessionContext integration (AC: #2)
+        - Subtask 2.1: Connect SessionTabs to SessionContext to get sessions array and activeSessionId
+        - Subtask 2.2: Implement onClick handler that calls SessionContext.selectSession(sessionId)
+        - Subtask 2.3: Update activeSessionId in SessionContext without remounting components
+        - Subtask 2.4: Verify terminal components use display:none for inactive sessions (not unmounting)
+        - Subtask 2.5: Measure and validate tab switching latency &lt;50ms using Performance API
+      - Task 3: Add keyboard shortcuts for tab navigation (AC: #3)
+        - Subtask 3.1: Create global keyboard event listener in App.tsx (mounted at app root)
+        - Subtask 3.2: Detect Cmd/Ctrl+1-4 keypresses using platform detection (navigator.platform)
+        - Subtask 3.3: Map Cmd+N to sessions array index N-1 (Cmd+1 → sessions[0])
+        - Subtask 3.4: Call SessionContext.selectSession(sessions[index].id) on valid shortcut
+        - Subtask 3.5: Prevent default browser behavior for Cmd+1-4 (tab switching in browser)
+      - Task 4: Implement close button with hover interaction (AC: #4)
+        - Subtask 4.1: Add Lucide X icon to each tab, initially hidden
+        - Subtask 4.2: Show close button on tab hover using CSS :hover state
+        - Subtask 4.3: Style close button (size: 16px, color: #81A1C1, hover: #BF616A)
+        - Subtask 4.4: Implement onClick handler for close button that stops event propagation
+        - Subtask 4.5: Call SessionContext.destroySession(sessionId) which triggers confirmation dialog
+      - Task 5: Handle horizontal scrolling for overflow tabs (AC: #5)
+        - Subtask 5.1: Wrap tabs in scrollable container with overflow-x: auto
+        - Subtask 5.2: Add CSS gradient scroll indicators on left/right edges when scrollable
+        - Subtask 5.3: Implement scrollIntoView() for active tab when tab changes
+        - Subtask 5.4: Test with 5+ tabs to verify horizontal scroll behavior
+        - Subtask 5.5: Add left/right arrow buttons for manual scroll (optional enhancement)
+      - Task 6: Wire "+ New Session" tab to modal (AC: #6)
+        - Subtask 6.1: Add onClick handler to "+ New Session" tab
+        - Subtask 6.2: Call SessionContext.openCreateSessionModal() (or trigger modal state)
+        - Subtask 6.3: Ensure modal component from Story 2.3 is available and integrated
+        - Subtask 6.4: Verify modal opens on click without switching active session
+      - Task 7: Testing and validation
+        - Subtask 7.1: Write unit test for SessionTabs component (render, click events)
+        - Subtask 7.2: Write integration test for tab switching with SessionContext
+        - Subtask 7.3: Write E2E test for keyboard shortcuts (Cmd+1-4)
+        - Subtask 7.4: Measure tab switching latency in dev tools (verify &lt;50ms)
+        - Subtask 7.5: Test with 1, 3, 4, and 5+ sessions to verify edge cases
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC1: Given 3 sessions exist in the system, when the UI loads, then the top bar displays tabs for each session with tab width 120-200px (truncate with ellipsis), active tab shows background #2E3440 with 2px solid #88C0D0 bottom border, inactive tabs show background #3B4252 with color #81A1C1, and "+ New Session" tab is visible at the end.
+
+    AC2: Given a user views multiple session tabs, when the user clicks an inactive tab, then the terminal view switches to that session within 50ms (FR30, NFR-PERF-2), the clicked tab becomes active with highlighting changes, and no component remounting occurs (SessionContext activeSessionId update only).
+
+    AC3: Given a user wants to use keyboard shortcuts, when the user presses Cmd+1 (macOS) or Ctrl+1 (Linux/Windows), then the first session activates, and Cmd+2, Cmd+3, Cmd+4 activate sessions 2, 3, 4 respectively, with keyboard shortcuts working globally (not just when terminal focused).
+
+    AC4: Given a user hovers over a session tab, when the mouse enters the tab area, then a close button (X icon) appears on the right side of the tab, and clicking the X triggers session destroy with confirmation dialog.
+
+    AC5: Given more than 4 tabs exist (edge case), when tabs overflow the available width, then tabs scroll horizontally with scroll indicators on edges, and active tab scrolls into view automatically.
+
+    AC6: Given the "+ New Session" tab is visible, when the user clicks it, then the session creation modal opens (from Story 2.3).
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>Multi-Session UI</section>
+        <snippet>Tabbed interface for switching between sessions, keyboard shortcuts (Cmd+1-4), close buttons, "+ New Session" tab always visible. Performance requirement: Tab switching must complete within 50ms from click to visual update (NFR-PERF-2).</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>Frontend Components - SessionTabs.tsx</section>
+        <snippet>Tabbed interface for switching, keyboard shortcuts (Cmd+1-4), close buttons, "+ New Session" tab. Inputs: Active sessions, selected session ID. Outputs: Session switch events, create events, destroy confirmation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>Performance Requirements (NFR-PERF-2)</section>
+        <snippet>Tab switching must complete within 50ms from click to visual update. Implementation: Update activeSessionId in SessionContext only, no component remounting. Terminal components remain mounted but hidden (display: none) when inactive.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>UI Theme (Oceanic Calm Palette)</section>
+        <snippet>Active tab background: #2E3440 (Nord Polar Night 0), Inactive tab background: #3B4252 (Nord Polar Night 2), Inactive tab text: #81A1C1 (Nord Frost 2), Active tab border: #88C0D0 (Nord Frost 1), Close button hover: #BF616A (Nord Aurora Red).</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>ADR-005: React Context API Over Zustand/Redux</section>
+        <snippet>Use React Context API + Hooks for state management. Application has 3-4 distinct state domains (sessions, layout, WebSocket connections, BMAD workflow). Context API sufficient when using separate contexts per domain.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Naming Conventions - React Components</section>
+        <snippet>React components: PascalCase - Terminal.tsx, SessionList.tsx, SessionTabs.tsx. React hooks: camelCase with use prefix - useWebSocket.ts, useSession.ts, useLayout.ts.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Component Structure Pattern</section>
+        <snippet>Component definition order: 1. Imports, 2. Types/Interfaces, 3. Component definition, 4. Hooks (context, state, effects, custom), 5. Event handlers, 6. Render, 7. Exports.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>frontend/src/components/ui/tabs.tsx</path>
+        <kind>component</kind>
+        <symbol>Tabs, TabsList, TabsTrigger, TabsContent</symbol>
+        <lines>1-54</lines>
+        <reason>shadcn/ui Tabs components already installed. SessionTabs should reuse these primitives with custom styling for Oceanic Calm theme and session-specific behavior.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/ui/button.tsx</path>
+        <kind>component</kind>
+        <symbol>Button</symbol>
+        <lines>N/A</lines>
+        <reason>Button component available for close button (X icon) on tabs. Use with Lucide X icon and hover styling.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/App.tsx</path>
+        <kind>component</kind>
+        <symbol>App</symbol>
+        <lines>1-49</lines>
+        <reason>Current App.tsx has single session layout with top bar. SessionTabs will integrate into the top bar header section (line 22) replacing or complementing the title. Global keyboard shortcuts (Cmd+1-4) should be added here.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/hooks/useWebSocket.ts</path>
+        <kind>hook</kind>
+        <symbol>useWebSocket</symbol>
+        <lines>1-124</lines>
+        <reason>WebSocket hook manages connection and messaging. SessionTabs will use SessionContext which internally manages WebSocket connections per session. Understanding this pattern helps with multi-session integration.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/Terminal.tsx</path>
+        <kind>component</kind>
+        <symbol>Terminal</symbol>
+        <lines>1-141</lines>
+        <reason>Current Terminal component is single-session. Multi-session implementation needs Terminal instances to remain mounted but hidden (display:none) when inactive to meet 50ms switching requirement.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/lib/utils.ts</path>
+        <kind>utility</kind>
+        <symbol>cn</symbol>
+        <lines>N/A</lines>
+        <reason>Utility function for merging Tailwind classes. Use for conditional tab styling (active vs inactive states).</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="@radix-ui/react-tabs" version="^1.1.13">shadcn/ui Tabs primitive (already installed)</package>
+        <package name="lucide-react" version="^0.554.0">X icon for close button (already installed)</package>
+        <package name="react" version="^19.2.0">React 19 with concurrent features</package>
+        <package name="clsx" version="^2.1.1">Class utility for conditional styling</package>
+        <package name="tailwind-merge" version="^3.4.0">Merge Tailwind classes without conflicts</package>
+      </node>
+      <devDependencies>
+        <package name="vitest" version="^4.0.13">Testing framework</package>
+        <package name="@testing-library/react" version="^16.3.0">React testing utilities</package>
+        <package name="@testing-library/user-event" version="^14.6.1">User interaction simulation</package>
+      </devDependencies>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - SessionTabs component MUST be created at: frontend/src/components/SessionTabs.tsx
+    - Component MUST use @radix-ui/react-tabs primitives (Tabs, TabsList, TabsTrigger) - DO NOT create custom tab implementation
+    - Styling MUST use Oceanic Calm theme colors: active tab #2E3440, inactive tab #3B4252, active border #88C0D0, inactive text #81A1C1
+    - Tab switching MUST complete within 50ms (NFR-PERF-2) - measured from click to visual update
+    - Implementation MUST update SessionContext.activeSessionId only - NO component remounting
+    - Terminal components MUST remain mounted but use display:none when inactive (not conditional rendering)
+    - Keyboard shortcuts MUST work globally (not just when terminal focused) - attach to window or app root
+    - Keyboard shortcuts MUST use platform detection: navigator.platform.includes('Mac') for Cmd vs Ctrl
+    - Close button MUST stop event propagation to prevent tab switching when clicking X
+    - Component MUST follow architecture naming convention: PascalCase filename SessionTabs.tsx
+    - Component MUST follow structure pattern: imports → types → component → hooks → handlers → render → exports
+    - MUST use cn() utility from @/lib/utils for conditional Tailwind class merging
+    - Tab width MUST be 120-200px with CSS text-overflow: ellipsis for long session names
+    - "+ New Session" tab MUST always be visible at the end of tab list
+    - Horizontal scroll MUST trigger when more than 4 tabs exist (edge case)
+    - Active tab MUST scroll into view automatically using scrollIntoView() on tab change
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>SessionContext (Future - Story 2.1-2.3)</name>
+      <kind>React Context</kind>
+      <signature>
+        interface SessionContextValue {
+          sessions: Session[];
+          activeSessionId: string | null;
+          selectSession: (sessionId: string) => void;
+          destroySession: (sessionId: string, cleanup?: boolean) => Promise&lt;void&gt;;
+          openCreateSessionModal: () => void;
+        }
+
+        interface Session {
+          id: string;
+          name: string;
+          status: 'active' | 'waiting' | 'idle' | 'error' | 'stopped';
+          branch: string;
+          worktreePath: string;
+          createdAt: string;
+          lastActivity: string;
+        }
+      </signature>
+      <path>frontend/src/context/SessionContext.tsx (to be created in Story 2.1-2.3)</path>
+    </interface>
+    <interface>
+      <name>SessionTabs Component API</name>
+      <kind>React Component</kind>
+      <signature>
+        interface SessionTabsProps {
+          // Props from SessionContext (via useContext)
+          // Component should internally consume SessionContext
+        }
+
+        export function SessionTabs(): JSX.Element
+      </signature>
+      <path>frontend/src/components/SessionTabs.tsx (to be created in this story)</path>
+    </interface>
+    <interface>
+      <name>Keyboard Shortcut Handler</name>
+      <kind>Event Handler</kind>
+      <signature>
+        useEffect(() => {
+          const handleKeyPress = (e: KeyboardEvent) => {
+            const isCmdOrCtrl = e.metaKey || e.ctrlKey;
+            const num = parseInt(e.key);
+            if (isCmdOrCtrl &amp;&amp; num >= 1 &amp;&amp; num &lt;= 4) {
+              e.preventDefault();
+              const session = sessions[num - 1];
+              if (session) selectSession(session.id);
+            }
+          };
+          window.addEventListener('keydown', handleKeyPress);
+          return () => window.removeEventListener('keydown', handleKeyPress);
+        }, [sessions, selectSession]);
+      </signature>
+      <path>To be implemented in App.tsx or SessionTabs component</path>
+    </interface>
+    <interface>
+      <name>Performance Measurement Pattern</name>
+      <kind>Utility Pattern</kind>
+      <signature>
+        const handleTabClick = (sessionId: string) => {
+          const startTime = performance.now();
+          selectSession(sessionId);
+          requestAnimationFrame(() => {
+            const endTime = performance.now();
+            console.log(`Tab switch latency: ${endTime - startTime}ms`);
+          });
+        };
+      </signature>
+      <path>Use in SessionTabs for latency validation (AC2)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing uses Vitest with React Testing Library and jsdom environment. Test files colocated with components using .test.tsx suffix. Component tests validate rendering, user interactions, and state changes. Integration tests verify context integration and multi-component workflows. E2E tests (future) use Playwright for full user flows. All tests follow AAA pattern (Arrange, Act, Assert) with descriptive test names using Vitest's describe/it/expect syntax.
+    </standards>
+    <locations>
+      - frontend/src/components/**/*.test.tsx (component unit tests)
+      - frontend/src/test/setup.ts (test configuration with @testing-library/jest-dom)
+      - vitest.config.ts (test runner configuration)
+    </locations>
+    <ideas>
+      <test id="AC1-rendering">
+        Test: SessionTabs renders all sessions as tabs
+        - Arrange: Mock SessionContext with 3 sessions
+        - Act: Render SessionTabs component
+        - Assert: 3 session tabs + 1 "+ New Session" tab visible
+        - Assert: Active tab has background #2E3440 and border
+        - Assert: Inactive tabs have background #3B4252
+      </test>
+      <test id="AC2-switching">
+        Test: Clicking tab switches session within 50ms
+        - Arrange: Mock SessionContext with selectSession spy
+        - Act: Click inactive tab
+        - Assert: selectSession called with correct sessionId
+        - Assert: Performance measurement &lt;50ms (using performance.now())
+        - Assert: Terminal components remain mounted (not remounted)
+      </test>
+      <test id="AC3-keyboard">
+        Test: Keyboard shortcuts activate correct sessions
+        - Arrange: Mock SessionContext with 3 sessions
+        - Act: Simulate Cmd+1, Cmd+2, Cmd+3 keypresses
+        - Assert: selectSession called with sessions[0].id, sessions[1].id, sessions[2].id
+        - Assert: Default browser behavior prevented (e.preventDefault)
+      </test>
+      <test id="AC4-close-button">
+        Test: Close button triggers destroy confirmation
+        - Arrange: Mock SessionContext with destroySession spy
+        - Act: Hover over tab, click X icon
+        - Assert: destroySession called with correct sessionId
+        - Assert: Event propagation stopped (tab not switched)
+      </test>
+      <test id="AC5-overflow">
+        Test: Horizontal scroll with 5+ tabs
+        - Arrange: Mock SessionContext with 6 sessions
+        - Act: Render SessionTabs
+        - Assert: Container has overflow-x: auto
+        - Assert: Active tab scrollIntoView called
+      </test>
+      <test id="AC6-new-session">
+        Test: "+ New Session" tab opens modal
+        - Arrange: Mock SessionContext with openCreateSessionModal spy
+        - Act: Click "+ New Session" tab
+        - Assert: openCreateSessionModal called
+        - Assert: Active session not changed
+      </test>
+      <test id="integration-context">
+        Test: SessionTabs integrates with SessionContext
+        - Arrange: Provide real SessionContext with test data
+        - Act: Render SessionTabs within context
+        - Assert: Context values consumed correctly
+        - Assert: Context methods called on interactions
+      </test>
+      <test id="edge-case-single-session">
+        Test: SessionTabs handles single session edge case
+        - Arrange: Mock SessionContext with 1 session
+        - Act: Render SessionTabs
+        - Assert: 1 session tab + "+ New Session" tab visible
+        - Assert: No horizontal scroll
+      </test>
+    </ideas>
+  </tests>
+</story-context>

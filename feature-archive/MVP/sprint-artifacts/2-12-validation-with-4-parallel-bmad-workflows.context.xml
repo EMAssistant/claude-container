@@ -1,0 +1,300 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>12</storyId>
+    <title>Validation with 4 Parallel BMAD Workflows</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/2-12-validation-with-4-parallel-bmad-workflows.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>to validate that 4 sessions can run complete BMAD workflows simultaneously</iWant>
+    <soThat>I'm confident the multi-session architecture meets the PRD success criteria</soThat>
+    <tasks>
+      - Task 1: Test Plan Creation - Define 4 distinct BMAD workflows (brainstorm, PRD, UX, dev), create test script, document expected outcomes, define validation checkpoints, create monitoring script
+      - Task 2: Session Creation and Initialization - Create 4 sessions (epic-auth, epic-payments, epic-ui-polish, epic-notifications) with test branches, verify UI display
+      - Task 3: Concurrent Workflow Execution - Start BMAD workflows in all 4 sessions, verify simultaneous terminal streaming, monitor for cross-contamination
+      - Task 4: UI Responsiveness Validation - Measure tab switching latency (<50ms p99), verify smooth rendering, test keyboard shortcuts
+      - Task 5: Git Worktree Isolation - Verify each session operates in own worktree, verify generated files isolated per session
+      - Task 6: Status Indicator Validation - Test waiting state indicators, verify autonomous work continuation in other sessions
+      - Task 7: Workflow Completion Verification - Monitor workflow completion, verify artifact generation in correct worktree
+      - Task 8: Container Restart and Session Resume - Test container restart, verify session restoration with status='idle', verify manual resume
+      - Task 9: Resource Usage Monitoring - Monitor memory usage (4-8GB target), verify CPU distribution, check for memory leaks
+      - Task 10: Error Handling and Crash Isolation - Force crash one session, verify other sessions continue, test restart
+      - Task 11: Test Report Generation - Document all validation results, capture screenshots, record measurements, update story
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+**AC1: Parallel Terminal Streaming** - All 4 terminals show real-time output when actively working simultaneously with no waiting for user input
+
+**AC2: UI Tab Switching Performance** - Switching between sessions completes in <50ms from click to visual update (NFR-PERF-2)
+
+**AC3: Output Isolation** - No terminal output is lost or cross-contaminated between sessions
+
+**AC4: Git Worktree Isolation** - Each session's git worktrees remain isolated (changes in one don't affect others)
+
+**AC5: Status Indicators** - When Claude asks a question in Session 2, Session 2 tab shows "!" badge (FR50) while Sessions 1, 3, 4 continue working autonomously
+
+**AC6: Session Autonomy** - Sessions 1, 3, 4 continue working while Session 2 is waiting for user input
+
+**AC7: Workflow Completion** - When Session 3 completes its UX design workflow, the generated UX spec exists in Session 3's worktree only (not in others)
+
+**AC8: Container Restart Recovery** - When container restarts, all 4 sessions restore from JSON and can be manually resumed with worktrees and branches intact
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification - Multi-Session Parallel Development</title>
+        <section>Story 2.12 Technical Notes</section>
+        <snippet>Test with REAL BMAD workflows, not mock commands. Validation success criteria from PRD Sprint 2: Can develop 4 features simultaneously. Monitor for memory leaks, WebSocket message loss, terminal rendering lag.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>NFR-PERF-4 (Concurrent Session Performance)</section>
+        <snippet>System shall handle 4 concurrent Claude CLI sessions without degradation. Each session maintains independent terminal latency <100ms. Terminal output streaming for 4 simultaneous sessions with no cross-session interference (PTY output correctly routed by sessionId).</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>NFR-PERF-2 (UI Tab Switching)</section>
+        <snippet>Session tab switching must complete within 50ms from click to visual update. Implementation: Update activeSessionId in SessionContext only, no component remounting. Terminal components remain mounted but hidden when inactive.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Multi-Session WebSocket Protocol</title>
+        <section>Multi-Session Architecture</section>
+        <snippet>Single WebSocket connection per client with session-multiplexed messages. Backend maintains Map&lt;sessionId, PTYProcess&gt; and Map&lt;WebSocket, Set&lt;sessionId&gt;&gt;. Session attach/detach messages control subscriptions. Concurrent streaming: Each PTY's onData callback filters by subscribed WebSockets.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Performance Considerations</title>
+        <section>NFR-PERF-4: Concurrent Session Performance</section>
+        <snippet>System handles 4 concurrent sessions without degradation. Memory target: 1-2GB RAM per session, 4-8GB total for 4 sessions. CPU usage distributes across available cores. No cross-session interference.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>backend/src/types.ts</path>
+        <kind>interfaces</kind>
+        <symbol>ClientMessage, ServerMessage, SessionData</symbol>
+        <lines>1-101</lines>
+        <reason>WebSocket message protocol definitions for terminal streaming - needed to understand session communication patterns and message routing for validation</reason>
+      </artifact>
+      <artifact>
+        <path>backend/src/ptyManager.ts</path>
+        <kind>service</kind>
+        <symbol>PTYManager</symbol>
+        <lines>64-299</lines>
+        <reason>PTY process spawning and management - critical for understanding how concurrent Claude CLI processes are spawned and managed per session</reason>
+      </artifact>
+      <artifact>
+        <path>backend/src/server.ts</path>
+        <kind>server</kind>
+        <symbol>Express app, WebSocket server</symbol>
+        <lines>all</lines>
+        <reason>Main backend server with WebSocket protocol implementation - needed to understand session multiplexing and output routing for validation</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/types.ts</path>
+        <kind>interfaces</kind>
+        <symbol>Session, TerminalMessage</symbol>
+        <lines>3-20</lines>
+        <reason>Frontend type definitions for sessions and terminal messages - needed to understand session status indicators and UI state</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/hooks/useWebSocket.ts</path>
+        <kind>hook</kind>
+        <symbol>useWebSocket</symbol>
+        <lines>18-123</lines>
+        <reason>WebSocket client connection with reconnection logic - needed to understand client-side session attachment and message routing for validation</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/Terminal.tsx</path>
+        <kind>component</kind>
+        <symbol>Terminal</symbol>
+        <lines>12-140</lines>
+        <reason>Terminal component with xterm.js integration - needed to understand terminal rendering and output isolation for validation</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <backend>
+        <dep name="express" version="^4.18.0">HTTP server framework</dep>
+        <dep name="ws" version="^8.14.0">WebSocket library for real-time terminal streaming</dep>
+        <dep name="node-pty" version="^1.0.0">PTY process spawning for Claude CLI</dep>
+        <dep name="uuid" version="^9.0.0">Session ID generation</dep>
+        <dep name="winston" version="^3.11.0">Structured JSON logging</dep>
+      </backend>
+      <frontend>
+        <dep name="react" version="^19.2.0">UI framework</dep>
+        <dep name="@xterm/xterm" version="^5.5.0">Terminal emulator</dep>
+        <dep name="@xterm/addon-fit" version="^0.10.0">Terminal sizing addon</dep>
+        <dep name="@xterm/addon-web-links" version="^0.11.0">Clickable URLs in terminal</dep>
+        <dep name="@radix-ui/react-tabs" version="^1.1.13">Tabbed interface components</dep>
+        <dep name="@radix-ui/react-tooltip" version="^1.2.8">Tooltip components for status indicators</dep>
+      </frontend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+**Architecture Constraints:**
+- Design limit: 4 concurrent sessions maximum (per PRD NFR-SCALE-1)
+- Each session consumes ~1-2GB RAM (total 4-8GB for full capacity)
+- Single WebSocket connection per client with session-multiplexed messages
+- Git worktrees stored in /workspace/.worktrees/ to survive container restarts
+- Session state persists in flat JSON file at /workspace/.claude-container-sessions.json
+
+**Testing Approach:**
+- Manual execution (not automated E2E test in Sprint 2)
+- Developer runs test script, observes system behavior, documents results
+- Automated testing deferred to Epic 4 Story 4-11 (Comprehensive Testing Suite)
+- This story focuses on proving architecture works end-to-end
+
+**Validation Requirements:**
+- Use REAL BMAD workflows, not mock commands
+- Test with diverse workflow types: brainstorming→PRD→architecture, PRD creation, UX design, dev-story
+- Monitor for: memory leaks, WebSocket message loss, terminal rendering lag, cross-contamination
+- Stress test: All 4 sessions generating high terminal output simultaneously
+
+**Performance Targets:**
+- Tab switching: <50ms p99 latency (NFR-PERF-2)
+- Terminal latency: <100ms per session during concurrent streaming (NFR-PERF-4)
+- Resource usage: 4-8GB total memory for 4 concurrent sessions
+- Session creation: <5 seconds (NFR-PERF-5)
+
+**Success Metrics:**
+- All 4 workflows complete successfully
+- No terminal output cross-contamination observed
+- Tab switching <50ms consistently
+- Resource usage within 4-8GB bounds
+- Sessions isolated (files only in respective worktrees)
+- Container restart recovery works correctly
+
+**Failure Scenarios to Test:**
+- PTY process crash in one session (isolation validation)
+- WebSocket disconnect during active work (reconnection validation)
+- Container restart mid-workflow (persistence validation)
+- High-volume terminal output (backpressure handling)
+  </constraints>
+
+  <interfaces>
+**WebSocket Protocol (Session Multiplexing):**
+```typescript
+// Client → Server: Session Management
+type ClientSessionMessage =
+  | { type: 'session.create', name?: string, branch?: string }
+  | { type: 'session.destroy', sessionId: string, cleanup?: boolean }
+  | { type: 'session.attach', sessionId: string }       // Subscribe to PTY output
+  | { type: 'session.detach', sessionId: string }       // Unsubscribe from PTY output
+  | { type: 'session.resume', sessionId: string };      // Spawn PTY for idle session
+
+// Client → Server: Terminal I/O
+type ClientTerminalMessage =
+  | { type: 'terminal.input', sessionId: string, data: string }
+  | { type: 'terminal.interrupt', sessionId: string }   // Send SIGINT
+  | { type: 'terminal.resize', sessionId: string, cols: number, rows: number };
+
+// Server → Client: Session Events
+type ServerSessionMessage =
+  | { type: 'session.created', session: Session }
+  | { type: 'session.destroyed', sessionId: string }
+  | { type: 'session.status', sessionId: string, status: SessionStatus, reason?: string }
+  | { type: 'session.list', sessions: Session[] };      // Full session list on connect
+
+// Server → Client: Terminal Output
+type ServerTerminalMessage =
+  | { type: 'terminal.output', sessionId: string, data: string }
+  | { type: 'terminal.exit', sessionId: string, exitCode: number, signal?: string };
+```
+
+**PTYManager API:**
+```typescript
+class PTYManager {
+  // Spawn Claude CLI PTY for session
+  async spawnPTY(sessionId: string, worktreePath: string): Promise<PTYProcess>;
+
+  // Kill PTY process (graceful SIGTERM, then SIGKILL after 5s)
+  async killPTY(sessionId: string): Promise<void>;
+
+  // Send input to PTY stdin
+  writeToPTY(sessionId: string, data: string): void;
+
+  // Send SIGINT (Ctrl+C) to PTY
+  interruptPTY(sessionId: string): void;
+
+  // Resize PTY terminal
+  resizePTY(sessionId: string, cols: number, rows: number): void;
+
+  // Register callback for PTY output
+  onPTYData(sessionId: string, callback: (data: string) => void): void;
+
+  // Register callback for PTY exit
+  onPTYExit(sessionId: string, callback: (exitCode: number, signal?: string) => void): void;
+}
+```
+
+**Session REST API:**
+```typescript
+// POST /api/sessions - Create new session
+Request: { name?: string, branch?: string }
+Response: { session: Session }
+Errors: { 400: 'INVALID_NAME' | 'MAX_SESSIONS', 500: 'GIT_ERROR' }
+
+// DELETE /api/sessions/:id - Destroy session
+Query: { cleanup?: 'true' }
+Response: { success: true }
+Errors: { 404: 'NOT_FOUND', 500: 'CLEANUP_ERROR' }
+
+// GET /api/sessions - List all sessions
+Response: { sessions: Session[] }
+```
+  </interfaces>
+
+  <tests>
+    <standards>
+This story is a comprehensive end-to-end validation story, not a code implementation story. Testing approach is manual with developer observation and documentation. No automated tests required for this story.
+
+Testing frameworks available for future automated testing:
+- Frontend: Vitest for unit tests, React Testing Library for component tests
+- Backend: Jest for unit/integration tests
+- E2E: Playwright for browser automation (deferred to Epic 4 Story 4-11)
+
+Validation is manual for Sprint 2 with focus on proving the multi-session architecture works under realistic concurrent load with real BMAD workflows.
+    </standards>
+
+    <locations>
+Manual test script location: /workspace/test-epic-2-validation.sh (to be created)
+Test artifacts stored in respective session worktrees:
+- /workspace/.worktrees/&lt;session-1-id&gt;/ - Brainstorming notes, PRD, Architecture
+- /workspace/.worktrees/&lt;session-2-id&gt;/ - PRD document
+- /workspace/.worktrees/&lt;session-3-id&gt;/ - UX design spec, Excalidraw wireframes
+- /workspace/.worktrees/&lt;session-4-id&gt;/ - Story implementation (code, tests)
+    </locations>
+
+    <ideas>
+**Test Idea 1 (AC1, AC3, AC4):** Create 4 sessions with distinct BMAD workflows running concurrently. Start all 4 workflows simultaneously, observe terminal output streaming in real-time. Verify each terminal shows only its own output (no cross-contamination). Check that switching between tabs shows correct terminal content for each session.
+
+**Test Idea 2 (AC2):** Measure tab switching latency using browser DevTools Performance timeline. Click between session tabs rapidly while terminals are actively streaming output. Record timestamp from click event to visual tab highlight change. Assert p99 latency <50ms across 20+ tab switches.
+
+**Test Idea 3 (AC5, AC6):** Start Session 2 with a workflow that will pause for user input (e.g., PRD elicitation). While Session 2 is waiting, verify Session 2 tab shows "!" badge. Simultaneously verify Sessions 1, 3, 4 continue generating terminal output autonomously without pausing.
+
+**Test Idea 4 (AC7):** Monitor Session 3 until UX design workflow completes and generates ux-design.md file. Verify file exists in /workspace/.worktrees/&lt;session-3-id&gt;/docs/. Switch to Sessions 1, 2, 4 and verify UX spec file is NOT present in their worktrees. Run `git status` in each session's worktree to confirm independent changes.
+
+**Test Idea 5 (AC8):** While all 4 sessions are actively running workflows, execute `docker stop claude-container`. Wait for container to stop. Verify /workspace/.claude-container-sessions.json exists and contains all 4 sessions. Execute `docker start claude-container`. Open UI and verify all 4 sessions displayed with status='idle'. Click "Resume" on each session and verify PTY spawns in correct worktree with previous files intact.
+
+**Test Idea 6 (Resource Monitoring):** During concurrent execution of all 4 workflows, run `docker stats claude-container` to monitor real-time memory and CPU usage. Record peak memory usage and verify it stays within 4-8GB bounds. Monitor for 30+ minutes to detect memory leaks (memory should stabilize, not continuously grow).
+
+**Test Idea 7 (Crash Isolation):** While 4 sessions running, find Session 2's PTY process ID via `ps aux | grep claude | grep &lt;session-2-id&gt;`. Execute `kill -9 &lt;PID&gt;` to force crash Session 2. Verify Session 2 UI updates to show error status (red dot). Verify Sessions 1, 3, 4 continue running normally with no interruption to terminal output. Click "Restart" in Session 2 to verify recovery.
+
+**Test Idea 8 (High-Volume Output):** Start a workflow in all 4 sessions that generates massive terminal output (e.g., running test suites with verbose output). Observe terminal rendering for lag or stuttering. Verify WebSocket doesn't drop messages (terminal output complete and in order). Check backend logs for backpressure warnings.
+    </ideas>
+  </tests>
+</story-context>

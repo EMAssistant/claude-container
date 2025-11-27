@@ -1,0 +1,11 @@
+# YAML with all completed workflows
+# Tests handling when all steps are done
+
+generated: "2025-11-24"
+project: "completed-project"
+
+workflow_status:
+  brainstorm-project: "docs/brainstorming.md"
+  prd: "docs/prd.md"
+  create-architecture: "docs/architecture.md"
+  sprint-planning: "docs/sprint-status.yaml"

@@ -1,0 +1,249 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.4</storyId>
+    <title>File Tree Component with Workspace Navigation</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/3-4-file-tree-component-with-workspace-navigation.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer monitoring multiple Claude sessions</asA>
+    <iWant>to browse the workspace file hierarchy in a collapsible tree view</iWant>
+    <soThat>I can quickly navigate to and view generated artifacts like PRDs, architecture docs, and user stories</soThat>
+    <tasks>
+      - Task 1: Backend file tree endpoint and WebSocket integration (AC: 3.6, 3.7)
+      - Task 2: FileTree React component with expand/collapse (AC: 3.6, 3.6.4)
+      - Task 3: File selection and callback integration (AC: 3.6.3)
+      - Task 4: Real-time updates via WebSocket (AC: 3.7)
+      - Task 5: Virtual scrolling optimization (AC: 3.6.5)
+      - Task 6: UI polish and accessibility (AC: all)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC3.6: File tree displays workspace hierarchy with folders and files (folders with expand/collapse icons, file type icons, reflects directory structure, root shows /workspace)
+
+    AC3.7: File tree updates in real-time when new files are created (Chokidar detects changes, backend sends file.changed WebSocket messages, frontend updates without reload, new files appear in correct position)
+
+    AC3.6.3: File selection - Clicking a file triggers callback to open in artifact viewer (selected file highlighted, passes path to parent, only files selectable, state persists)
+
+    AC3.6.4: Expand/collapse state - Folder state persists during session (toggle on click, stored in state/localStorage, smooth CSS animation, all folders start collapsed)
+
+    AC3.6.5: Virtual scrolling for large trees - Performance optimization for 1000+ files (react-window or similar, only render visible nodes, smooth scrolling, meets <100ms target for 500 files)
+
+    AC3.6.6: File type filtering - Initially show all files, optionally filter to .md only (decision deferred to implementation, provide toggle if implemented, filtered files hidden but available)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic Technical Specification: Workflow Visibility & Document Review</title>
+        <section>Detailed Design - Services and Modules</section>
+        <snippet>FileTree.tsx component provides hierarchical file browser with expand/collapse. FileTreeNode data model includes name, path, type (file/directory), children (for directories), and lastModified timestamp.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic Technical Specification: Workflow Visibility & Document Review</title>
+        <section>Data Models and Contracts - FileTreeNode</section>
+        <snippet>FileTreeNode interface: { name: string, path: string, type: 'file' | 'directory', children?: FileTreeNode[], lastModified: string (ISO 8601) }</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic Technical Specification: Workflow Visibility & Document Review</title>
+        <section>APIs and Interfaces - New WebSocket Message Types</section>
+        <snippet>file.changed message: { type: 'file.changed', path: string, event: 'add' | 'change' | 'unlink', timestamp: string }. New REST endpoint: GET /api/documents/tree returns { tree: FileTreeNode[] }</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic Technical Specification: Workflow Visibility & Document Review</title>
+        <section>Non-Functional Requirements - Performance</section>
+        <snippet>File tree rendering <100ms for 500 files. File change notification <200ms end-to-end. Virtual scrolling required for 1000+ files. Debounce file watcher events (500ms) to batch rapid updates.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>FR Category to Architecture Mapping - Web Interface Document Viewing</section>
+        <snippet>FileTree.tsx component in frontend/src/components/ provides file tree navigation with chokidar file watching. Hierarchical tree view with expand/collapse.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Consistency Rules - Naming Conventions</section>
+        <snippet>React components: PascalCase (FileTree.tsx). Event handlers: on prefix (onFileSelect, onFolderToggle). State variables: camelCase (expandedFolders, selectedFile).</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture-decisions.md</path>
+        <title>Architecture Decision Records</title>
+        <section>ADR-006: Chokidar for File System Watching</section>
+        <snippet>Use Chokidar for workspace file monitoring (production-ready reliability, normalizes events across platforms, handles edge cases). Watch /workspace/**/* with ignore patterns for node_modules, .git, .worktrees. 500ms debounce for batching.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>backend/src/types.ts</path>
+        <kind>types</kind>
+        <symbol>ClientMessage, ServerMessage</symbol>
+        <lines>1-244</lines>
+        <reason>WebSocket message type definitions. Need to extend ServerMessage union with file.changed message type for real-time file tree updates.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/src/server.ts</path>
+        <kind>server</kind>
+        <symbol>Express app, WebSocket server</symbol>
+        <lines>1-100</lines>
+        <reason>Main backend server file. Need to add GET /api/documents/tree REST endpoint and extend WebSocket message handling for file.changed events.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/hooks/useWebSocket.ts</path>
+        <kind>hook</kind>
+        <symbol>useWebSocket</symbol>
+        <lines>1-252</lines>
+        <reason>WebSocket hook with message subscription pattern. FileTree component will use the 'on' method to subscribe to file.changed messages.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/Terminal.tsx</path>
+        <kind>component</kind>
+        <symbol>Terminal</symbol>
+        <lines>all</lines>
+        <reason>Example React component following project patterns. Reference for component structure, TypeScript usage, and WebSocket integration patterns.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/SessionList.tsx</path>
+        <kind>component</kind>
+        <symbol>SessionList</symbol>
+        <lines>all</lines>
+        <reason>Example component with real-time updates and list rendering. Reference for handling dynamic data updates and UI state management.</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <backend>
+        <package name="express" version="^4.18.0" purpose="HTTP server and REST API" />
+        <package name="ws" version="^8.14.0" purpose="WebSocket server for real-time file change notifications" />
+        <package name="winston" version="^3.11.0" purpose="Structured logging" />
+        <note>Chokidar is NOT yet in dependencies - need to add chokidar@^4.x for file watching</note>
+      </backend>
+      <frontend>
+        <package name="react" version="^19.2.0" purpose="UI framework" />
+        <package name="lucide-react" version="^0.554.0" purpose="Icon library for ChevronRight, ChevronDown, FileText, FolderClosed, FolderOpen icons" />
+        <package name="tailwind-merge" version="^3.4.0" purpose="Utility class management" />
+        <package name="clsx" version="^2.1.1" purpose="Conditional className composition" />
+        <note>react-window or react-virtualized NOT yet in dependencies - need to add for virtual scrolling (Task 5)</note>
+      </frontend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Component must be placed in frontend/src/components/FileTree.tsx (flat structure per Architecture)
+    - Use TypeScript strict mode with explicit types for all props and state
+    - Follow React component structure pattern: 1) Imports, 2) Types/Interfaces, 3) Component definition, 4) Hooks, 5) Event handlers, 6) Render
+    - Use absolute imports with @ path alias for internal modules (e.g., import { useWebSocket } from '@/hooks/useWebSocket')
+    - Performance requirement: File tree rendering must complete in <100ms for 500 files
+    - Performance requirement: File change notification must complete in <200ms end-to-end (Chokidar event to UI update)
+    - Debounce file watcher events with 500ms delay to batch rapid updates during Claude operations
+    - Watch /workspace/**/* with ignore patterns: node_modules, .git, .worktrees
+    - All folders must start collapsed by default
+    - CSS transitions for expand/collapse must use 350ms ease-out (per Architecture Section 8.1)
+    - Follow Oceanic Calm theme colors: Selection #88C0D0 (blue), Hover #4C566A (gray), Background #2E3440 (dark), Text #ECEFF4 (light)
+    - Virtual scrolling required for trees with 1000+ files
+    - WebSocket messages must follow existing pattern: JSON.stringify({ type: 'resource.action', ...data })
+    - File paths returned from backend must be absolute paths (converted to relative for display if needed)
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>FileTreeNode</name>
+      <kind>TypeScript interface</kind>
+      <signature>
+interface FileTreeNode {
+  name: string;           // File/folder name
+  path: string;           // Absolute path
+  type: 'file' | 'directory';
+  children?: FileTreeNode[];  // Only for directories
+  lastModified: string;   // ISO 8601 timestamp
+}
+      </signature>
+      <path>backend/src/types.ts (to be added), frontend/src/types.ts (to be added)</path>
+    </interface>
+
+    <interface>
+      <name>GET /api/documents/tree</name>
+      <kind>REST endpoint</kind>
+      <signature>
+GET /api/documents/tree
+Response: { tree: FileTreeNode[] }
+Returns file tree structure for workspace directory
+      </signature>
+      <path>backend/src/server.ts (to be added)</path>
+    </interface>
+
+    <interface>
+      <name>file.changed WebSocket message</name>
+      <kind>WebSocket message (Server → Client)</kind>
+      <signature>
+{
+  type: 'file.changed',
+  path: string,
+  event: 'add' | 'change' | 'unlink',
+  timestamp: string
+}
+      </signature>
+      <path>backend/src/types.ts (to be added to ServerMessage union)</path>
+    </interface>
+
+    <interface>
+      <name>FileTreeProps</name>
+      <kind>React component props</kind>
+      <signature>
+interface FileTreeProps {
+  onFileSelect: (filePath: string) => void;  // Callback when file is clicked
+  className?: string;  // Optional Tailwind classes
+}
+      </signature>
+      <path>frontend/src/components/FileTree.tsx (to be created)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Frontend tests use Vitest with @testing-library/react. Unit test coverage target: 50%+ for frontend components (per Architecture Section 7.2). Backend tests use Jest with supertest for API endpoints. Test files co-located with source using .test.ts/.test.tsx suffix. Follow describe/it/expect syntax. Mock WebSocket connections and file system operations in tests.
+    </standards>
+
+    <locations>
+      frontend/src/components/FileTree.test.tsx
+      backend/src/server.test.ts (extend existing for new /api/documents/tree endpoint)
+      backend/src/fileWatcher.test.ts (to be created for chokidar integration)
+    </locations>
+
+    <ideas>
+      Unit tests (Vitest - frontend/src/components/FileTree.test.tsx):
+      - AC3.6: Render tree structure correctly with nested folders and files
+      - AC3.6.4: Expand/collapse folders on click and verify state change
+      - AC3.6.3: Highlight selected file with correct background color
+      - AC3.6.3: Call onFileSelect callback with correct absolute path when file clicked
+      - AC3.6.4: Persist expand/collapse state in localStorage
+      - AC3.6.6: Filter files to .md only when filter toggle enabled (if implemented)
+
+      Integration tests (Vitest - frontend/src/components/FileTree.test.tsx):
+      - AC3.7: Update tree on file.changed WebSocket message (add event)
+      - AC3.7: Update tree on file.changed WebSocket message (unlink event)
+      - AC3.7: Preserve expand state during tree updates
+
+      Backend tests (Jest - backend/src/server.test.ts):
+      - GET /api/documents/tree returns valid FileTreeNode[] structure
+      - GET /api/documents/tree handles invalid workspace paths
+      - File watcher sends file.changed WebSocket on file creation (integration test)
+      - File watcher debounces rapid file changes to single message batch
+
+      Performance tests (Vitest):
+      - AC3.6.5: Render 500 file tree in <100ms
+      - AC3.6.5: Virtual scrolling renders only visible nodes for 1000+ file tree
+      - AC3.7: File change notification completes in <200ms end-to-end
+    </ideas>
+  </tests>
+</story-context>

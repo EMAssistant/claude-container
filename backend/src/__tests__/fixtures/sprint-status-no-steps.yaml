@@ -1,0 +1,12 @@
+# Sprint status with all stories done
+# Testing when epic is fully completed
+
+generated: 2025-11-24
+project: test-project
+
+development_status:
+  epic-1: contexted
+  epic-1-retrospective: completed
+  1-1-basic-setup: done
+  1-2-terminal-component: done
+  1-3-backend-server: done

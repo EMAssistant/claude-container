@@ -1,0 +1,8 @@
+# Partial YAML with minimal fields
+# Tests graceful handling of incomplete data
+
+project: "partial-project"
+
+workflow_status:
+  brainstorm-project: "docs/brainstorming.md"
+  prd: required

@@ -1,0 +1,43 @@
+# BMM Workflow Status
+# Tracks progress through BMad Method phases (Discovery, Planning, Solutioning)
+# Implementation phase tracked separately in sprint-status.yaml
+
+# STATUS DEFINITIONS:
+# ==================
+# Initial Status (before completion):
+#   - required: Must be completed to progress
+#   - optional: Can be completed but not required
+#   - recommended: Strongly suggested but not required
+#   - conditional: Required only if certain conditions met (e.g., if_has_ui)
+#
+# Completion Status:
+#   - {file-path}: File created/found (workflow complete)
+#   - skipped: Optional/conditional workflow that was skipped
+
+generated: "2025-11-24"
+project: "claude-container"
+project_type: "software"
+selected_track: "bmad-method"
+field_type: "greenfield"
+workflow_path: "method-greenfield.yaml"
+
+workflow_status:
+  # Phase 0: Discovery (Optional)
+  brainstorm-project: "docs/brainstorming-session-results-2025-11-23.md"
+  research: skipped
+  product-brief: skipped
+
+  # Phase 1: Planning
+  prd: "docs/prd.md"
+  validate-prd: skipped
+  create-design: "docs/ux-design-specification.md"
+
+  # Phase 2: Solutioning
+  create-architecture: "docs/architecture.md"
+  create-epics-and-stories: "docs/epics.md"
+  test-design: skipped
+  validate-architecture: skipped
+  implementation-readiness: "docs/implementation-readiness-report-2025-11-24.md"
+
+  # Phase 3: Implementation
+  sprint-planning: "docs/sprint-artifacts/sprint-status.yaml"

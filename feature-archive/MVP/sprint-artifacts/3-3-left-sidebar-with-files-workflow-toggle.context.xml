@@ -1,0 +1,250 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.3</storyId>
+    <title>Left Sidebar with Files/Workflow Toggle</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/3-3-left-sidebar-with-files-workflow-toggle.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>a left sidebar that toggles between file tree and workflow diagram views</iWant>
+    <soThat>I can access both generated artifacts and process visualization</soThat>
+    <tasks>
+- Create LeftSidebar component structure (AC: 1, 2)
+  - Set up component with default 280px width
+  - Implement tab bar with "Files" and "Workflow" buttons using shadcn/ui Tabs
+  - Style tabs with Oceanic Calm theme colors
+- Implement tab toggle functionality (AC: 3, 4, 7)
+  - Create state management in LayoutContext for `leftSidebarView: 'files' | 'workflow'`
+  - Add click handlers for tab switching
+  - Implement keyboard shortcut (Cmd+W / Ctrl+W) with global event listener
+  - Ensure keyboard shortcut only fires when focus is not in input/textarea
+  - Measure and validate toggle completes in &lt;50ms
+- Integrate child view components (AC: 5, 6)
+  - Add conditional rendering: Files view shows FileTree component (lazy loaded)
+  - Add conditional rendering: Workflow view shows WorkflowProgress component (lazy loaded)
+  - Use React.lazy() for code splitting of child components
+- Add view persistence (AC: 8)
+  - Save active view to localStorage on tab change
+  - Load saved view preference on component mount
+  - Handle missing/corrupted localStorage gracefully (default to 'files')
+- Implement collapse/expand functionality (AC: 9, 10)
+  - Add collapse button with icon in sidebar header
+  - Create collapsed state (40px width, vertical text/icon)
+  - Implement CSS transition (300ms ease-out) for collapse animation
+  - Save collapsed state and previous width to localStorage
+  - Add click handler to expand from collapsed state
+- Testing (All ACs)
+  - Unit test: Tab switching updates state correctly
+  - Unit test: Keyboard shortcut triggers tab toggle
+  - Unit test: localStorage persistence saves and restores view
+  - Unit test: Collapse/expand state transitions
+  - Visual test: Verify 50ms toggle performance with React DevTools
+  - Integration test: Verify child components render in correct view
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. Sidebar Structure: Left sidebar component exists with 280px default width, resizable between 200-400px
+2. Tab Navigation: Sidebar displays tab bar at top with two buttons: "Files" | "Workflow"
+3. Default View: "Files" tab is active by default on UI load
+4. Toggle Interaction: User can switch views via click or keyboard shortcut Cmd+W (macOS) / Ctrl+W (Windows/Linux)
+5. Files View: When "Files" tab is active, sidebar shows file tree of workspace documents (Story 3.4)
+6. Workflow View: When "Workflow" tab is active, sidebar shows BMAD workflow progress component (Story 3.2)
+7. Toggle Performance: View switches complete within 50ms
+8. View Persistence: Last active view is remembered per session in localStorage
+9. Collapse State: Sidebar has collapse button that minimizes to 40px wide bar with rotate icon/text
+10. Expand Interaction: Clicking collapsed bar expands sidebar back to previous width
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <artifact>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic Technical Specification: Workflow Visibility &amp; Document Review</title>
+        <section>Detailed Design - Left Sidebar</section>
+        <snippet>Left sidebar with dual-view toggle (280px default, resizable 200-400px) switching between Files and Workflow views via tabs or Cmd+W keyboard shortcut. Layout state managed in LayoutContext with persistence to localStorage.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/epics/epic-3-workflow-visibility.md</path>
+        <title>Epic 3: Workflow Visibility &amp; Document Review</title>
+        <section>Story 3.3: Left Sidebar with Files/Workflow Toggle</section>
+        <snippet>Toggle buttons using shadcn/ui tabs with Oceanic Calm styling. Two separate components: FileTree and WorkflowDiagram (lazy loaded). State: LayoutContext tracks leftSidebarView: 'files' | 'workflow'. Keyboard shortcut: Global event listener, check active element not input. Collapse/expand: CSS transition 300ms, state persisted to localStorage.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Project Structure - Frontend Components</section>
+        <snippet>Frontend structure includes components/, hooks/, context/, and lib/ directories. React Context API used for state management (ADR-005). shadcn/ui provides component primitives with full customization for Oceanic Calm theme.</snippet>
+      </artifact>
+    </docs>
+    <code>
+      <artifact>
+        <path>frontend/src/App.tsx</path>
+        <kind>component</kind>
+        <symbol>App</symbol>
+        <lines>1-226</lines>
+        <reason>Main application layout showing current sidebar implementation (SessionList on right). Reference for understanding overall app structure and where LeftSidebar will fit in the layout.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/SessionTabs.tsx</path>
+        <kind>component</kind>
+        <symbol>SessionTabs</symbol>
+        <lines>1-220</lines>
+        <reason>Excellent reference for tab implementation using shadcn/ui Tabs. Shows keyboard shortcuts (Cmd/Ctrl+1-4), performance measurement (&lt;50ms), and Oceanic Calm styling patterns. Key patterns to replicate: keyboard event handling, scroll management, and tab styling.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/ui/tabs.tsx</path>
+        <kind>ui-component</kind>
+        <symbol>Tabs, TabsList, TabsTrigger, TabsContent</symbol>
+        <lines>1-54</lines>
+        <reason>shadcn/ui Tabs primitives from @radix-ui/react-tabs. Use these components for implementing Files/Workflow toggle with custom Oceanic Calm styling.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/ui/resizable.tsx</path>
+        <kind>ui-component</kind>
+        <symbol>ResizablePanelGroup, ResizablePanel, ResizableHandle</symbol>
+        <lines>1-44</lines>
+        <reason>Resizable panel components from react-resizable-panels. Use for implementing sidebar resize functionality (200-400px constraint) with drag handles.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/SessionList.tsx</path>
+        <kind>component</kind>
+        <symbol>SessionList</symbol>
+        <lines>N/A</lines>
+        <reason>Right sidebar implementation. Reference for sidebar layout patterns, width constraints, and integration with main app layout.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <frontend>
+        <package name="react" version="^19.2.0" />
+        <package name="react-dom" version="^19.2.0" />
+        <package name="@radix-ui/react-tabs" version="^1.1.13" />
+        <package name="react-resizable-panels" version="^3.0.6" />
+        <package name="lucide-react" version="^0.554.0" />
+        <package name="clsx" version="^2.1.1" />
+        <package name="tailwind-merge" version="^3.4.0" />
+        <package name="tailwindcss" version="^4.1.17" />
+      </frontend>
+      <devDependencies>
+        <package name="vitest" version="^4.0.13" />
+        <package name="@testing-library/react" version="^16.3.0" />
+        <package name="@testing-library/user-event" version="^14.6.1" />
+        <package name="@testing-library/jest-dom" version="^6.9.1" />
+      </devDependencies>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+- **State Management (ADR-005)**: Use React Context API for managing sidebar view state. Create or extend LayoutContext to include leftSidebarView, isLeftCollapsed, and leftSidebarWidth state.
+- **Performance Requirement**: Tab switching must complete within 50ms. Use performance.now() for measurement and console.warn if exceeds threshold (pattern from SessionTabs.tsx).
+- **Keyboard Shortcut Scope**: Cmd+W / Ctrl+W shortcut must only trigger when document.activeElement is not input/textarea/contenteditable to avoid interfering with text editing.
+- **Lazy Loading**: Use React.lazy() to code-split FileTree and WorkflowProgress child components. Prevents loading unused code when view is not active.
+- **Oceanic Calm Theme**: Follow established color palette - Inactive tab: #81A1C1, Active tab: #88C0D0 with #434C5E background, Hover: #5E81AC
+- **CSS Transitions**: Collapse/expand animation must use CSS transition (300ms ease-out), not JavaScript animation, for smooth performance.
+- **localStorage Persistence**: Save view preference (files/workflow), collapsed state, and sidebar width to localStorage. Handle corrupted data gracefully with fallback to defaults.
+- **Component Dependencies**: LeftSidebar depends on FileTree.tsx (Story 3.4) and WorkflowProgress.tsx (Story 3.2) which are not yet implemented. Use placeholder components or conditional rendering until those stories complete.
+- **Width Constraints**: Sidebar resizable between 200px (minimum) and 400px (maximum). Collapsed state: 40px width.
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>LayoutContext (to be created/extended)</name>
+      <kind>React Context</kind>
+      <signature>
+interface LayoutState {
+  leftSidebarView: 'files' | 'workflow';
+  leftSidebarWidth: number;  // 200-400px
+  isLeftCollapsed: boolean;
+  setLeftSidebarView: (view: 'files' | 'workflow') =&gt; void;
+  toggleLeftSidebar: () =&gt; void;
+  setLeftSidebarWidth: (width: number) =&gt; void;
+  setIsLeftCollapsed: (collapsed: boolean) =&gt; void;
+}
+      </signature>
+      <path>frontend/src/context/LayoutContext.tsx</path>
+    </interface>
+    <interface>
+      <name>LeftSidebar Props</name>
+      <kind>Component Props Interface</kind>
+      <signature>
+interface LeftSidebarProps {
+  // No props needed - uses LayoutContext for state
+  // Children components (FileTree, WorkflowProgress) will be rendered conditionally
+}
+      </signature>
+      <path>frontend/src/components/LeftSidebar.tsx</path>
+    </interface>
+    <interface>
+      <name>Tabs Component (shadcn/ui)</name>
+      <kind>UI Component</kind>
+      <signature>
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+// Radix UI tabs with value prop for controlled state
+&lt;Tabs value={activeView} onValueChange={handleViewChange}&gt;
+  &lt;TabsList&gt;
+    &lt;TabsTrigger value="files"&gt;Files&lt;/TabsTrigger&gt;
+    &lt;TabsTrigger value="workflow"&gt;Workflow&lt;/TabsTrigger&gt;
+  &lt;/TabsList&gt;
+&lt;/Tabs&gt;
+      </signature>
+      <path>frontend/src/components/ui/tabs.tsx</path>
+    </interface>
+    <interface>
+      <name>localStorage API</name>
+      <kind>Browser API</kind>
+      <signature>
+// Save state
+localStorage.setItem('leftSidebarView', view);
+localStorage.setItem('leftSidebarWidth', width.toString());
+localStorage.setItem('isLeftCollapsed', collapsed.toString());
+
+// Load state with fallback
+const savedView = localStorage.getItem('leftSidebarView') || 'files';
+const savedWidth = parseInt(localStorage.getItem('leftSidebarWidth') || '280');
+const savedCollapsed = localStorage.getItem('isLeftCollapsed') === 'true';
+      </signature>
+      <path>Web Storage API</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+Testing uses Vitest as test framework with @testing-library/react for component testing. Tests follow patterns established in SessionTabs.test.tsx and SessionList.test.tsx. Unit tests verify component behavior and state management. Integration tests verify interaction with context providers. Performance tests use React DevTools Profiler or performance.now() for latency measurement. Test files colocated with components using .test.tsx suffix. Coverage target: 50%+ for frontend unit tests per architecture.
+    </standards>
+    <locations>
+- frontend/src/components/LeftSidebar.test.tsx
+- frontend/src/components/SessionTabs.test.tsx (reference example)
+- frontend/src/context/LayoutContext.test.tsx (if creating new context)
+    </locations>
+    <ideas>
+**Unit Tests:**
+- AC1,2: Renders with default 280px width and tab bar with Files/Workflow buttons
+- AC3: Files tab is active by default on initial render
+- AC4: Click handler switches view state correctly
+- AC4: Cmd+W keyboard shortcut toggles between files and workflow views
+- AC4: Keyboard shortcut does NOT trigger when focus is in input element
+- AC7: Tab switch completes in &lt;50ms (measure with performance.now())
+- AC8: Saves view preference to localStorage on tab change
+- AC8: Loads saved view preference from localStorage on mount
+- AC8: Handles corrupted/missing localStorage gracefully (defaults to 'files')
+- AC9,10: Collapse button updates isLeftCollapsed state
+- AC9,10: Collapsed state shows 40px width, expanded shows previous width
+- AC9,10: Collapse/expand animation uses CSS transition
+
+**Integration Tests:**
+- AC5: When Files tab active, FileTree component renders (or placeholder if not implemented)
+- AC6: When Workflow tab active, WorkflowProgress component renders (or placeholder)
+- Context integration: LayoutContext provides correct state to LeftSidebar
+- Context integration: State changes in LeftSidebar update LayoutContext
+
+**Performance Tests:**
+- AC7: Use React DevTools Profiler to measure tab switch render time
+- AC7: Performance test with console.warn if exceeds 50ms threshold (pattern from SessionTabs)
+    </ideas>
+  </tests>
+</story-context>

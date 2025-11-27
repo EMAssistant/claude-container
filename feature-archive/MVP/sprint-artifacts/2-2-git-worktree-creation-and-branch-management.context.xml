@@ -1,0 +1,322 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2</storyId>
+    <title>Git Worktree Creation and Branch Management</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/2-2-git-worktree-creation-and-branch-management.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>each session to operate in an isolated git worktree on its own branch</iWant>
+    <soThat>Claude's changes don't conflict with work in other sessions</soThat>
+    <tasks>
+- Task 1: Create WorktreeManager module (AC: 1-4)
+  - Create `/backend/src/worktreeManager.ts` module
+  - Install simple-git dependency: `npm install simple-git` in backend
+  - Implement `WorktreeManager` class with constructor accepting `workspaceRoot` option
+  - Implement `createWorktree(sessionId: string, branchName: string): Promise&lt;string&gt;` method
+  - Execute `git worktree add -b &lt;branch&gt; /workspace/.worktrees/&lt;session-id&gt;` using simple-git
+  - Return the full worktree path on success
+  - Implement error handling for existing branch names (git will reject duplicate branches)
+  - Implement error handling for filesystem errors (permissions, disk space)
+
+- Task 2: Implement branch name validation and generation (AC: 1, 3)
+  - Implement `validateBranchName(name: string): boolean` method
+  - Validate git-compatible characters only (alphanumeric, dash, slash, underscore)
+  - Reject names longer than 255 characters (git limit)
+  - Reject names starting with slash or dot (git restrictions)
+  - Implement `generateBranchName(sessionName: string): string` method
+  - Convert session name to branch format: `feature/&lt;session-name&gt;`
+  - Handle auto-generated session names: `feature/2025-11-24-001`
+
+- Task 3: Implement worktree removal with cleanup (AC: 7-9)
+  - Implement `removeWorktree(sessionId: string): Promise&lt;void&gt;` method
+  - Execute `git worktree remove /workspace/.worktrees/&lt;session-id&gt;` using simple-git
+  - Add force flag if worktree has uncommitted changes (user opted for cleanup)
+  - Verify worktree directory is deleted after removal
+  - Do NOT delete the git branch (user responsibility per FR20)
+  - Log errors if removal fails (locked files, uncommitted changes without force)
+
+- Task 4: Implement worktree listing for recovery (AC: 2)
+  - Implement `listWorktrees(): Promise&lt;Array&lt;{ path: string, branch: string }&gt;&gt;` method
+  - Execute `git worktree list --porcelain` using simple-git
+  - Parse output to extract worktree paths and associated branches
+  - Filter for worktrees in `/workspace/.worktrees/` directory only
+  - Return structured array for session manager recovery mechanism
+
+- Task 5: Integrate with PTYManager for worktree-scoped processes (AC: 5-6)
+  - Modify `ptyManager.ts` to accept `cwd` parameter in `spawnPTY()` method
+  - Set PTY process working directory to worktree path when spawning
+  - Verify PTY process inherits `cwd` correctly (test with `pwd` command)
+  - Ensure Claude CLI executes commands within worktree context only
+  - Update PTYManager interface to require worktree path on session creation
+
+- Task 6: Add comprehensive error handling and logging
+  - Import winston logger in worktreeManager.ts
+  - Log worktree creation: `logger.info('Worktree created', { sessionId, branch, path })`
+  - Log worktree removal: `logger.info('Worktree removed', { sessionId, cleanup: true/false })`
+  - Log errors with git stderr output: `logger.error('Git worktree failed', { error, gitOutput })`
+  - Catch and wrap simple-git errors with user-friendly messages
+  - Include session ID and branch name in all log entries for traceability
+
+- Task 7: Write unit tests for WorktreeManager
+  - Test `createWorktree()` with valid session ID and branch name
+  - Test `createWorktree()` with existing branch (should fail gracefully)
+  - Test `validateBranchName()` with valid and invalid branch names
+  - Test `generateBranchName()` with various session name formats
+  - Test `removeWorktree()` for successful cleanup
+  - Test `removeWorktree()` error handling (non-existent worktree)
+  - Test `listWorktrees()` returns correct worktree information
+  - Mock simple-git library to avoid real git operations in tests
+
+- Task 8: Integration testing with real git repository
+  - Create integration test with actual git repository in temp directory
+  - Test full workflow: create worktree → spawn PTY → verify cwd → remove worktree
+  - Test concurrent worktree creation (2 sessions simultaneously)
+  - Verify worktree isolation (changes in one don't affect another)
+  - Test worktree removal with uncommitted changes (verify error or force)
+  - Cleanup temp directories after tests
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+AC1: GIVEN a `worktreeManager.ts` backend module using simple-git, WHEN a session is created with name "feature-auth", THEN the system executes: `git worktree add -b feature/feature-auth /workspace/.worktrees/&lt;session-id&gt;`
+
+AC2: AND a new git worktree is created at `/workspace/.worktrees/&lt;session-id&gt;`
+
+AC3: AND a new branch `feature/feature-auth` is created from current HEAD
+
+AC4: AND the worktree directory contains a complete copy of the repository
+
+AC5: AND WHEN the PTY process is spawned for this session, THEN the working directory is set to `/workspace/.worktrees/&lt;session-id&gt;` (FR18)
+
+AC6: AND Claude operates exclusively within that worktree
+
+AC7: AND WHEN the session is destroyed with cleanup option enabled, THEN the system executes: `git worktree remove /workspace/.worktrees/&lt;session-id&gt;`
+
+AC8: AND the worktree directory is deleted
+
+AC9: AND the branch remains (user can merge/delete manually per FR20)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>Services and Modules - worktreeManager.ts</section>
+        <snippet>Defines WorktreeManager module responsibilities: Creates/removes git worktrees using simple-git, validates branch names, manages worktree directory structure. Inputs: Session ID, branch name, cleanup flags. Outputs: Worktree path, git command results, errors. Location: /backend/src/worktreeManager.ts</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>Data Models and Contracts - Session Entity</section>
+        <snippet>Session interface includes worktreePath field (absolute path /workspace/.worktrees/&lt;session-id&gt;) and branch field (git branch name e.g., "feature/feature-auth"). Session persists in JSON at /workspace/.claude-container-sessions.json.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>Workflows and Sequencing - Workflow 1: Session Creation</section>
+        <snippet>Session creation workflow steps: 1) SessionManager checks session count &lt; 4, 2) Generates UUID session ID, 3) Derives branch name "feature/&lt;session-name&gt;", 4) WorktreeManager executes git worktree add command, 5) PTYManager spawns Claude CLI with cwd=worktreePath, 6) Session saved to JSON with atomic write.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>ADR-008: simple-git for Git Worktree Management</section>
+        <snippet>Decision: Use simple-git library instead of dedicated git-worktree package or isomorphic-git. Rationale: Git binary already required in container, simple-git wraps native git CLI with worktree command support via .raw(), actively maintained. Straightforward API: git.raw(['worktree', 'add', path, branch])</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Technology Stack - Backend Dependencies</section>
+        <snippet>New dependencies for Epic 2: simple-git (^3.25.0) for git worktree management (wraps git CLI). Production dependencies already installed: express, ws, node-pty, uuid, winston.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Consistency Rules - Logging Strategy</section>
+        <snippet>Winston structured JSON logging. Log levels: error (failures requiring attention), info (important state changes), debug (detailed execution). Include sessionId in all session-related logs. No sensitive data in logs.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>Git Worktree Management (FR16-FR20)</section>
+        <snippet>FR16: Each session gets isolated git worktree at /workspace/.worktrees/&lt;session-id&gt; on branch feature/&lt;session-name&gt;. FR18: PTY process spawns with cwd set to worktree path. FR20: Branch remains after session destroy (user responsibility to merge).</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>APIs and Interfaces - WorktreeManager Public API</section>
+        <snippet>WorktreeManager class methods: createWorktree(sessionId, branchName) returns Promise&lt;string&gt; worktree path, removeWorktree(sessionId) returns Promise&lt;void&gt;, listWorktrees() returns Promise&lt;Array&lt;{path, branch}&gt;&gt;, validateBranchName(name) returns boolean, generateBranchName(sessionName) returns string.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>backend/src/ptyManager.ts</path>
+        <kind>service</kind>
+        <symbol>PTYManager.spawn</symbol>
+        <lines>83-144</lines>
+        <reason>PTYManager.spawn() method accepts cwd config parameter that must be set to worktree path. This is the integration point for Task 5 - setting working directory to worktree when spawning Claude CLI process.</reason>
+      </file>
+      <file>
+        <path>backend/src/ptyManager.ts</path>
+        <kind>interface</kind>
+        <symbol>PTYConfig</symbol>
+        <lines>33-44</lines>
+        <reason>PTYConfig interface defines cwd field (working directory) that worktreeManager will pass when creating sessions. This interface already supports worktree integration.</reason>
+      </file>
+      <file>
+        <path>backend/src/server.ts</path>
+        <kind>function</kind>
+        <symbol>createSession</symbol>
+        <lines>130-162</lines>
+        <reason>createSession() function will need to call worktreeManager.createWorktree() before spawning PTY process, and pass worktreePath as cwd to ptyManager.spawn(). Currently hardcoded to '/workspace' - will become dynamic per session.</reason>
+      </file>
+      <file>
+        <path>backend/src/types.ts</path>
+        <kind>interface</kind>
+        <symbol>SessionData</symbol>
+        <lines>82-89</lines>
+        <reason>SessionData interface will need to add worktreePath and branch fields to track git worktree location and branch name for each session. Currently missing these fields from Story 2.1.</reason>
+      </file>
+      <file>
+        <path>backend/package.json</path>
+        <kind>config</kind>
+        <symbol>dependencies</symbol>
+        <lines>21-27</lines>
+        <reason>Package.json dependencies section needs simple-git added. Current dependencies: express, node-pty, uuid, winston, ws. Task 1 requires installing simple-git.</reason>
+      </file>
+    </code>
+    <dependencies>
+      <backend>
+        <package name="express" version="^4.18.0" />
+        <package name="node-pty" version="^1.0.0" />
+        <package name="uuid" version="^9.0.0" />
+        <package name="winston" version="^3.11.0" />
+        <package name="ws" version="^8.14.0" />
+        <package name="simple-git" version="^3.25.0" required="true" reason="New dependency for Epic 2 - git worktree management" />
+      </backend>
+      <devDependencies>
+        <package name="@types/express" version="^4.17.0" />
+        <package name="@types/node" version="^20.10.0" />
+        <package name="@types/uuid" version="^9.0.0" />
+        <package name="@types/ws" version="^8.5.0" />
+        <package name="nodemon" version="^3.0.0" />
+        <package name="ts-node" version="^10.9.0" />
+        <package name="typescript" version="^5.3.0" />
+      </devDependencies>
+      <system>
+        <dependency name="git" version="2.x+" reason="Required for git worktree commands - already installed in Docker container from Epic 1" />
+        <dependency name="Node.js" version="20 LTS" reason="Backend runtime - already installed" />
+      </system>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+- MUST use simple-git library for all git operations (ADR-008) - no direct shell command execution
+- Worktree paths MUST be under /workspace/.worktrees/&lt;session-id&gt; to survive container restarts (workspace volume is mounted)
+- Branch naming convention MUST follow "feature/&lt;session-name&gt;" format for user-provided names, "feature/YYYY-MM-DD-NNN" for auto-generated
+- Design limit: Max 4 worktrees enforced by session manager (NFR-SCALE-1), not this module
+- PTY processes MUST spawn with cwd set to worktree path (FR18) - integration point with ptyManager.ts
+- Session persistence MUST use atomic write pattern (temp file + rename) to prevent JSON corruption
+- Git worktrees share same .git directory (object database and refs) - concurrent operations are safe due to git internal locking
+- Branch MUST remain after worktree removal (FR20) - user merges manually
+- All git errors MUST be caught and wrapped with user-friendly messages including sessionId and branch name
+- Winston structured logging MUST include: sessionId, branch, worktreePath, operation, error details, git stderr output
+- Branch name validation: alphanumeric + dash/slash/underscore, max 255 chars, no leading slash/dot
+- Worktree creation performance target: ~2 seconds (acceptable for user-initiated action per Tech Spec)
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>WorktreeManager.createWorktree</name>
+      <kind>async method</kind>
+      <signature>async createWorktree(sessionId: string, branchName: string): Promise&lt;string&gt;</signature>
+      <path>backend/src/worktreeManager.ts</path>
+      <description>Creates git worktree using simple-git, returns absolute worktree path. Throws error if branch exists or git operation fails.</description>
+    </interface>
+    <interface>
+      <name>WorktreeManager.removeWorktree</name>
+      <kind>async method</kind>
+      <signature>async removeWorktree(sessionId: string): Promise&lt;void&gt;</signature>
+      <path>backend/src/worktreeManager.ts</path>
+      <description>Removes git worktree directory and unregisters from git. Uses force flag if uncommitted changes. Branch remains (user responsibility).</description>
+    </interface>
+    <interface>
+      <name>WorktreeManager.listWorktrees</name>
+      <kind>async method</kind>
+      <signature>async listWorktrees(): Promise&lt;Array&lt;{path: string, branch: string}&gt;&gt;</signature>
+      <path>backend/src/worktreeManager.ts</path>
+      <description>Executes git worktree list --porcelain, parses output, filters for /workspace/.worktrees/ paths. Used for session recovery mechanism.</description>
+    </interface>
+    <interface>
+      <name>WorktreeManager.validateBranchName</name>
+      <kind>method</kind>
+      <signature>validateBranchName(name: string): boolean</signature>
+      <path>backend/src/worktreeManager.ts</path>
+      <description>Validates branch name against git restrictions: alphanumeric + dash/slash/underscore, max 255 chars, no leading slash/dot.</description>
+    </interface>
+    <interface>
+      <name>WorktreeManager.generateBranchName</name>
+      <kind>method</kind>
+      <signature>generateBranchName(sessionName: string): string</signature>
+      <path>backend/src/worktreeManager.ts</path>
+      <description>Converts session name to git branch format: feature/&lt;session-name&gt; or feature/YYYY-MM-DD-NNN for auto-generated names.</description>
+    </interface>
+    <interface>
+      <name>PTYManager.spawn</name>
+      <kind>method</kind>
+      <signature>spawn(command: string, args: string[], config: Partial&lt;PTYConfig&gt;): IPty</signature>
+      <path>backend/src/ptyManager.ts</path>
+      <description>Spawns PTY process with config.cwd set to worktree path. Integration point for Task 5 - existing method accepts cwd parameter.</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+Backend unit tests use Jest with ts-jest transformer. Test files co-located with source using .test.ts suffix. Mock external dependencies (simple-git) to avoid filesystem side effects. Integration tests use real git repository in temporary directory with cleanup in afterAll(). Target coverage: 70%+ for critical paths (sessionManager, worktreeManager, ptyManager). Structured logging with winston for test debugging. All async operations use async/await pattern.
+    </standards>
+    <locations>
+- backend/src/worktreeManager.test.ts (unit tests)
+- backend/src/integration/*.test.ts (integration tests)
+- Test utilities: createTestRepo() helper to initialize empty git repo in /tmp
+- Test utilities: removeAllWorktrees() helper to reset state between tests
+    </locations>
+    <ideas>
+      <test ac="AC1,AC2,AC3,AC4">
+        <description>Unit test: createWorktree() with valid session ID and branch name. Mock simple-git to verify git worktree add -b &lt;branch&gt; &lt;path&gt; command called with correct args. Verify method returns expected path string.</description>
+      </test>
+      <test ac="AC1">
+        <description>Unit test: createWorktree() with existing branch name. Mock simple-git to throw error simulating git rejection of duplicate branch. Verify error is caught and re-thrown with user-friendly message including sessionId and branch.</description>
+      </test>
+      <test ac="AC3">
+        <description>Unit test: validateBranchName() with valid names (feature/auth, release/v1.0, bugfix/issue-123). Assert returns true. Test invalid names (spaces, special chars, >255 chars, leading slash/dot). Assert returns false.</description>
+      </test>
+      <test ac="AC3">
+        <description>Unit test: generateBranchName() with user-provided name "feature-auth". Assert returns "feature/feature-auth". Test auto-generated name "2025-11-24-001". Assert returns "feature/2025-11-24-001".</description>
+      </test>
+      <test ac="AC7,AC8,AC9">
+        <description>Unit test: removeWorktree() for successful cleanup. Mock simple-git to verify git worktree remove &lt;path&gt; called. Verify method completes without error. Verify branch NOT deleted (no git branch -d call).</description>
+      </test>
+      <test ac="AC7,AC8">
+        <description>Unit test: removeWorktree() with uncommitted changes. Mock simple-git to simulate error, then succeed with force flag. Verify force flag added on retry. Verify winston logger called with error details.</description>
+      </test>
+      <test ac="AC2,AC4">
+        <description>Unit test: listWorktrees() mock git worktree list --porcelain output. Verify parsing extracts path and branch correctly. Verify filters only /workspace/.worktrees/ paths (excludes main worktree).</description>
+      </test>
+      <test ac="AC5,AC6">
+        <description>Integration test: Full workflow with real git repo in /tmp. Create worktree, spawn PTY with cwd=worktreePath, execute pwd command, verify output matches worktree path. Remove worktree, verify directory deleted.</description>
+      </test>
+      <test ac="AC6">
+        <description>Integration test: Worktree isolation. Create 2 worktrees, create file in worktree-1, verify file NOT visible in worktree-2. Create file in worktree-2, verify NOT in worktree-1. Ensures independent working directories.</description>
+      </test>
+      <test ac="AC7,AC8,AC9">
+        <description>Integration test: Concurrent worktree creation. Spawn 2 createWorktree() calls simultaneously with different sessionIds but valid unique branch names. Verify both succeed. Verify no race conditions or git locking issues.</description>
+      </test>
+    </ideas>
+  </tests>
+</story-context>

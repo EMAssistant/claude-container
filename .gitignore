@@ -1,0 +1,9 @@
+node_modules/
+.playwright-mcp/
+settings.local.json
+/.worktrees
+coverage/
+dist/
+.claude-container-sessions.json
+/.claude/commands/bmad
+.idea

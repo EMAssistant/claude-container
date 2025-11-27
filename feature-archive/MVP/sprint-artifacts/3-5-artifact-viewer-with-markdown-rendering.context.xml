@@ -1,0 +1,275 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>5</storyId>
+    <title>Artifact Viewer with Markdown Rendering</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/3-5-artifact-viewer-with-markdown-rendering.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>to view markdown documents rendered in the browser with syntax highlighting</iWant>
+    <soThat>I can review PRDs, architecture docs, and code snippets without leaving the UI (FR45)</soThat>
+    <tasks>
+- [ ] Task 1: Create ArtifactViewer.tsx component (AC: #1, #7)
+  - [ ] Subtask 1.1: Set up react-markdown with remark-gfm and rehype-highlight plugins
+  - [ ] Subtask 1.2: Implement file content loading from backend API
+  - [ ] Subtask 1.3: Add close/switch file functionality
+  - [ ] Subtask 1.4: Style with Oceanic Calm theme matching terminal
+- [ ] Task 2: Implement markdown rendering with GFM support (AC: #2)
+  - [ ] Subtask 2.1: Configure remark-gfm plugin for tables, task lists, strikethrough
+  - [ ] Subtask 2.2: Add proper CSS for table borders and cell padding
+  - [ ] Subtask 2.3: Test rendering with sample markdown containing all GFM features
+- [ ] Task 3: Add syntax highlighting for code blocks (AC: #3)
+  - [ ] Subtask 3.1: Configure rehype-highlight plugin with language detection
+  - [ ] Subtask 3.2: Import and apply Oceanic Calm highlight.js theme (or create custom CSS)
+  - [ ] Subtask 3.3: Test highlighting with python, typescript, bash, json, yaml code blocks
+- [ ] Task 4: Implement file change detection and auto-refresh (AC: #4, #5, #6)
+  - [ ] Subtask 4.1: Subscribe to WebSocket `file.changed` events for current file
+  - [ ] Subtask 4.2: Store current scroll position before refresh
+  - [ ] Subtask 4.3: Reload file content and restore scroll position
+  - [ ] Subtask 4.4: Add visual indicator during refresh (optional)
+- [ ] Task 5: Write unit tests for ArtifactViewer component
+  - [ ] Subtask 5.1: Test markdown rendering with various content types
+  - [ ] Subtask 5.2: Test file change event handling
+  - [ ] Subtask 5.3: Test scroll position preservation logic
+  - [ ] Subtask 5.4: Test file switching functionality
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **Given** an `ArtifactViewer.tsx` component
+   **When** the user clicks "prd.md" in the file tree
+   **Then** the main content area displays the rendered markdown with GitHub Flavored Markdown support (tables, task lists, strikethrough), code blocks with syntax highlighting, and Oceanic Calm code theme (background `#2E3440`, syntax colors match terminal)
+
+2. **And** when the markdown contains a table, **Then** the table renders with proper borders and cell padding
+
+3. **And** when the markdown contains code blocks, **Then** the code is syntax highlighted based on language (python, typescript, bash, etc.)
+
+4. **And** when the file updates (Claude modifies it), **Then** the chokidar watcher detects the change
+
+5. **And** the artifact viewer auto-refreshes to show updated content
+
+6. **And** the scroll position is preserved (unless user manually scrolled away)
+
+7. **And** when the user clicks "Close" or selects a different file, **Then** the artifact viewer closes or switches to the new file
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic Technical Specification: Workflow Visibility & Document Review</title>
+        <section>Services and Modules - ArtifactViewer.tsx</section>
+        <snippet>Module responsibility: Render markdown with syntax highlighting. Inputs: File content string. Outputs: Rendered React components. Performance target: <500ms for 100KB file.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic Technical Specification: Workflow Visibility & Document Review</title>
+        <section>Data Models and Contracts - WebSocket Messages</section>
+        <snippet>file.changed message type: { type: 'file.changed', path: string, event: 'add'|'change'|'unlink', timestamp: string }</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic Technical Specification: Workflow Visibility & Document Review</title>
+        <section>APIs and Interfaces - REST Endpoints</section>
+        <snippet>GET /api/documents/:path returns file content (text/plain for markdown). Response: string or Error: { error: 'File not found' }</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-3-workflow-visibility.md</path>
+        <title>Epic 3: Workflow Visibility & Document Review - Story 3.5</title>
+        <section>Story 3.5: Artifact Viewer with Markdown Rendering</section>
+        <snippet>Prerequisites: Story 3.4 (File tree) provides file selection callback. Story 3.1 (File watching) backend infrastructure must be in place.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - ADR-007</title>
+        <section>ADR-007: react-markdown for Markdown Rendering</section>
+        <snippet>Use react-markdown for safe markdown rendering (no XSS vulnerabilities). React integration renders to React components, not raw HTML. Plugin ecosystem for remark plugins.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - ADR-011</title>
+        <section>ADR-011: Markdown Plugins for Code Highlighting</section>
+        <snippet>Use remark-gfm + rehype-highlight for markdown rendering. remark-gfm: GitHub Flavored Markdown support (tables, task lists, strikethrough). rehype-highlight: Syntax highlighting for code blocks.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Frontend Stack</title>
+        <section>Technology Stack Details - Frontend Stack</section>
+        <snippet>React 19, TypeScript 5.x, Vite 6.x, Tailwind CSS 4.0, shadcn/ui, xterm.js 5.x, react-markdown, remark-gfm, rehype-highlight, Lucide React</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>frontend/src/hooks/useWebSocket.ts</path>
+        <kind>hook</kind>
+        <symbol>useWebSocket</symbol>
+        <lines>1-251</lines>
+        <reason>Existing WebSocket hook pattern for subscribing to `file.changed` events. Use `on()` method to register callback for file change notifications.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/Terminal.tsx</path>
+        <kind>component</kind>
+        <symbol>Terminal</symbol>
+        <lines>70-98</lines>
+        <reason>Oceanic Calm theme definition with exact color values to match in code highlighting CSS. Terminal uses theme: background '#2E3440', foreground '#D8DEE9', cursor '#88C0D0', etc.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/Terminal.tsx</path>
+        <kind>component</kind>
+        <symbol>Terminal</symbol>
+        <lines>167-178</lines>
+        <reason>Pattern for subscribing to WebSocket messages. Use `on()` from useWebSocket hook and unsubscribe in cleanup function.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/SessionList.test.tsx</path>
+        <kind>test</kind>
+        <symbol>SessionList tests</symbol>
+        <lines>1-80</lines>
+        <reason>Testing pattern example: use Vitest, @testing-library/react, mock functions with vi.fn(), helper functions for mock data, describe/it structure.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/SessionList.tsx</path>
+        <kind>component</kind>
+        <symbol>SessionList</symbol>
+        <lines>entire file</lines>
+        <reason>Example React component structure with TypeScript props interface, hooks usage, and Tailwind CSS styling patterns.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <frontend>
+        <existing>
+          <package>react</package>
+          <version>^19.2.0</version>
+        </existing>
+        <existing>
+          <package>react-dom</package>
+          <version>^19.2.0</version>
+        </existing>
+        <existing>
+          <package>@xterm/xterm</package>
+          <version>^5.5.0</version>
+          <note>Terminal emulator with Oceanic Calm theme already configured</note>
+        </existing>
+        <existing>
+          <package>tailwindcss</package>
+          <version>^4.1.17</version>
+        </existing>
+        <existing>
+          <package>lucide-react</package>
+          <version>^0.554.0</version>
+          <note>Icon library for UI elements</note>
+        </existing>
+        <missing>
+          <package>react-markdown</package>
+          <version>^9.0.0</version>
+          <note>Safe markdown rendering (AC #1)</note>
+        </missing>
+        <missing>
+          <package>remark-gfm</package>
+          <version>^4.0.0</version>
+          <note>GitHub Flavored Markdown support (AC #2)</note>
+        </missing>
+        <missing>
+          <package>rehype-highlight</package>
+          <version>^7.0.0</version>
+          <note>Syntax highlighting for code blocks (AC #3)</note>
+        </missing>
+        <missing>
+          <package>highlight.js</package>
+          <version>^11.0.0</version>
+          <note>Syntax highlighting engine with theme support</note>
+        </missing>
+      </frontend>
+      <backend>
+        <existing>
+          <package>express</package>
+          <version>^4.18.0</version>
+          <note>HTTP server for REST API endpoints</note>
+        </existing>
+        <existing>
+          <package>ws</package>
+          <version>^8.14.0</version>
+          <note>WebSocket library for file.changed events</note>
+        </existing>
+      </backend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+- **Security**: Use react-markdown (safe by default, no dangerouslySetInnerHTML) to prevent XSS attacks (ADR-007)
+- **Performance**: Rendering must complete in <500ms for 100KB markdown files (Epic 3 Tech Spec)
+- **Theme Consistency**: Code highlighting must use Oceanic Calm color scheme matching Terminal component (background #2E3440, foreground #D8DEE9, keywords #81A1C1, strings #A3BE8C, comments #616E88, functions #88C0D0)
+- **Component Location**: Create at frontend/src/components/ArtifactViewer.tsx (flat structure, alphabetical)
+- **File Watching**: Subscribe to WebSocket file.changed events with 500ms debounce (handled by backend chokidar)
+- **Scroll Preservation**: Store scrollTop before re-render, restore after (AC #6)
+- **API Integration**: Use GET /api/documents/:path for file content loading
+- **Testing**: Achieve 50%+ coverage with Vitest, following SessionList.test.tsx patterns
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>ArtifactViewerProps</name>
+      <kind>React component interface</kind>
+      <signature>interface ArtifactViewerProps {
+  filePath?: string;           // Path to file to display (null = no file selected)
+  onClose?: () => void;        // Callback when user closes viewer
+  ws: UseWebSocketReturn;      // WebSocket hook for file.changed events
+}</signature>
+      <path>frontend/src/components/ArtifactViewer.tsx</path>
+    </interface>
+    <interface>
+      <name>GET /api/documents/:path</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /api/documents/:path
+Response: string (text/plain)
+Error: { error: 'File not found' } (404)</signature>
+      <path>backend/src/server.ts</path>
+    </interface>
+    <interface>
+      <name>file.changed WebSocket message</name>
+      <kind>WebSocket message type</kind>
+      <signature>{
+  type: 'file.changed',
+  path: string,
+  event: 'add' | 'change' | 'unlink',
+  timestamp: string
+}</signature>
+      <path>backend/src/server.ts (outgoing message)</path>
+    </interface>
+    <interface>
+      <name>useWebSocket.on()</name>
+      <kind>Function signature</kind>
+      <signature>on: (type: string, callback: (message: WebSocketMessage) => void) => () => void
+// Returns unsubscribe function</signature>
+      <path>frontend/src/hooks/useWebSocket.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+Use Vitest testing framework with @testing-library/react for component testing. Follow existing patterns from SessionList.test.tsx: create helper functions for mock data (e.g., createMockProps), use describe/it structure for test organization, use vi.fn() for mock functions, test rendering with screen queries, test user interactions with fireEvent, and test component state changes. Target 50%+ code coverage for frontend components.
+    </standards>
+    <locations>
+- Frontend component tests: frontend/src/components/*.test.tsx
+- Test configuration: frontend/vitest.config.ts
+- Run tests: npm test (from frontend directory)
+- Coverage report: npm run test:coverage
+    </locations>
+    <ideas>
+- Test markdown rendering: Verify headings, lists, links, images render correctly
+- Test GFM tables: Verify table with borders and cell padding renders from markdown table syntax
+- Test code highlighting: Verify code block with language tag (```python) renders with syntax colors
+- Test file loading: Mock fetch for GET /api/documents/:path, verify content displays
+- Test file change event: Trigger file.changed WebSocket message, verify content refreshes
+- Test scroll preservation: Set scroll position, trigger refresh, verify scroll restored
+- Test file switching: Change filePath prop, verify new content loads
+- Test error handling: Mock 404 error from API, verify error message displays
+- Test empty state: Render with no filePath, verify empty state or placeholder shown
+    </ideas>
+  </tests>
+</story-context>

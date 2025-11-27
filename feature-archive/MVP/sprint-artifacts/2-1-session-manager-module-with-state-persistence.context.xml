@@ -1,0 +1,263 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>1</storyId>
+    <title>Session Manager Module with State Persistence</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/2-1-session-manager-module-with-state-persistence.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>the backend to track multiple sessions with persistent state across container restarts</iWant>
+    <soThat>I can resume my parallel work after Docker stops</soThat>
+    <tasks>
+      - Task 1: Create TypeScript interfaces for Session entity (AC: #1)
+      - Task 2: Implement SessionManager class core functionality (AC: #1, #5)
+      - Task 3: Implement session lookup and management methods (AC: #1)
+      - Task 4: Implement atomic JSON persistence (AC: #2)
+      - Task 5: Implement session restoration from JSON (AC: #3)
+      - Task 6: Implement corrupted JSON recovery (AC: #4)
+      - Task 7: Add structured logging with Winston (AC: All)
+      - Task 8: Write unit tests for SessionManager (AC: All)
+      - Task 9: Integration with server.ts (AC: #1, #3)
+      - Task 10: Documentation and references (AC: All)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC1: Session Creation and Object Structure
+    - Session object created with: id (UUID v4), name, status ('active'), branch, worktreePath, createdAt, lastActivity (ISO 8601 UTC)
+
+    AC2: Session Persistence with Atomic Writes
+    - Session persisted to /workspace/.claude-container-sessions.json using atomic write pattern (temp file + rename)
+    - JSON schema includes: version, sessions array with all session fields
+
+    AC3: Session Restoration on Container Restart
+    - Sessions loaded from JSON on backend startup
+    - All sessions restored to in-memory registry with metadata preserved (FR11, FR62)
+
+    AC4: Graceful Handling of Corrupted JSON
+    - Corrupted/missing JSON triggers warning log
+    - Rebuilds state from git worktrees (FR61)
+    - Continues operation without crashing
+
+    AC5: Session Count Limit Enforcement
+    - Enforces MAX_SESSIONS = 4 limit
+    - Throws error with code 'MAX_SESSIONS' when limit exceeded
+    - Returns user-friendly message: "Maximum 4 sessions supported. Destroy a session to create a new one." (FR9)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>Services and Modules - sessionManager.ts</section>
+        <snippet>Tracks up to 4 sessions, manages session lifecycle (create/destroy), persists state to JSON, validates session names, generates session IDs. Inputs: Session creation requests (name, branch), session ID for lookups. Outputs: Session objects, session list, success/error responses.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>Data Models and Contracts - Session Entity</section>
+        <snippet>Session interface with id (UUID v4), name (user-provided or auto-generated), status (SessionStatus enum), branch (git branch name), worktreePath (absolute path), ptyPid (optional), createdAt/lastActivity (ISO 8601 UTC), currentPhase (optional BMAD phase), metadata (optional).</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>Session Persistence JSON Schema</section>
+        <snippet>JSON file format with version "1.0" and sessions array containing session objects. Each session includes all fields: id, name, status, branch, worktreePath, ptyPid, createdAt, lastActivity, currentPhase, metadata.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>APIs and Interfaces - SessionManager Public API</section>
+        <snippet>SessionManager class with methods: createSession(name?, branch?), destroySession(sessionId, cleanup?), getSession(sessionId), getAllSessions(), updateSessionStatus(sessionId, status), updateLastActivity(sessionId), loadSessions(), saveSessions(), rebuildFromWorktrees().</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>ADR-009: Flat JSON File for Session Persistence</section>
+        <snippet>Use flat JSON file at /workspace/.claude-container-sessions.json instead of SQLite. Simple key-value storage for 4 sessions max, human-readable, survives container restarts, no database overhead. Atomic writes (temp file + rename) prevent corruption. Single backend process (no concurrent write concerns).</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>backend/src/types.ts</path>
+        <kind>interface</kind>
+        <symbol>SessionData</symbol>
+        <lines>82-89</lines>
+        <reason>Existing session tracking structure - shows current session data model that will be extended for Epic 2</reason>
+      </file>
+      <file>
+        <path>backend/src/ptyManager.ts</path>
+        <kind>class</kind>
+        <symbol>PTYManager</symbol>
+        <lines>64-302</lines>
+        <reason>PTY management patterns to integrate with SessionManager - shows spawn, kill, onData, onExit callbacks needed for session lifecycle</reason>
+      </file>
+      <file>
+        <path>backend/src/server.ts</path>
+        <kind>entry-point</kind>
+        <symbol>server</symbol>
+        <lines>1-end</lines>
+        <reason>Backend entry point where SessionManager will be initialized and integrated on startup</reason>
+      </file>
+      <file>
+        <path>backend/src/ptyManager.ts</path>
+        <kind>logger-config</kind>
+        <symbol>logger</symbol>
+        <lines>6-27</lines>
+        <reason>Winston logger configuration pattern to replicate for SessionManager structured logging</reason>
+      </file>
+    </code>
+    <dependencies>
+      <node>
+        <package name="express" version="^4.18.0" />
+        <package name="node-pty" version="^1.0.0" />
+        <package name="uuid" version="^9.0.0" note="Required for Session ID generation (UUID v4)" />
+        <package name="winston" version="^3.11.0" note="Required for structured logging" />
+        <package name="ws" version="^8.14.0" />
+        <package name="@types/express" version="^4.17.0" dev="true" />
+        <package name="@types/node" version="^20.10.0" dev="true" />
+        <package name="@types/uuid" version="^9.0.0" dev="true" note="Required for uuid TypeScript definitions" />
+        <package name="@types/ws" version="^8.5.0" dev="true" />
+        <package name="typescript" version="^5.3.0" dev="true" />
+        <package name="ts-node" version="^10.9.0" dev="true" />
+        <package name="nodemon" version="^3.0.0" dev="true" />
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - MUST use TypeScript 5.x strict mode with explicit types for all public APIs
+    - Session interface MUST match tech spec exactly (id, name, status, branch, worktreePath, ptyPid?, createdAt, lastActivity, currentPhase?, metadata?)
+    - SessionStatus type MUST be enum: 'active' | 'waiting' | 'idle' | 'error' | 'stopped'
+    - Session IDs MUST be UUID v4 format generated using uuid library
+    - Session names auto-generated if not provided using format: feature-YYYY-MM-DD-NNN
+    - Branch names derived from session name using format: feature/{session-name}
+    - MAX_SESSIONS constant MUST be 4 (design constraint per PRD NFR-SCALE-1)
+    - Session persistence file location: /workspace/.claude-container-sessions.json
+    - MUST use atomic write pattern: write to temp file → rename to target (prevents corruption on crash)
+    - Timestamps MUST be ISO 8601 UTC format using new Date().toISOString()
+    - Winston logger configuration MUST match ptyManager.ts pattern (JSON format, timestamps, structured metadata)
+    - All session lifecycle events MUST be logged with structured metadata (sessionId, name, timestamps)
+    - Error handling: Corrupted JSON MUST log warning and continue (graceful fallback to empty state or rebuild from worktrees)
+    - File operations MUST use fs.promises (async/await pattern, no blocking fs calls)
+    - SessionManager MUST be singleton instance exported from module
+    - Unit tests MUST mock fs.promises and uuid for deterministic testing
+    - Coverage target: 70%+ for sessionManager.ts (critical path)
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Session</name>
+      <kind>TypeScript interface</kind>
+      <signature>
+        interface Session {
+          id: string;                    // UUID v4
+          name: string;                  // User-provided or auto-generated
+          status: SessionStatus;         // 'active' | 'waiting' | 'idle' | 'error' | 'stopped'
+          branch: string;                // Git branch name
+          worktreePath: string;          // Absolute path: /workspace/.worktrees/&lt;session-id&gt;
+          ptyPid?: number;               // Only if PTY process running
+          createdAt: string;             // ISO 8601 UTC timestamp
+          lastActivity: string;          // ISO 8601 UTC timestamp
+          currentPhase?: string;         // Optional BMAD phase
+          metadata?: object;             // Optional additional data
+        }
+      </signature>
+      <path>backend/src/types.ts</path>
+    </interface>
+    <interface>
+      <name>SessionManager.createSession</name>
+      <kind>Class method</kind>
+      <signature>async createSession(name?: string, branch?: string): Promise&lt;Session&gt;</signature>
+      <path>backend/src/sessionManager.ts</path>
+    </interface>
+    <interface>
+      <name>SessionManager.saveSessions</name>
+      <kind>Class method</kind>
+      <signature>async saveSessions(): Promise&lt;void&gt;</signature>
+      <path>backend/src/sessionManager.ts</path>
+    </interface>
+    <interface>
+      <name>SessionManager.loadSessions</name>
+      <kind>Class method</kind>
+      <signature>async loadSessions(): Promise&lt;void&gt;</signature>
+      <path>backend/src/sessionManager.ts</path>
+    </interface>
+    <interface>
+      <name>JSON Persistence Schema</name>
+      <kind>JSON Schema</kind>
+      <signature>
+        {
+          "version": "1.0",
+          "sessions": [
+            {
+              "id": "string (UUID v4)",
+              "name": "string",
+              "status": "active | waiting | idle | error | stopped",
+              "branch": "string",
+              "worktreePath": "string",
+              "ptyPid": "number | undefined",
+              "createdAt": "string (ISO 8601 UTC)",
+              "lastActivity": "string (ISO 8601 UTC)",
+              "currentPhase": "string | undefined",
+              "metadata": "object | undefined"
+            }
+          ]
+        }
+      </signature>
+      <path>/workspace/.claude-container-sessions.json</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing framework: Jest (backend standard per architecture). Coverage target: 70%+ for sessionManager.ts (critical path). Test file location: backend/src/sessionManager.test.ts. Mocking strategy: Mock fs.promises for file operations (avoid actual file I/O in tests), mock uuid for deterministic session IDs, mock process.env.WORKSPACE_ROOT for path validation. Use describe/it/expect syntax. Test both happy path and error cases.
+    </standards>
+    <locations>
+      backend/src/*.test.ts (co-located with source files)
+    </locations>
+    <ideas>
+      <test ac="AC1">
+        - Test createSession() with valid name returns Session object with correct structure (id, name='test', status='active', branch='feature/test', worktreePath, timestamps)
+        - Test createSession() with no name generates auto-name in format feature-YYYY-MM-DD-NNN
+        - Test Session object has all required fields matching interface (id, name, status, branch, worktreePath, createdAt, lastActivity)
+      </test>
+      <test ac="AC2">
+        - Test saveSessions() creates JSON file at /workspace/.claude-container-sessions.json
+        - Test atomic write pattern: verify temp file created, then renamed to target
+        - Test JSON file contains version "1.0" and sessions array
+        - Test JSON serialization includes all session fields
+      </test>
+      <test ac="AC3">
+        - Test loadSessions() reads JSON file and populates in-memory registry
+        - Test all sessions restored with metadata preserved (name, status, timestamps)
+        - Test session count matches JSON file session count
+        - Test sessions accessible via getSession(id) after load
+      </test>
+      <test ac="AC4">
+        - Test loadSessions() with corrupted JSON logs warning message
+        - Test corrupted JSON does not crash process (graceful fallback to empty state)
+        - Test rebuildFromWorktrees() stub returns empty array (actual worktree scanning in Story 2.2)
+        - Test loadSessions() with missing JSON file creates empty registry
+      </test>
+      <test ac="AC5">
+        - Test createSession() when count = 4 throws error with code 'MAX_SESSIONS'
+        - Test error message is user-friendly: "Maximum 4 sessions supported. Destroy a session to create a new one."
+        - Test getAllSessions() returns correct count
+        - Test destroySession() decrements count and allows new session creation
+      </test>
+      <test general="Session Management">
+        - Test updateSessionStatus(id, 'waiting') updates status and saves to JSON
+        - Test updateLastActivity(id) updates timestamp and saves to JSON
+        - Test getSession(id) returns undefined for non-existent session
+        - Test destroySession(id) removes session from registry
+      </test>
+    </ideas>
+  </tests>
+</story-context>

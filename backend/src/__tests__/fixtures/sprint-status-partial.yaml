@@ -1,0 +1,10 @@
+# Minimal sprint status file for testing
+# Only one epic with a few stories
+
+generated: 2025-11-24
+project: test-project
+
+development_status:
+  epic-1: contexted
+  1-1-basic-setup: done
+  1-2-terminal-component: in-progress

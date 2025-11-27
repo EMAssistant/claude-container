@@ -1,0 +1,255 @@
+<story-context id="{bmad_folder}/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.3</storyId>
+    <title>Backend Server with Express and WebSocket</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-3-backend-server-with-express-and-websocket.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>a backend server that handles HTTP requests and WebSocket connections</iWant>
+    <soThat>the frontend can communicate with Claude CLI processes in real-time</soThat>
+    <tasks>
+- [ ] Task 1: Initialize Backend Project Structure (AC: #1, #2, #3)
+  - [ ] Subtask 1.1: Create `/backend` directory with TypeScript configuration
+  - [ ] Subtask 1.2: Install production dependencies (express, ws, winston)
+  - [ ] Subtask 1.3: Install development dependencies (typescript, @types packages, nodemon)
+  - [ ] Subtask 1.4: Configure tsconfig.json for Node.js backend
+  - [ ] Subtask 1.5: Create package.json with start and dev scripts
+
+- [ ] Task 2: Implement Express HTTP Server (AC: #1, #2)
+  - [ ] Subtask 2.1: Create `server.ts` with Express app initialization
+  - [ ] Subtask 2.2: Configure Express to serve static files from `/frontend/dist`
+  - [ ] Subtask 2.3: Add Winston logger with JSON format configuration
+  - [ ] Subtask 2.4: Add startup logging "Server listening on port 3000"
+  - [ ] Subtask 2.5: Bind Express to port 3000 with host `0.0.0.0`
+
+- [ ] Task 3: Implement WebSocket Server (AC: #3, #4, #5)
+  - [ ] Subtask 3.1: Import ws library and create WebSocket.Server instance
+  - [ ] Subtask 3.2: Attach WebSocket server to same HTTP server as Express
+  - [ ] Subtask 3.3: Implement WebSocket connection handler
+  - [ ] Subtask 3.4: Log connection events with unique connection ID
+  - [ ] Subtask 3.5: Implement heartbeat mechanism with 30-second interval
+  - [ ] Subtask 3.6: Send heartbeat message format: `{ type: 'heartbeat', timestamp: number }`
+
+- [ ] Task 4: Implement Graceful Shutdown (AC: #6)
+  - [ ] Subtask 4.1: Register SIGTERM signal handler
+  - [ ] Subtask 4.2: Close all active WebSocket connections on SIGTERM
+  - [ ] Subtask 4.3: Stop Express server from accepting new connections
+  - [ ] Subtask 4.4: Log shutdown events with structured Winston logging
+  - [ ] Subtask 4.5: Exit process with code 0 after cleanup
+
+- [ ] Task 5: Add Error Handling and Logging (AC: #1-6)
+  - [ ] Subtask 5.1: Implement WebSocket error handler
+  - [ ] Subtask 5.2: Implement Express error middleware
+  - [ ] Subtask 5.3: Add unhandled exception and rejection handlers
+  - [ ] Subtask 5.4: Configure Winston log levels (error, warn, info, debug)
+  - [ ] Subtask 5.5: Add structured logging with context (port, connection IDs)
+
+- [ ] Task 6: Create Health Check Endpoint (AC: #2)
+  - [ ] Subtask 6.1: Add GET `/api/health` route
+  - [ ] Subtask 6.2: Return JSON response: `{ status: 'ok', uptime: <seconds> }`
+  - [ ] Subtask 6.3: Test health endpoint returns 200 status
+
+- [ ] Task 7: Testing and Validation (AC: #1-6)
+  - [ ] Subtask 7.1: Manual test: Start server and verify port 3000 listening
+  - [ ] Subtask 7.2: Manual test: Connect WebSocket client and verify connection
+  - [ ] Subtask 7.3: Manual test: Verify heartbeat messages received every 30s
+  - [ ] Subtask 7.4: Manual test: Send SIGTERM and verify graceful shutdown
+  - [ ] Subtask 7.5: Manual test: Verify Winston logs contain expected events
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **AC1: Express HTTP Server Starts on Port 3000**
+   - **Given** the backend code is in `/backend/src/server.ts`
+   - **When** the container starts
+   - **Then** Express.js HTTP server starts on port 3000
+   - **And** the server logs "Server listening on port 3000" using Winston structured logging
+
+2. **AC2: Static Frontend Assets Served**
+   - **Given** the Express server is running
+   - **When** a request is made to the root path `/`
+   - **Then** the server serves static frontend assets from `/frontend/dist`
+   - **And** index.html is served for the root route
+
+3. **AC3: WebSocket Server Listening**
+   - **Given** the Express server is running on port 3000
+   - **When** the server initializes
+   - **Then** a WebSocket server is listening on the same port (port 3000)
+   - **And** WebSocket upgrade requests are handled correctly
+
+4. **AC4: WebSocket Connection Established**
+   - **Given** the WebSocket server is listening
+   - **When** a WebSocket client connects to `ws://localhost:3000`
+   - **Then** the connection is established successfully
+   - **And** the backend logs the connection event with connection ID
+
+5. **AC5: Heartbeat Messages Sent**
+   - **Given** a WebSocket client is connected
+   - **When** 30 seconds elapse
+   - **Then** the server sends a heartbeat message: `{ type: 'heartbeat', timestamp: <ms> }`
+   - **And** heartbeat messages continue every 30 seconds
+
+6. **AC6: Graceful Shutdown on SIGTERM**
+   - **Given** the server is running with active WebSocket connections
+   - **When** the container receives SIGTERM signal
+   - **Then** the server closes all WebSocket connections gracefully
+   - **And** the Express server stops accepting new connections
+   - **And** the process exits cleanly after shutdown completes
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <artifact>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic Technical Specification: Foundation & Single-Session Terminal</title>
+        <section>Services and Modules - server.ts</section>
+        <snippet>Express app initialization, WebSocket server setup, static file serving. Module location: backend/src/server.ts. Handles HTTP server on port 3000 and WebSocket endpoint.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic Technical Specification: Foundation & Single-Session Terminal</title>
+        <section>APIs and Interfaces - HTTP Endpoints</section>
+        <snippet>GET / serves index.html, GET /assets/* serves static files, GET /api/health returns { status: 'ok', uptime: number }. WebSocket endpoint at ws://localhost:3000.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic Technical Specification: Foundation & Single-Session Terminal</title>
+        <section>Data Models and Contracts - WebSocket Message Protocol</section>
+        <snippet>Server → Client messages: terminal.output, terminal.ready, error, heartbeat. Heartbeat format: { type: 'heartbeat', timestamp: number }. Heartbeat interval: 30 seconds.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic Technical Specification: Foundation & Single-Session Terminal</title>
+        <section>Workflows and Sequencing - Sequence 1: Container Startup</section>
+        <snippet>Express server initializes (server.ts), spawns Claude CLI process via node-pty in /workspace directory, WebSocket server listening on port 3000, serves index.html + React bundle from /app/frontend/dist.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic Technical Specification: Foundation & Single-Session Terminal</title>
+        <section>Workflows and Sequencing - Sequence 4: Graceful Shutdown</section>
+        <snippet>SIGTERM handler closes WebSocket connections, sends SIGTERM to PTY, waits up to 5 seconds for Claude CLI exit, Express server closes HTTP listener, process exits with code 0.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic Technical Specification: Foundation & Single-Session Terminal</title>
+        <section>Observability - Structured Logging (Winston)</section>
+        <snippet>Winston with JSON format. Log levels: error (failures), warn (degraded state), info (state changes), debug (detailed execution). Key events: "Express server listening on port 3000", "WebSocket connection established", "Graceful shutdown initiated".</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Technology Stack Details - Backend Stack</section>
+        <snippet>Express 4.x for HTTP server, ws 8.x for WebSocket bidirectional streaming, winston for structured JSON logging. Backend serves frontend static assets.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>API Contracts - WebSocket Protocol</section>
+        <snippet>Connection at ws://localhost:3000. Heartbeat messages exchanged every 30s to detect disconnects. Server → Client: terminal.output, session.created, heartbeat. Format: { type: string, ...data }.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/architecture-decisions.md</path>
+        <title>Architecture Decision Records</title>
+        <section>ADR-003: Manual Backend Setup Instead of Boilerplate</section>
+        <snippet>Manually configure Express + TypeScript + WebSocket + node-pty backend. No boilerplate exists combining these technologies. Clean minimal backend without unnecessary REST patterns.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/architecture-decisions.md</path>
+        <title>Architecture Decision Records</title>
+        <section>ADR-004: WebSocket Library (ws) Over Socket.io</section>
+        <snippet>Use ws library for WebSocket. Lower-level control for PTY streaming, smaller bundle size, better performance for high-frequency terminal output. No unnecessary Socket.io features.</snippet>
+      </artifact>
+    </docs>
+    <code></code>
+    <dependencies>
+      <node>
+        <production>
+          <package name="express" version="^4.18.0">HTTP server, static file serving</package>
+          <package name="ws" version="^8.14.0">WebSocket library for terminal streaming</package>
+          <package name="winston" version="^3.11.0">Structured JSON logging</package>
+          <package name="uuid" version="^9.0.0">Connection ID generation</package>
+        </production>
+        <development>
+          <package name="typescript" version="^5.3.0">TypeScript compiler</package>
+          <package name="@types/node" version="^20.10.0">Node.js type definitions</package>
+          <package name="@types/express" version="^4.17.0">Express type definitions</package>
+          <package name="@types/ws" version="^8.5.0">WebSocket type definitions</package>
+          <package name="nodemon" version="^3.0.0">Development server auto-reload</package>
+          <package name="ts-node" version="^10.9.0">TypeScript execution for development</package>
+        </development>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+- Express 4.x selected for HTTP server (Architecture ADR-003)
+- Single HTTP server handles both static file serving and WebSocket upgrade requests
+- Binds to `0.0.0.0:3000` inside container (Docker exposes as `127.0.0.1:3000` on host)
+- Static file serving: `app.use(express.static('/app/frontend/dist'))` for production builds
+- No REST API routes yet - this story focuses on infrastructure setup
+- ws library 8.x chosen over Socket.io for lower-level control and better PTY streaming performance (ADR-004)
+- WebSocket server attached to same HTTP server as Express: `new WebSocket.Server({ server: httpServer })`
+- Heartbeat mechanism: Send `{ type: 'heartbeat', timestamp: Date.now() }` every 30 seconds
+- Message format per Architecture "API Contracts - WebSocket Protocol": JSON for control messages
+- Winston library for structured JSON logging
+- Log format: `{ timestamp, level, message, context }` where context includes port, connection IDs
+- Log levels: `error` (failures), `warn` (degraded state), `info` (state changes), `debug` (detailed execution, disabled by default)
+- Graceful shutdown pattern: Register SIGTERM handler, close WebSocket connections, stop Express, wait up to 5 seconds, exit with code 0
+- Container startup target: <30 seconds total (this story contributes ~5-10 seconds for backend init)
+- Single-user local security model: No authentication required, no TLS/HTTPS, WebSocket uses `ws://` not `wss://`
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>GET /api/health</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /api/health → { status: 'ok', uptime: number }</signature>
+      <path>docs/sprint-artifacts/tech-spec-epic-1.md#APIs-and-Interfaces</path>
+    </interface>
+    <interface>
+      <name>WebSocket Connection</name>
+      <kind>WebSocket endpoint</kind>
+      <signature>ws://localhost:3000 - JSON messages for control, raw text for terminal I/O</signature>
+      <path>docs/sprint-artifacts/tech-spec-epic-1.md#APIs-and-Interfaces</path>
+    </interface>
+    <interface>
+      <name>Heartbeat Message</name>
+      <kind>WebSocket message</kind>
+      <signature>{ type: 'heartbeat', timestamp: number } - Sent every 30 seconds</signature>
+      <path>docs/sprint-artifacts/tech-spec-epic-1.md#Data-Models-and-Contracts</path>
+    </interface>
+    <interface>
+      <name>Static File Serving</name>
+      <kind>Express middleware</kind>
+      <signature>app.use(express.static('/app/frontend/dist')) - Serves React frontend</signature>
+      <path>docs/architecture.md#Backend-Stack</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+Epic 1 prioritizes integration testing and end-to-end validation over comprehensive unit test coverage. The goal is to prove the complete stack works end-to-end before optimizing individual components. Backend tests use Jest + ts-jest framework. Integration tests validate Express server startup, WebSocket connection, PTY streaming, and graceful shutdown. Manual testing approach for Epic 1 with automated tests deferred to Epic 4.
+    </standards>
+    <locations>
+- backend/src/__tests__/ - Backend unit and integration tests
+- Manual validation commands documented in Dev Notes section
+    </locations>
+    <ideas>
+- Test Express server starts on port 3000 (AC1)
+- Test health endpoint returns { status: 'ok', uptime: number } (AC2)
+- Test WebSocket server accepts connections (AC3, AC4)
+- Test heartbeat messages sent every 30 seconds (AC5)
+- Test graceful shutdown closes connections and exits cleanly (AC6)
+- Test static file serving from /frontend/dist (AC2)
+- Manual test: curl http://localhost:3000/api/health
+- Manual test: Use wscat to connect: wscat -c ws://localhost:3000
+- Manual test: docker stop to verify graceful shutdown logs
+    </ideas>
+  </tests>
+</story-context>

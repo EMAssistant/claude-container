@@ -1,0 +1,268 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.11</storyId>
+    <title>Tool Approval Elimination via Container Configuration</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-11-tool-approval-elimination-via-container-configuration.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>all Claude CLI tools to be marked as safe within the container</iWant>
+    <soThat>Claude can execute commands autonomously without approval prompts (FR6)</soThat>
+    <tasks>
+- Task 1: Research Claude CLI configuration for tool approval (AC: #1, #2, #5)
+  - Subtask 1.1: Review Claude CLI documentation for approval configuration
+  - Subtask 1.2: Identify configuration method (environment variable, config file, or CLI flag)
+  - Subtask 1.3: Test configuration approach in local Claude CLI installation
+  - Subtask 1.4: Document exact configuration steps and file paths
+
+- Task 2: Implement container-level configuration (AC: #1, #2, #5)
+  - Subtask 2.1: Add configuration to Dockerfile or docker-compose.yml
+  - Subtask 2.2: Set environment variables if needed (e.g., CLAUDE_APPROVE_ALL=true)
+  - Subtask 2.3: Modify mounted Claude config if needed (read-only constraints)
+  - Subtask 2.4: Ensure configuration applies before Claude CLI starts
+
+- Task 3: Validate host system isolation (AC: #3)
+  - Subtask 3.1: Run destructive test commands in container (rm -rf /)
+  - Subtask 3.2: Verify host filesystem remains untouched
+  - Subtask 3.3: Confirm workspace mount (RW) is only writable volume
+  - Subtask 3.4: Test container escape attempts (security validation)
+
+- Task 4: Verify interrupt mechanism compatibility (AC: #4)
+  - Subtask 4.1: Test ESC key interrupt with autonomous commands
+  - Subtask 4.2: Test STOP button interrupt with autonomous commands
+  - Subtask 4.3: Verify SIGINT delivery to PTY process
+  - Subtask 4.4: Confirm Claude CLI responds to interrupt within 1 second
+
+- Task 5: End-to-end validation with real commands (AC: #1, #2, #3, #4, #5)
+  - Subtask 5.1: Test git operations (git status, git commit) - no prompts
+  - Subtask 5.2: Test npm operations (npm install, npm run) - no prompts
+  - Subtask 5.3: Test Python operations (pytest, pip install) - no prompts
+  - Subtask 5.4: Test file operations (rm, mv, cp) - no prompts
+  - Subtask 5.5: Verify all operations complete without user intervention</tasks>
+  </story>
+
+  <acceptanceCriteria>
+AC1: No Approval Prompts for CLI Tools
+- Given the Claude CLI configuration in the container
+- When Claude attempts to use CLI tools (bash, git, npm, python, pytest, etc.)
+- Then NO approval prompts are shown
+- And commands execute immediately without user intervention
+
+AC2: Autonomous Command Execution
+- Given Claude is running in the container terminal
+- When Claude runs commands like `git status`, `npm install`, `pytest`, or `rm -rf`
+- Then the command executes and output is streamed to terminal
+- And no user confirmation is required for any command
+
+AC3: Container Isolation Ensures Host Safety
+- Given potentially destructive commands execute without prompts
+- When Claude runs destructive commands like `rm -rf` within the container
+- Then the command executes within the container filesystem only
+- And the host system remains protected by Docker isolation (FR7)
+
+AC4: Interrupt Capability Always Available
+- Given Claude is executing any command autonomously
+- When the user presses ESC key or clicks the STOP button
+- Then the user can always interrupt with STOP button/ESC key (FR26, FR27)
+- And Claude CLI receives SIGINT and stops the operation
+
+AC5: Configuration Persists Across Container Restarts
+- Given the container has been configured for unrestricted tool access
+- When the container is stopped and restarted
+- Then the tool approval settings persist
+- And Claude continues to execute commands without prompts</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>Executive Summary - Core Problem Solved</section>
+        <snippet>Daily friction with tool approvals blocks autonomous epic completion. Current terminal-based Claude Code requires manual approval for CLI tools to prevent destructive commands on the host system. This defeats the purpose of AI-assisted development by requiring constant supervision.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR6: Unrestricted Tools</section>
+        <snippet>System shall mark all CLI tools as safe within container (no approval prompts required). Docker container provides safe sandboxing that allows unrestricted tool access within isolated environment.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR7: Container Isolation</section>
+        <snippet>System shall isolate container filesystem from host system to prevent destructive commands affecting host. Docker filesystem isolation ensures commands within container cannot access host filesystem except mounted volumes.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR26 and FR27: Interrupt Mechanisms</section>
+        <snippet>Users can interrupt current Claude operation using ESC key (FR26) or visible STOP button in UI (FR27). ESC key and STOP button shall send SIGINT (Ctrl+C) to Claude PTY process (FR28).</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic Technical Specification: Foundation & Single-Session Terminal</title>
+        <section>Acceptance Criteria - AC10: Tool Approval Elimination Works</section>
+        <snippet>Given container running with mounted workspace, when Claude CLI attempts to use tools (bash, git, npm, python, etc.), then NO approval prompts appear. Commands execute immediately without user intervention. Claude can run `git status`, `npm install`, `pytest`, `rm -rf` without confirmation. Host system remains safe (Docker isolation prevents host access).</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic Technical Specification: Foundation & Single-Session Terminal</title>
+        <section>NFR-SEC-1: Container Isolation (Core Security Boundary)</section>
+        <snippet>Docker filesystem isolation: Commands within container cannot access host filesystem (except mounted volumes). Threat mitigated: Container escape attempts, malicious code execution. Validation: Run `rm -rf /` inside container → Only container filesystem affected, host untouched.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic Technical Specification: Foundation & Single-Session Terminal</title>
+        <section>NFR-SEC-2: Volume Mount Safety</section>
+        <snippet>Workspace mount (RW): `/workspace` ← host project directory, Claude CLI can modify files (intentional). Config mount (RO): `/config/.claude-code` ← read-only prevents accidental API key corruption. No additional mounts: No `/tmp`, `/var`, or other host directories exposed.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Security Architecture - Threat Model</section>
+        <snippet>In-Scope Threats: Container escape (malicious code attempting to break out of Docker sandbox), Path traversal (file operations accessing files outside /workspace), XSS attacks (malicious markdown injecting scripts), Resource exhaustion (runaway Claude processes consuming all container resources).</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Security Architecture - Container Isolation</section>
+        <snippet>Docker container provides process and filesystem isolation from host. Claude CLI runs with limited privileges (non-root user in container). Volume mounts: Workspace (RW), Claude config (RO). Network: Localhost binding only (0.0.0.0:3000 → 127.0.0.1:3000 on host). Resource limits: Docker memory/CPU limits prevent denial-of-service.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture-decisions.md</path>
+        <title>Architecture Decision Records</title>
+        <section>ADR-008: All Tools Marked Safe in Sandbox</section>
+        <snippet>Decision: Mark all tools as safe (no approval required) within the Docker container. Claude has unrestricted CLI access. Rationale: Container isolation ensures Docker provides filesystem isolation. Worst case: Claude destroys container filesystem. Host system remains untouched. Entire point of project is autonomous epic execution.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-1-foundation.md</path>
+        <title>Epic 1: Foundation & Single-Session Terminal</title>
+        <section>Story 1.11: Tool Approval Elimination via Container Configuration</section>
+        <snippet>As a developer, I want all Claude CLI tools to be marked as safe within the container, so that Claude can execute commands autonomously without approval prompts (FR6). Acceptance Criteria: Claude CLI configuration in container allows all CLI tools without prompts. Commands execute immediately. Destructive commands execute within container (host protected by Docker isolation). User can always interrupt with STOP button/ESC key.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <!-- Note: No source code exists yet in the repository. This is a greenfield project. -->
+      <artifact>
+        <path>Dockerfile</path>
+        <kind>container-definition</kind>
+        <symbol>N/A</symbol>
+        <lines>N/A</lines>
+        <reason>Container definition file where Claude CLI approval configuration will be applied via environment variables or build-time settings. This is the primary file for implementing AC1, AC2, and AC5.</reason>
+      </artifact>
+      <artifact>
+        <path>docker-compose.yml</path>
+        <kind>container-orchestration</kind>
+        <symbol>N/A</symbol>
+        <lines>N/A</lines>
+        <reason>Optional orchestration file where environment variables for Claude CLI approval configuration could be set. Alternative configuration point to Dockerfile for AC1, AC2, and AC5.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/src/ptyManager.ts</path>
+        <kind>module</kind>
+        <symbol>PTYManager</symbol>
+        <lines>N/A</lines>
+        <reason>PTY process spawning module that may need modifications to pass environment variables or CLI flags to Claude CLI process. Related to AC1 and AC2 for ensuring approval configuration is active when Claude spawns.</reason>
+      </artifact>
+      <artifact>
+        <path>backend/src/server.ts</path>
+        <kind>server</kind>
+        <symbol>N/A</symbol>
+        <lines>N/A</lines>
+        <reason>Backend server initialization where environment variables can be validated on startup. Could add health check logging to confirm Claude CLI approval mode is active (AC1, AC2).</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <express>^4.18.0</express>
+        <ws>^8.14.0</ws>
+        <node-pty>^1.0.0</node-pty>
+        <winston>^3.11.0</winston>
+        <uuid>^9.0.0</uuid>
+      </node>
+      <system>
+        <docker>Docker Desktop (macOS) or Docker Engine (Linux)</docker>
+        <ubuntu>Ubuntu 22.04 LTS (container base image)</ubuntu>
+        <python>Python 3.13</python>
+        <java>Amazon Corretto 21 (OpenJDK 21)</java>
+        <nodejs>Node.js 20 LTS</nodejs>
+        <git>git</git>
+        <jq>jq</jq>
+        <build-essential>build-essential (gcc, g++, make)</build-essential>
+        <claude-cli>Claude CLI (@anthropic-ai/claude-cli or similar)</claude-cli>
+      </system>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+- **Container Isolation Pattern**: All tool approval elimination must rely on Docker container isolation (FR7, NFR-SEC-1). The host system must remain protected even with unrestricted tool access within the container. This is THE CORE SECURITY BOUNDARY.
+
+- **Configuration Persistence**: Claude CLI approval configuration must persist across container restarts (AC5). Configuration should be baked into the Docker image or set via docker-compose environment variables, NOT stored in ephemeral container state.
+
+- **Read-Only Config Mount**: The Claude config directory at `/config/.claude-code` is mounted read-only (FR3, NFR-SEC-2). Any approval configuration changes must NOT require modifying the mounted config. Use environment variables or container-level settings instead.
+
+- **Interrupt Mechanism Compatibility**: Tool approval elimination must not interfere with existing interrupt mechanisms (ESC key, STOP button) that send SIGINT to Claude PTY process (AC4, FR26, FR27, FR28). Claude must remain interruptible even with unrestricted tool access.
+
+- **Volume Mount Safety**: Workspace mount is read-write intentionally (Claude needs to modify project files). Config mount is read-only to prevent accidental API key corruption (NFR-SEC-2). No additional volume mounts should expose host directories beyond workspace and config.
+
+- **No Template-Driven Approval**: Do not implement any custom approval logic, whitelists, or command filtering. The project philosophy is "unrestricted tools within safe sandbox" (ADR-008). Approval prompts defeat the autonomous execution goal.
+
+- **Testing Standards**: Security validation must include destructive command tests (rm -rf /) to prove container isolation works (AC3, NFR-SEC-1). Host filesystem must remain untouched. Use dedicated test containers, NOT production environments.
+
+- **Documentation Required**: Exact configuration method (environment variable, CLI flag, or config file setting) must be documented for future maintenance. Include troubleshooting steps if approval prompts still appear after configuration.</constraints>
+
+  <interfaces>
+    <interface>
+      <name>Claude CLI Environment Variables</name>
+      <kind>environment-variable</kind>
+      <signature>CLAUDE_APPROVE_ALL=true (or similar)</signature>
+      <path>Dockerfile or docker-compose.yml</path>
+    </interface>
+    <interface>
+      <name>Claude CLI Command Line Flags</name>
+      <kind>CLI-flag</kind>
+      <signature>claude --approve-all (or similar)</signature>
+      <path>backend/src/ptyManager.ts (PTY spawn command)</path>
+    </interface>
+    <interface>
+      <name>Claude CLI Config File</name>
+      <kind>configuration-file</kind>
+      <signature>config.json with approval settings</signature>
+      <path>/config/.claude-code/config.json (read-only mount)</path>
+    </interface>
+    <interface>
+      <name>Docker Container Isolation</name>
+      <kind>security-boundary</kind>
+      <signature>Docker filesystem isolation, volume mounts</signature>
+      <path>Dockerfile, docker-compose.yml</path>
+    </interface>
+    <interface>
+      <name>PTY SIGINT Signal</name>
+      <kind>process-signal</kind>
+      <signature>ptyProcess.kill('SIGINT')</signature>
+      <path>backend/src/ptyManager.ts (interrupt handling)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Testing for Story 1.11 follows Epic 1 testing strategy: Integration tests for configuration validation, end-to-end tests for autonomous command execution, security validation tests for container isolation. Use Jest for backend integration tests, manual E2E testing for command execution flows. Security tests must include destructive commands to prove host isolation (rm -rf /, container escape attempts). Interrupt mechanism tests verify ESC key and STOP button work with unrestricted tools. All tests run in isolated Docker containers to prevent host system damage.</standards>
+    <locations>
+      <location>backend/src/ptyManager.test.ts</location>
+      <location>backend/src/server.test.ts</location>
+      <location>E2E tests (manual or Playwright) - validate autonomous command execution</location>
+      <location>Security validation tests (manual Docker exec) - container isolation</location>
+    </locations>
+    <ideas>
+      <idea ac="AC1, AC2">**Test: Autonomous Command Execution Without Prompts** - Given Claude CLI configured with approval elimination, when Claude executes git status, npm install, pytest, rm test.txt commands, then all execute without approval prompts and output streams to terminal. Verify no user intervention required.</idea>
+      <idea ac="AC3">**Test: Container Isolation with Destructive Commands** - Given container running with approval elimination, when Claude executes `rm -rf /` or `dd if=/dev/zero of=/dev/sda` (destructive commands), then commands execute within container only, host filesystem remains untouched, container filesystem may be damaged but host is safe. Run in isolated test container.</idea>
+      <idea ac="AC4">**Test: Interrupt Mechanism Compatibility** - Given Claude running autonomous command (sleep 60, long npm install), when user presses ESC key or clicks STOP button, then SIGINT sent to PTY process, Claude CLI responds within 1 second, command stops, prompt returns. Verify interrupt works with unrestricted tools.</idea>
+      <idea ac="AC5">**Test: Configuration Persistence Across Restarts** - Given container configured for approval elimination, when container stopped with `docker stop claude-container` and restarted with `docker start claude-container`, then approval settings persist, Claude executes commands without prompts on restart. Verify no reconfiguration needed.</idea>
+      <idea ac="AC1, AC2, AC3">**Test: Real Project Validation** - Given emassistant project (Python 3.13) mounted at /workspace, when Claude executes pytest, pip install, git commit commands, then all execute autonomously without prompts, tests run successfully, dependencies install, commits work. Repeat with work project (Java 21): mvn clean install, npm run build. Verify both project types work.</idea>
+    </ideas>
+  </tests>
+</story-context>

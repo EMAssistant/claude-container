@@ -1,0 +1,6 @@
+# Invalid YAML with syntax errors
+current_phase: "prd_creation
+  - missing closing quote
+  invalid: [ unclosed array
+steps
+  name: "test"

@@ -1,0 +1,208 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.1</storyId>
+    <title>Docker Container with Development Environment</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-1-docker-container-with-development-environment.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>a Docker container with all necessary development tools pre-installed</iWant>
+    <soThat>Claude can work on both emassistant (Python 3.13) and work projects (Java 21) without tool installation friction</soThat>
+    <tasks>
+- Task 1: Create Dockerfile with Ubuntu 22.04 base (AC: 1)
+  - Subtask 1.1: Set up Ubuntu 22.04 LTS as base image
+  - Subtask 1.2: Configure apt-get update and package installation
+  - Subtask 1.3: Optimize layer caching (base packages first, source code last)
+- Task 2: Install Python 3.13 environment (AC: 1)
+  - Subtask 2.1: Add Python 3.13 repository and install python3
+  - Subtask 2.2: Install pip for Python 3.13
+  - Subtask 2.3: Verify Python version with `python3 --version`
+- Task 3: Install Java 21 (Amazon Corretto) (AC: 1)
+  - Subtask 3.1: Add Amazon Corretto 21 apt repository
+  - Subtask 3.2: Install java-21-amazon-corretto-jdk (or openjdk-21-jdk as fallback)
+  - Subtask 3.3: Verify Java version with `java --version`
+- Task 4: Install Node.js 20 LTS and npm (AC: 1)
+  - Subtask 4.1: Add NodeSource repository for Node.js 20
+  - Subtask 4.2: Install Node.js which includes npm
+  - Subtask 4.3: Verify versions with `node --version` and `npm --version`
+- Task 5: Install system utilities and build tools (AC: 1)
+  - Subtask 5.1: Install git, jq, curl, wget
+  - Subtask 5.2: Install build-essential (gcc, g++, make) for native npm modules
+  - Subtask 5.3: Install ca-certificates and gnupg for secure package downloads
+  - Subtask 5.4: Clean up apt cache with `rm -rf /var/lib/apt/lists/*`
+- Task 6: Install Claude CLI globally (AC: 1)
+  - Subtask 6.1: Install Claude CLI via npm: `npm install -g @anthropic-ai/claude-cli`
+  - Subtask 6.2: Verify Claude CLI is accessible with `claude --version`
+- Task 7: Configure container user and security (AC: 2, 3)
+  - Subtask 7.1: Create non-root user for running container processes
+  - Subtask 7.2: Set working directory to /app
+  - Subtask 7.3: Configure appropriate permissions for workspace and config mounts
+- Task 8: Test container build and tool availability (AC: 1, 2, 3)
+  - Subtask 8.1: Build container from scratch (no cache): `docker build --no-cache -t claude-container:test .`
+  - Subtask 8.2: Verify all tool versions in running container
+  - Subtask 8.3: Test layer caching by rebuilding (only changed layers rebuild)
+  - Subtask 8.4: Test container isolation with destructive command inside container
+</tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **Container Build Success**
+   - Given a Dockerfile in the repository root
+   - When the container is built with `docker build -t claude-container .`
+   - Then the container includes Ubuntu 22.04 LTS base image
+   - And Python 3.13 is installed and accessible via `python3 --version`
+   - And Amazon Corretto 21 (OpenJDK) is installed and accessible via `java --version`
+   - And Node.js 20 LTS is installed with npm
+   - And git, jq, curl, wget, build-essential packages are installed
+   - And Claude CLI is installed globally
+
+2. **Immediate Tool Availability**
+   - Given the container has started
+   - When development tools are checked
+   - Then all tools are immediately available without additional setup
+   - And no installation delays occur during first use
+
+3. **Container Isolation Verification**
+   - Given the container filesystem is isolated from the host system
+   - When destructive commands are executed within the container
+   - Then the host system remains unaffected
+   - And only the container filesystem is modified
+</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <artifact>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR1: Development Environment Container</section>
+        <snippet>System shall provide Docker container with complete development environment (Ubuntu 22.04, Python 3.13, Java 21, Node.js, git, jq, build-essential). Container filesystem shall be fully isolated from host system.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Container Layer - Development Environment</section>
+        <snippet>Ubuntu 22.04 LTS base image provides stable, long-term support foundation. Comprehensive development environment per ADR-009 includes Python 3.13, Amazon Corretto 21, Node.js 20 LTS, git, build-essential. Docker isolation ensures host system safety while allowing unrestricted tool access.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Docker Container Optimization</section>
+        <snippet>Layer caching strategy: Ubuntu base → apt packages → Python → Java → Node.js → Claude CLI → source code. Stable dependencies first, frequently changing code last. Multi-stage build for size optimization. Expected final image: ~2-3GB (acceptable for development environment).</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Security Architecture - Container Isolation</section>
+        <snippet>Docker container provides process and filesystem isolation from host. Claude CLI runs with limited privileges (non-root user in container). Volume mounts: Workspace (RW), Claude config (RO). Container escape attempts mitigated by Docker security boundaries.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Technical Specification Epic 1</title>
+        <section>Container System Dependencies</section>
+        <snippet>Base: Ubuntu 22.04 LTS. System packages: curl, wget, git, jq, build-essential, ca-certificates, gnupg. Python: 3.13 with pip. Java: Amazon Corretto 21 (or openjdk-21-jdk fallback). Node.js: 20 LTS with npm. Claude CLI via npm global install.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Technical Specification Epic 1</title>
+        <section>AC1: Docker Container with Complete Dev Environment</section>
+        <snippet>Container must include Ubuntu 22.04 LTS, Python 3.13 (python3 --version outputs 3.13.x), Amazon Corretto 21 or OpenJDK 21 (java --version outputs 21.x), Node.js 20 LTS (node --version outputs v20.x), git, jq, curl, wget, build-essential, and Claude CLI accessible as `claude` command.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/architecture-decisions.md</path>
+        <title>Architecture Decision Records</title>
+        <section>ADR-001: Single Container vs External Orchestrator</section>
+        <snippet>Decision: Build a single, self-contained Docker container that runs one Node.js backend service and multiple Claude CLI processes within the container. Rationale: Simplicity (single docker run), resource efficiency (shared base system), simpler state management.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/architecture-decisions.md</path>
+        <title>Architecture Decision Records</title>
+        <section>ADR-008: All Tools Marked Safe in Sandbox</section>
+        <snippet>Mark all tools as safe (no approval required) within Docker container. Claude has unrestricted CLI access. Container isolation protects host - worst case Claude destroys container filesystem, host remains untouched. Enables autonomous epic execution.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/architecture-decisions.md</path>
+        <title>Architecture Decision Records</title>
+        <section>ADR-009: Development Environment Requirements</section>
+        <snippet>Include comprehensive development environment: Python 3.13, Amazon Corretto Java 21, Node.js + npm, jq, git, curl, wget, build-essential. Rationale: User projects span multiple languages, installing on-demand would slow development, all tools pre-installed enables immediate epic execution.</snippet>
+      </artifact>
+    </docs>
+    <code>
+      <!-- No existing code artifacts - greenfield implementation -->
+    </code>
+    <dependencies>
+      <system>
+        <package name="ubuntu" version="22.04 LTS">Base operating system - stable foundation</package>
+        <package name="python3" version="3.13">Python runtime for emassistant project validation</package>
+        <package name="python3-pip" version="latest">Python package manager</package>
+        <package name="java-21-amazon-corretto-jdk" version="21.x">Java runtime for work projects (or openjdk-21-jdk as fallback)</package>
+        <package name="nodejs" version="20.x LTS">JavaScript runtime and backend platform</package>
+        <package name="npm" version="bundled with Node.js">Node.js package manager</package>
+        <package name="git" version="latest">Version control system</package>
+        <package name="jq" version="latest">JSON processing utility</package>
+        <package name="curl" version="latest">HTTP client</package>
+        <package name="wget" version="latest">HTTP client</package>
+        <package name="build-essential" version="latest">Compilers and build tools (gcc, g++, make) for native npm modules</package>
+        <package name="ca-certificates" version="latest">SSL certificate authorities</package>
+        <package name="gnupg" version="latest">GNU Privacy Guard for package verification</package>
+      </system>
+      <npm>
+        <package name="@anthropic-ai/claude-cli" version="latest">Claude CLI for AI-assisted development (global install)</package>
+      </npm>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+- **Container Base Image**: Must use Ubuntu 22.04 LTS for stability and long-term support (ADR-001)
+- **Layer Caching Strategy**: Order Dockerfile instructions from stable to volatile (Architecture "Docker Container Optimization"): Ubuntu base → apt packages → Python → Java → Node.js → Claude CLI → source code
+- **Image Size Target**: ~2-3GB final image (acceptable for development environment, not production-optimized)
+- **Build Time Target**: First build 5-10 minutes, subsequent builds <1 minute with layer caching
+- **Security Pattern**: Run container processes as non-root user for security (Dev Notes "Non-Root User Pattern")
+- **Isolation Requirement**: Container filesystem must be fully isolated from host (NFR-SEC-1)
+- **Tool Availability**: All tools must be immediately available at container startup, no runtime installation delays (AC 2)
+- **Multi-Language Support**: Must support Python 3.13 (emassistant), Java 21 (work projects), and Node.js 20 (backend services)
+- **Apt Cache Cleanup**: Must clean apt cache after installations (`rm -rf /var/lib/apt/lists/*`) to reduce image size
+- **Package Verification**: Use ca-certificates and gnupg for secure package downloads
+</constraints>
+
+  <interfaces>
+    <!-- No existing interfaces - this is the foundation story that creates the container -->
+  </interfaces>
+
+  <tests>
+    <standards>
+Epic 1 prioritizes integration testing and end-to-end validation. For Story 1.1, focus on Docker container build validation and tool availability verification. Use `docker build` and `docker run` commands to validate container construction. Manual testing approach for Sprint 1, automated testing deferred to Epic 4.
+</standards>
+    <locations>
+- Dockerfile in repository root
+- Build validation via command-line docker commands
+- No formal test directory yet (Epic 1 focuses on manual validation)
+</locations>
+    <ideas>
+**Docker Container Build Tests** (AC 1):
+- Build test: `docker build --no-cache -t claude-container:test .` succeeds
+- Version verification tests:
+  - `docker run claude-container:test python3 --version | grep "3.13"`
+  - `docker run claude-container:test java --version | grep "21"`
+  - `docker run claude-container:test node --version | grep "v20"`
+  - `docker run claude-container:test git --version`
+  - `docker run claude-container:test jq --version`
+  - `docker run claude-container:test claude --version`
+- Layer caching test: Rebuild with `docker build -t claude-container:test .` should use cache for unchanged layers
+
+**Tool Availability Tests** (AC 2):
+- Start container and verify all tools accessible without additional setup
+- Check that tool execution happens immediately (no installation delays)
+- Verify Python can import common packages, Java can compile simple programs, Node.js can run npm commands
+
+**Container Isolation Tests** (AC 3):
+- Run destructive command inside container: `docker run -it claude-container:test bash -c "rm -rf /tmp/test"`
+- Verify host /tmp directory is unaffected (container isolation working)
+- Test that container filesystem modifications don't impact host system
+</ideas>
+  </tests>
+</story-context>

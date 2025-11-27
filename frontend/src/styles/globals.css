@@ -1,0 +1,180 @@
+@import "tailwindcss";
+
+@plugin "tailwindcss-animate";
+
+@custom-variant dark (&:is(.dark *));
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: rgb(var(--background));
+  --color-foreground: rgb(var(--foreground));
+  --color-card: rgb(var(--card));
+  --color-card-foreground: rgb(var(--card-foreground));
+  --color-popover: rgb(var(--popover));
+  --color-popover-foreground: rgb(var(--popover-foreground));
+  --color-primary: rgb(var(--primary));
+  --color-primary-foreground: rgb(var(--primary-foreground));
+  --color-secondary: rgb(var(--secondary));
+  --color-secondary-foreground: rgb(var(--secondary-foreground));
+  --color-muted: rgb(var(--muted));
+  --color-muted-foreground: rgb(var(--muted-foreground));
+  --color-accent: rgb(var(--accent));
+  --color-accent-foreground: rgb(var(--accent-foreground));
+  --color-destructive: rgb(var(--destructive));
+  --color-destructive-foreground: rgb(var(--destructive-foreground));
+  --color-border: rgb(var(--border));
+  --color-input: rgb(var(--input));
+  --color-ring: rgb(var(--ring));
+  --color-chart-1: rgb(var(--chart-1));
+  --color-chart-2: rgb(var(--chart-2));
+  --color-chart-3: rgb(var(--chart-3));
+  --color-chart-4: rgb(var(--chart-4));
+  --color-chart-5: rgb(var(--chart-5));
+  --color-sidebar: rgb(var(--sidebar));
+  --color-sidebar-foreground: rgb(var(--sidebar-foreground));
+  --color-sidebar-primary: rgb(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: rgb(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: rgb(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: rgb(var(--sidebar-accent-foreground));
+  --color-sidebar-border: rgb(var(--sidebar-border));
+  --color-sidebar-ring: rgb(var(--sidebar-ring));
+}
+
+:root {
+  --radius: 0.625rem;
+  /* Oceanic Calm Theme Colors */
+  --background: 46 52 64; /* #2E3440 */
+  --foreground: 216 222 233; /* #D8DEE9 */
+  --card: 59 66 82; /* #3B4252 */
+  --card-foreground: 216 222 233; /* #D8DEE9 */
+  --popover: 59 66 82; /* #3B4252 */
+  --popover-foreground: 216 222 233; /* #D8DEE9 */
+  --primary: 136 192 208; /* #88C0D0 */
+  --primary-foreground: 46 52 64; /* #2E3440 */
+  --secondary: 59 66 82; /* #3B4252 */
+  --secondary-foreground: 216 222 233; /* #D8DEE9 */
+  --muted: 76 86 106; /* #4C566A */
+  --muted-foreground: 129 161 193; /* #81A1C1 */
+  --accent: 136 192 208; /* #88C0D0 */
+  --accent-foreground: 46 52 64; /* #2E3440 */
+  --destructive: 191 97 106; /* #BF616A */
+  --destructive-foreground: 216 222 233; /* #D8DEE9 */
+  --border: 76 86 106; /* #4C566A */
+  --input: 76 86 106; /* #4C566A */
+  --ring: 136 192 208; /* #88C0D0 */
+  --chart-1: 136 192 208; /* #88C0D0 */
+  --chart-2: 129 161 193; /* #81A1C1 */
+  --chart-3: 94 129 172; /* #5E81AC */
+  --chart-4: 163 190 140; /* #A3BE8C */
+  --chart-5: 235 203 139; /* #EBCB8B */
+  --sidebar: 46 52 64; /* #2E3440 */
+  --sidebar-foreground: 216 222 233; /* #D8DEE9 */
+  --sidebar-primary: 136 192 208; /* #88C0D0 */
+  --sidebar-primary-foreground: 46 52 64; /* #2E3440 */
+  --sidebar-accent: 59 66 82; /* #3B4252 */
+  --sidebar-accent-foreground: 216 222 233; /* #D8DEE9 */
+  --sidebar-border: 76 86 106; /* #4C566A */
+  --sidebar-ring: 136 192 208; /* #88C0D0 */
+}
+
+.dark {
+  /* Oceanic Calm is inherently dark - keeping same colors */
+  --background: 46 52 64; /* #2E3440 */
+  --foreground: 216 222 233; /* #D8DEE9 */
+  --card: 59 66 82; /* #3B4252 */
+  --card-foreground: 216 222 233; /* #D8DEE9 */
+  --popover: 59 66 82; /* #3B4252 */
+  --popover-foreground: 216 222 233; /* #D8DEE9 */
+  --primary: 136 192 208; /* #88C0D0 */
+  --primary-foreground: 46 52 64; /* #2E3440 */
+  --secondary: 59 66 82; /* #3B4252 */
+  --secondary-foreground: 216 222 233; /* #D8DEE9 */
+  --muted: 76 86 106; /* #4C566A */
+  --muted-foreground: 129 161 193; /* #81A1C1 */
+  --accent: 136 192 208; /* #88C0D0 */
+  --accent-foreground: 46 52 64; /* #2E3440 */
+  --destructive: 191 97 106; /* #BF616A */
+  --destructive-foreground: 216 222 233; /* #D8DEE9 */
+  --border: 76 86 106; /* #4C566A */
+  --input: 76 86 106; /* #4C566A */
+  --ring: 136 192 208; /* #88C0D0 */
+  --chart-1: 136 192 208; /* #88C0D0 */
+  --chart-2: 129 161 193; /* #81A1C1 */
+  --chart-3: 94 129 172; /* #5E81AC */
+  --chart-4: 163 190 140; /* #A3BE8C */
+  --chart-5: 235 203 139; /* #EBCB8B */
+  --sidebar: 46 52 64; /* #2E3440 */
+  --sidebar-foreground: 216 222 233; /* #D8DEE9 */
+  --sidebar-primary: 136 192 208; /* #88C0D0 */
+  --sidebar-primary-foreground: 46 52 64; /* #2E3440 */
+  --sidebar-accent: 59 66 82; /* #3B4252 */
+  --sidebar-accent-foreground: 216 222 233; /* #D8DEE9 */
+  --sidebar-border: 76 86 106; /* #4C566A */
+  --sidebar-ring: 136 192 208; /* #88C0D0 */
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Pulsing animation for active session status dot */
+@keyframes pulse-status {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse-status {
+  animation: pulse-status 2s ease-in-out infinite;
+}
+
+/* Story 4.9: Accessibility - Focus Ring Styles */
+/* Use :focus-visible for keyboard-only focus (not mouse clicks) */
+*:focus-visible {
+  outline: 2px solid #88C0D0; /* Oceanic Calm blue */
+  outline-offset: 2px;
+}
+
+/* Remove default browser focus styles (replaced by :focus-visible) */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Story 4.9: Screen reader only content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Story 4.9: Reduced Motion Support */
+/* Disable animations for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

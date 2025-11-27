@@ -1,0 +1,129 @@
+/**
+ * Oceanic Calm Theme for Syntax Highlighting
+ * Story 3.5: Artifact Viewer with Markdown Rendering
+ *
+ * Color scheme matches Terminal component's Oceanic Calm theme
+ * Based on Nord color palette
+ *
+ * Reference: frontend/src/components/Terminal.tsx lines 76-98
+ */
+
+/* Code block background */
+.hljs {
+  background: #2E3440;
+  color: #D8DEE9;
+  display: block;
+  overflow-x: auto;
+  padding: 1em;
+  border-radius: 0.375rem;
+}
+
+/* Base colors */
+.hljs-comment,
+.hljs-quote {
+  color: #616E88;
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-subst {
+  color: #81A1C1;
+  font-weight: bold;
+}
+
+.hljs-number,
+.hljs-literal,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag .hljs-attr {
+  color: #B48EAD;
+}
+
+.hljs-string,
+.hljs-doctag {
+  color: #A3BE8C;
+}
+
+.hljs-title,
+.hljs-section,
+.hljs-selector-id {
+  color: #88C0D0;
+  font-weight: bold;
+}
+
+.hljs-type,
+.hljs-class .hljs-title {
+  color: #8FBCBB;
+}
+
+.hljs-tag,
+.hljs-name,
+.hljs-attribute {
+  color: #88C0D0;
+  font-weight: normal;
+}
+
+.hljs-regexp,
+.hljs-link {
+  color: #EBCB8B;
+}
+
+.hljs-symbol,
+.hljs-bullet {
+  color: #D8DEE9;
+}
+
+.hljs-built_in,
+.hljs-builtin-name {
+  color: #88C0D0;
+}
+
+.hljs-meta {
+  color: #616E88;
+}
+
+.hljs-deletion {
+  background: #BF616A;
+  color: #2E3440;
+}
+
+.hljs-addition {
+  background: #A3BE8C;
+  color: #2E3440;
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+}
+
+/* Language-specific adjustments */
+.hljs-function .hljs-title,
+.hljs-function .hljs-params {
+  color: #88C0D0;
+}
+
+.hljs-attr {
+  color: #8FBCBB;
+}
+
+.hljs-params {
+  color: #D8DEE9;
+}
+
+/* Markdown code blocks should have proper spacing and borders */
+pre code.hljs {
+  padding: 1em;
+}
+
+/* Inline code should have subtle background */
+:not(pre) > code.hljs {
+  display: inline;
+  padding: 0.2em 0.4em;
+  background: #3B4252;
+  border-radius: 0.25rem;
+}

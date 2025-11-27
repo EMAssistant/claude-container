@@ -1,0 +1,196 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.2</storyId>
+    <title>Workflow Progress Component Compact Linear View</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/3-2-workflow-progress-component-compact-linear-view.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>to see BMAD workflow progress in a compact list showing current step</iWant>
+    <soThat>I know where Claude is in the process at a glance (FR38-FR41)</soThat>
+    <tasks>
+      <task id="1" ac="1,2">Create WorkflowProgress component
+        <subtask id="1.1">Create frontend/src/components/WorkflowProgress.tsx with TypeScript interface</subtask>
+        <subtask id="1.2">Implement vertical list rendering with step status indicators</subtask>
+        <subtask id="1.3">Apply Oceanic Calm color scheme per UX spec</subtask>
+      </task>
+      <task id="2" ac="2,3">Implement status indicator logic
+        <subtask id="2.1">Map step status to visual indicator: completed→✓, in_progress→→, pending→○</subtask>
+        <subtask id="2.2">Apply color coding: green for completed, blue for current, gray for pending</subtask>
+        <subtask id="2.3">Add highlighted background (#434C5E) for current step</subtask>
+        <subtask id="2.4">Implement auto-scroll behavior using scrollIntoView</subtask>
+      </task>
+      <task id="3" ac="4">Integrate with WorkflowContext
+        <subtask id="3.1">Subscribe to WorkflowContext for workflow state updates</subtask>
+        <subtask id="3.2">Re-render component on workflow state changes</subtask>
+        <subtask id="3.3">Handle WebSocket workflow.updated messages via context</subtask>
+      </task>
+      <task id="4" ac="5">Add hover tooltip
+        <subtask id="4.1">Implement optional tooltip showing step description on hover</subtask>
+        <subtask id="4.2">Use shadcn/ui Tooltip component</subtask>
+      </task>
+      <task id="5" ac="all">Write component tests
+        <subtask id="5.1">Unit test: Renders correct indicators per status</subtask>
+        <subtask id="5.2">Unit test: Auto-scroll behavior on current step change</subtask>
+        <subtask id="5.3">Integration test: WorkflowContext update triggers re-render</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="1">Given a WorkflowProgress.tsx component When the workflow state is: Current step: "prd_creation", Completed: ["brainstorming", "product_brief"], Pending: ["architecture", "ux_design", "epic_planning"] Then the component displays a vertical list with proper status indicators</ac>
+    <ac id="2">Given the workflow rendering Then display: ✓ Brainstorming (green #A3BE8C), ✓ Product Brief (green #A3BE8C), → PRD Creation (blue #88C0D0, highlighted background #434C5E), ○ Architecture (gray #4C566A), ○ UX Design (gray #4C566A), ○ Epic Planning (gray #4C566A)</ac>
+    <ac id="3">Given the current step Then it has: Arrow indicator (→), Blue color (#88C0D0), Subtle highlighted background (#434C5E), Auto-scroll to keep visible</ac>
+    <ac id="4">Given a workflow step changes (WebSocket workflow.updated message) Then: The list updates in real-time, The previous step changes to checkmark (✓), The new current step shows arrow (→) and highlighting</ac>
+    <ac id="5">Given the user hovers over a step Then a tooltip shows step description (optional enhancement)</ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification: Workflow Visibility & Document Review</title>
+        <section>Data Models and Contracts</section>
+        <snippet>WorkflowState interface defines currentStep (string), completedSteps (string[]), and steps (WorkflowStep[]). WorkflowStep contains name, status ('completed' | 'in_progress' | 'pending'), and optional displayName. Per module definition (lines 66-71), WorkflowProgress.tsx is a compact linear view component that displays this workflow state.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>WebSocket Protocol</section>
+        <snippet>New workflow.updated message type: { type: 'workflow.updated', sessionId: string, workflow: WorkflowState }. This message triggers real-time UI updates when BMAD workflow steps change (lines 127-132).</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>ADR-005: React Context API Over Zustand/Redux</section>
+        <snippet>Use React Context API + Hooks for state management with separate contexts per domain (SessionContext, LayoutContext, WebSocketContext, WorkflowContext). This avoids re-render issues and maintains zero additional dependencies (lines 1304-1325).</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-3-workflow-visibility.md</path>
+        <title>Epic 3: Workflow Visibility & Document Review</title>
+        <section>Story 3.2 Complete Specification</section>
+        <snippet>Status indicators: ✓ (completed), → (current), ○ (pending) per FR39-FR41. Colors from Oceanic Calm palette. WorkflowContext provides workflow state via useContext hook. Auto-scroll uses scrollIntoView({ behavior: 'smooth' }) on current step (lines 65-114).</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Consistency Rules - Naming Conventions</section>
+        <snippet>React components use PascalCase (Terminal.tsx, SessionList.tsx). Files placed in frontend/src/components/ flat structure. Test files use .test.tsx suffix. Component structure: imports, types, component definition, event handlers, render, exports (lines 523-636).</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>frontend/src/types.ts</path>
+        <kind>interface</kind>
+        <symbol>Session</symbol>
+        <lines>3-14</lines>
+        <reason>Session interface includes optional currentPhase field that may relate to workflow state. Shows pattern for TypeScript interfaces in this project.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/SessionList.tsx</path>
+        <kind>component</kind>
+        <symbol>SessionList</symbol>
+        <lines>1-100</lines>
+        <reason>Example of existing list component with Oceanic Calm color scheme (STATUS_COLORS constant lines 23-28), shadcn/ui components (Tooltip, Badge), and proper TypeScript patterns. Demonstrates status dot rendering, color mapping, and component structure to follow.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/hooks/useWebSocket.ts</path>
+        <kind>hook</kind>
+        <symbol>useWebSocket</symbol>
+        <lines>1-100</lines>
+        <reason>WebSocket hook that handles message subscription via 'on' method. WorkflowProgress will need to subscribe to 'workflow.updated' messages through this hook or via WorkflowContext that wraps it.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/ui/tooltip.tsx</path>
+        <kind>component</kind>
+        <symbol>Tooltip (shadcn/ui)</symbol>
+        <lines>all</lines>
+        <reason>shadcn/ui Tooltip component to use for AC5 (hover tooltip). Already installed and configured in project.</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/lib/utils.ts</path>
+        <kind>utility</kind>
+        <symbol>cn, relativeTime</symbol>
+        <lines>all</lines>
+        <reason>Utility functions: cn() for conditional classNames (used in SessionList), relativeTime() for timestamp formatting. Standard utilities to use in WorkflowProgress component.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <frontend>
+        <dependency name="react" version="^19.2.0">Core React library with Context API</dependency>
+        <dependency name="lucide-react" version="^0.554.0">Icon library for step indicators</dependency>
+        <dependency name="@radix-ui/react-tooltip" version="^1.2.8">Tooltip primitive for AC5</dependency>
+        <dependency name="@radix-ui/react-scroll-area" version="^1.2.10">Scroll area if list becomes long</dependency>
+        <dependency name="clsx" version="^2.1.1">Conditional className utility</dependency>
+        <dependency name="tailwind-merge" version="^3.4.0">Tailwind class merging</dependency>
+      </frontend>
+      <testing>
+        <dependency name="vitest" version="^4.0.13">Frontend testing framework</dependency>
+        <dependency name="@testing-library/react" version="^16.3.0">React component testing</dependency>
+        <dependency name="@testing-library/jest-dom" version="^6.9.1">DOM matchers</dependency>
+        <dependency name="@testing-library/user-event" version="^14.6.1">User interaction simulation</dependency>
+      </testing>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Component must be created at frontend/src/components/WorkflowProgress.tsx per project structure</constraint>
+    <constraint>Use TypeScript strict mode - all props and state must be typed</constraint>
+    <constraint>Apply Oceanic Calm color palette: green #A3BE8C (completed), blue #88C0D0 (current), gray #4C566A (pending), background #434C5E (current highlight)</constraint>
+    <constraint>Component structure must follow architecture pattern: imports, types/interfaces, component definition, event handlers, render, exports</constraint>
+    <constraint>Use shadcn/ui components (Tooltip) for consistency with existing UI</constraint>
+    <constraint>Subscribe to WorkflowContext for workflow state (context pattern per ADR-005)</constraint>
+    <constraint>Auto-scroll must use scrollIntoView({ behavior: 'smooth' }) for current step visibility</constraint>
+    <constraint>Status indicator mapping: completed→✓, in_progress→→, pending→○ (exact characters required)</constraint>
+    <constraint>Test file must be co-located: frontend/src/components/WorkflowProgress.test.tsx</constraint>
+    <constraint>Vitest for unit tests, @testing-library/react for component tests</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>WorkflowState</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface WorkflowState { currentStep: string; completedSteps: string[]; steps: WorkflowStep[]; }</signature>
+      <path>docs/sprint-artifacts/tech-spec-epic-3.md (lines 76-87)</path>
+    </interface>
+    <interface>
+      <name>WorkflowStep</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface WorkflowStep { name: string; status: 'completed' | 'in_progress' | 'pending'; displayName?: string; }</signature>
+      <path>docs/sprint-artifacts/tech-spec-epic-3.md (lines 83-87)</path>
+    </interface>
+    <interface>
+      <name>workflow.updated WebSocket message</name>
+      <kind>WebSocket protocol</kind>
+      <signature>{ type: 'workflow.updated', sessionId: string, workflow: WorkflowState }</signature>
+      <path>docs/sprint-artifacts/tech-spec-epic-3.md (lines 128-132)</path>
+    </interface>
+    <interface>
+      <name>WorkflowContext (to be created in Story 3.1)</name>
+      <kind>React Context</kind>
+      <signature>WorkflowContext provides WorkflowState and update handlers. Component subscribes via useContext(WorkflowContext)</signature>
+      <path>Prerequisite from Story 3.1 - backend statusParser.ts must create this context</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Frontend tests use Vitest framework with @testing-library/react for component testing. Tests are co-located with source files using .test.tsx suffix. Test structure follows describe/it pattern with clear test names. Coverage target: 50%+ for frontend components. Use render() from @testing-library/react, screen queries, and userEvent for interactions. Mock contexts and hooks as needed.</standards>
+    <locations>
+      <location>frontend/src/components/WorkflowProgress.test.tsx</location>
+      <location>frontend/src/test/setup.ts (Vitest configuration)</location>
+    </locations>
+    <ideas>
+      <idea ac="1,2">Unit Test: Render WorkflowProgress with mock workflow state containing completed, in_progress, and pending steps. Assert correct number of list items rendered. Verify status indicators: ✓ for completed steps, → for current step, ○ for pending steps.</idea>
+      <idea ac="2">Visual Test: Verify correct colors applied - check computed styles or className for green (#A3BE8C) on completed steps, blue (#88C0D0) on current step, gray (#4C566A) on pending steps. Verify current step has highlighted background (#434C5E).</idea>
+      <idea ac="3">Unit Test: Test auto-scroll behavior by mocking scrollIntoView and verifying it's called on current step element when workflow state updates. Use jest.fn() to spy on scrollIntoView.</idea>
+      <idea ac="4">Integration Test: Mock WorkflowContext provider, render component, trigger context update with new currentStep, verify component re-renders with updated indicators. Previous current step should change from → to ✓, new current step should show →.</idea>
+      <idea ac="5">Interaction Test: Use @testing-library/user-event to hover over a step, verify tooltip appears with step description. Use waitFor() to handle tooltip animation delays.</idea>
+      <idea>Error Handling Test: Render component with missing or invalid workflow state (undefined, empty array). Component should handle gracefully without crashing, showing empty state or loading indicator.</idea>
+    </ideas>
+  </tests>
+</story-context>

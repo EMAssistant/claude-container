@@ -1,0 +1,254 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>11</storyId>
+    <title>Browser Notifications Prep for Epic 4</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/3-11-browser-notifications-prep-for-epic-4.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer managing multiple parallel Claude sessions</asA>
+    <iWant>the application to request browser notification permission on first load</iWant>
+    <soThat>I can receive notifications when Claude asks questions (implemented in Epic 4)</soThat>
+    <tasks>
+      <task id="1" acs="1,2">Implement notification permission check module</task>
+      <task id="2" acs="3">Create notification permission banner component</task>
+      <task id="3" acs="2,4">Integrate banner into app layout</task>
+      <task id="4" acs="5">Add notification settings to Settings dropdown</task>
+      <task id="5" acs="6">Create NotificationContext for Epic 4 preparation</task>
+      <task id="6" acs="all">Write unit tests</task>
+      <task id="7" acs="all">Update documentation</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1" priority="must">
+      <title>AC3.19 - Notification permission requested</title>
+      <description>Given user loads application for first time, when application checks notification permission status, then if permission is "default" (not granted/denied), show permission request banner/prompt and store permission response to avoid repeated requests</description>
+    </criterion>
+    <criterion id="2" priority="must">
+      <title>Permission Check on Load</title>
+      <description>Application checks Notification.permission status on mount. If "granted": No UI shown. If "denied": Show informational message. If "default": Show permission request UI</description>
+    </criterion>
+    <criterion id="3" priority="must">
+      <title>Permission Request UI</title>
+      <description>User-friendly prompt explaining notification purpose with clear explanation "Get notified when Claude needs your input", two actions ("Enable Notifications" button and "Maybe Later" dismissal), non-blocking user workflow, and dismissible close button</description>
+    </criterion>
+    <criterion id="4" priority="must">
+      <title>Permission State Persistence</title>
+      <description>Track permission request/response using localStorage for whether user has seen/responded to prompt, don't show banner again if user clicked "Maybe Later", re-check permission on each app load (user may change in browser settings)</description>
+    </criterion>
+    <criterion id="5" priority="must">
+      <title>Settings Integration</title>
+      <description>Notification preferences accessible in Settings dropdown showing current permission status (Granted/Denied/Not Requested), with appropriate actions for each state (instructions for denied, request button for not requested, confirmation for granted)</description>
+    </criterion>
+    <criterion id="6" priority="must">
+      <title>No Actual Notifications</title>
+      <description>This story only requests permission. Do NOT implement notification sending logic (Epic 4 Story 4.3). Only check Notification.permission and call Notification.requestPermission(). Prepare NotificationContext/hook for Epic 4 to consume</description>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Acceptance Criteria</section>
+        <snippet>AC3.19: Notification permission requested on first load. FR49 (prep): Browser Notification Permission - Prompt for notification permission on first load (notifications implemented in Epic 4)</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Out-of-Scope</section>
+        <snippet>Browser notification sending (permission setup only—actual notifications deferred to Epic 4 Story 4.3). Cloud deployment or remote access features. Mobile responsive layout (desktop-only tool)</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>ADR-005: React Context API</section>
+        <snippet>Use React Context API + Hooks for state management instead of Zustand or Redux Toolkit. Application has 3-4 distinct state domains. Create separate contexts per domain</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Technology Stack - Frontend</section>
+        <snippet>shadcn/ui component library for accessible primitives. React 19 with TypeScript 5.x. Tailwind CSS 4.0 for Oceanic Calm theme. Vitest for frontend testing</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic-2-retrospective.md</path>
+        <title>Epic 2 Retrospective</title>
+        <section>Lessons Learned</section>
+        <snippet>TypeScript strict mode caught edge cases early. Context splitting prevents re-renders. Comprehensive test coverage (96%+) prevented regressions. localStorage usage patterns from session state persistence</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>frontend/src/hooks/useWebSocket.ts</path>
+        <kind>hook</kind>
+        <symbol>useWebSocket</symbol>
+        <lines>1-250</lines>
+        <reason>Established custom hook pattern to follow for useNotificationPermission hook implementation</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/ConnectionBanner.tsx</path>
+        <kind>component</kind>
+        <symbol>ConnectionBanner</symbol>
+        <lines>1-100</lines>
+        <reason>Example of non-blocking banner component for reference when creating NotificationBanner</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/SessionModal.tsx</path>
+        <kind>component</kind>
+        <symbol>SessionModal</symbol>
+        <lines>1-200</lines>
+        <reason>Example of shadcn/ui component integration patterns (Dialog, Button usage)</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/App.tsx</path>
+        <kind>component</kind>
+        <symbol>App</symbol>
+        <lines>1-250</lines>
+        <reason>Main layout component where NotificationBanner will be integrated above top bar</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/ui/use-toast.ts</path>
+        <kind>hook</kind>
+        <symbol>useToast</symbol>
+        <lines>1-150</lines>
+        <reason>Example of custom hook pattern using React state for UI feedback</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/types.ts</path>
+        <kind>types</kind>
+        <symbol>Session</symbol>
+        <lines>1-50</lines>
+        <reason>TypeScript types/interfaces location - add notification-related types here</reason>
+      </artifact>
+      <artifact>
+        <path>frontend/src/components/SessionList.test.tsx</path>
+        <kind>test</kind>
+        <symbol>SessionList tests</symbol>
+        <lines>1-200</lines>
+        <reason>Example of Vitest + React Testing Library patterns to follow for NotificationBanner tests</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <frontend>
+        <package name="react" version="^19.2.0">Core framework</package>
+        <package name="react-dom" version="^19.2.0">React DOM rendering</package>
+        <package name="@radix-ui/react-dialog" version="^1.1.15">Dialog primitives (for Settings)</package>
+        <package name="@radix-ui/react-dropdown-menu" version="^2.1.16">Dropdown menu primitives (for Settings dropdown)</package>
+        <package name="@radix-ui/react-toast" version="^1.2.15">Toast notifications</package>
+        <package name="lucide-react" version="^0.554.0">Icons for UI</package>
+        <package name="clsx" version="^2.1.1">Conditional className utility</package>
+        <package name="tailwind-merge" version="^3.4.0">Tailwind class merging</package>
+      </frontend>
+      <devDependencies>
+        <package name="vitest" version="^4.0.13">Test framework</package>
+        <package name="@testing-library/react" version="^16.3.0">React testing utilities</package>
+        <package name="@testing-library/jest-dom" version="^6.9.1">DOM matchers</package>
+        <package name="@testing-library/user-event" version="^14.6.1">User interaction simulation</package>
+        <package name="jsdom" version="^27.2.0">DOM environment for tests</package>
+        <package name="typescript" version="~5.9.3">TypeScript compiler</package>
+      </devDependencies>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint category="architecture">Follow React Context API pattern established in Epic 2 (SessionContext pattern). Create separate NotificationContext for notification state, avoid mixing with other state domains</constraint>
+    <constraint category="architecture">Use custom hook pattern (useNotificationPermission) similar to existing useWebSocket hook</constraint>
+    <constraint category="ui">Use shadcn/ui components for banner (Alert or custom styled component)</constraint>
+    <constraint category="ui">Match Oceanic Calm theme established in Story 1.7</constraint>
+    <constraint category="ui">Banner must be non-blocking - positioned at top, doesn't prevent user interaction</constraint>
+    <constraint category="browser-api">Notification.requestPermission() requires user gesture (must be called from button click)</constraint>
+    <constraint category="browser-api">Notification API only available in secure contexts (HTTPS or localhost)</constraint>
+    <constraint category="browser-api">Permission states: "granted" / "denied" / "default" (not yet asked)</constraint>
+    <constraint category="storage">Use localStorage for permission prompt dismissal state (key: "notification-permission-dismissed")</constraint>
+    <constraint category="storage">Store last permission check timestamp in localStorage (key: "notification-permission-last-check")</constraint>
+    <constraint category="testing">Mock window.Notification API in tests (not available in jsdom)</constraint>
+    <constraint category="testing">Test all three permission states independently</constraint>
+    <constraint category="testing">Aim for 70%+ coverage following Epic 2 patterns</constraint>
+    <constraint category="scope">Do NOT implement notification sending - only permission request. Sending deferred to Epic 4 Story 4.3</constraint>
+    <constraint category="scope">Prepare NotificationContext API for Epic 4 integration (permissionGranted, permissionState, requestPermission)</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Notification.permission</name>
+      <kind>Browser API property</kind>
+      <signature>readonly permission: "granted" | "denied" | "default"</signature>
+      <path>Browser Web API</path>
+    </interface>
+    <interface>
+      <name>Notification.requestPermission</name>
+      <kind>Browser API method</kind>
+      <signature>static requestPermission(): Promise&lt;"granted" | "denied" | "default"&gt;</signature>
+      <path>Browser Web API</path>
+    </interface>
+    <interface>
+      <name>NotificationContext (to create)</name>
+      <kind>React Context</kind>
+      <signature>
+interface NotificationContextValue {
+  permissionGranted: boolean;
+  permissionState: "granted" | "denied" | "default";
+  requestPermission: () =&gt; Promise&lt;string&gt;;
+  isDismissed: boolean;
+  dismissBanner: () =&gt; void;
+}
+      </signature>
+      <path>frontend/src/context/NotificationContext.tsx</path>
+    </interface>
+    <interface>
+      <name>useNotificationPermission (to create)</name>
+      <kind>React Hook</kind>
+      <signature>
+function useNotificationPermission(): {
+  permissionState: "granted" | "denied" | "default";
+  requestPermission: () =&gt; Promise&lt;string&gt;;
+  checkPermission: () =&gt; void;
+}
+      </signature>
+      <path>frontend/src/hooks/useNotificationPermission.ts</path>
+    </interface>
+    <interface>
+      <name>localStorage keys</name>
+      <kind>Storage Interface</kind>
+      <signature>
+"notification-permission-dismissed": boolean
+"notification-permission-last-check": ISO 8601 timestamp string
+      </signature>
+      <path>Browser localStorage API</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+Frontend tests use Vitest test framework with @testing-library/react for component testing. Follow patterns established in Epic 2 stories. Mock browser APIs (Notification) in tests using vi.stubGlobal(). Test files colocated with source using .test.tsx suffix. Aim for 70%+ coverage on critical paths (permission check, request flow, state management). Use user-event library for simulating user interactions. Test all permission states (granted/denied/default) independently. Verify localStorage persistence across test scenarios.
+    </standards>
+    <locations>
+      <location>frontend/src/hooks/useNotificationPermission.test.ts</location>
+      <location>frontend/src/components/NotificationBanner.test.tsx</location>
+      <location>frontend/src/context/NotificationContext.test.tsx</location>
+      <location>frontend/src/**/*.test.{ts,tsx}</location>
+    </locations>
+    <ideas>
+      <idea ac="1,2">useNotificationPermission hook: Test initial permission check on mount returns correct state (granted/denied/default)</idea>
+      <idea ac="1,2">useNotificationPermission hook: Test permission state updates when browser permission changes</idea>
+      <idea ac="1,3">NotificationBanner component: Test banner renders only when permission is "default" and not dismissed</idea>
+      <idea ac="3">NotificationBanner component: Test "Enable Notifications" button calls requestPermission and hides banner on success</idea>
+      <idea ac="3">NotificationBanner component: Test "Maybe Later" button sets dismissal flag in localStorage and hides banner</idea>
+      <idea ac="4">NotificationBanner component: Test dismissed banner doesn't re-appear on app reload</idea>
+      <idea ac="4">localStorage persistence: Test dismissal state persists across page reloads</idea>
+      <idea ac="5">Settings dropdown: Test notification section displays correct status for each permission state</idea>
+      <idea ac="5">Settings dropdown: Test "Request Permission" button appears when permission is "default"</idea>
+      <idea ac="6">NotificationContext: Test context provides correct permission state to consumers</idea>
+      <idea ac="6">NotificationContext: Test requestPermission function updates state correctly</idea>
+      <idea ac="all">Integration: Test full flow - app load → check permission → show banner → request → update state → hide banner</idea>
+      <idea ac="all">Mock Notification API: Test that Notification.requestPermission is properly mocked and returns expected values</idea>
+    </ideas>
+  </tests>
+</story-context>
