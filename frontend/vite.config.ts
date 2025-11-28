@@ -37,6 +37,10 @@ export default defineConfig({
   build: {
     // Story 4.10 AC#8: Code splitting and manual chunking for vendor optimization
     rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        'test-workflow': path.resolve(__dirname, 'test-workflow.html'),
+      },
       output: {
         manualChunks: {
           // React core libraries

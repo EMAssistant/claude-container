@@ -75,8 +75,10 @@ interface WorkflowStepDef {
   name: string
   role: RoleName
   optional?: boolean
+  optionalLabel?: string // Custom label instead of "(optional)"
   isDecision?: boolean
   decisionLabel?: string
+  isEnd?: boolean // For terminal "End" node
 }
 
 // Workflow steps organized by phase with role colors
@@ -104,6 +106,12 @@ const WORKFLOW_STEPS: Record<string, WorkflowStepDef[]> = {
     { id: 'create-story', name: 'Create Story', role: 'SM' },
     { id: 'validate-story', name: 'Validate Story', role: 'SM', optional: true },
     { id: 'develop-story', name: 'Develop Story', role: 'Dev' },
+    { id: 'code-review', name: 'Code Review', role: 'Dev', optional: true, optionalLabel: 'use different llm' },
+    { id: 'code-review-pass', name: 'Code Review\nPass?', role: 'Dev', isDecision: true },
+    { id: 'more-stories', name: 'More stories\nin epic?', role: 'SM', isDecision: true },
+    { id: 'retrospective', name: 'Retrospective', role: 'SM' },
+    { id: 'more-epics', name: 'More\nEpics?', role: 'SM', isDecision: true },
+    { id: 'end', name: 'End', role: 'SM', isEnd: true },
   ],
 }
 
@@ -129,7 +137,7 @@ function getStatusStyles(status: StepStatus): { border: string; bg: string; text
     case 'skipped':
       return { border: 'border-gray-500', bg: 'bg-gray-500/20', text: 'text-gray-400' }
     case 'in_progress':
-      return { border: 'border-cyan-400', bg: 'bg-cyan-500/20', text: 'text-cyan-400' }
+      return { border: 'border-cyan-400 border-[5px]', bg: 'bg-cyan-500/20', text: 'text-cyan-400' }
     case 'pending':
       return { border: 'border-gray-600', bg: 'bg-gray-800/50', text: 'text-gray-500' }
   }
@@ -143,8 +151,69 @@ interface WorkflowStepProps {
   stepRef?: React.RefObject<HTMLDivElement | null>
 }
 
-// Decision diamond component
-function DecisionDiamond({ step, status, stepRef }: { step: WorkflowStepDef; status: StepStatus; stepRef?: React.RefObject<HTMLDivElement | null> }) {
+// Decision diamond component - wider to match box width
+function DecisionDiamond({ step, status, stepRef, showArrow }: { step: WorkflowStepDef; status: StepStatus; stepRef?: React.RefObject<HTMLDivElement | null>; showArrow?: boolean }) {
+  const styles = getStatusStyles(status)
+
+  // Determine branch labels and layout based on step type
+  // Implementation loop decisions have the "negative" path going LEFT, not right
+  const isLoopDecision = ['code-review-pass', 'more-stories', 'more-epics'].includes(step.id)
+
+  const getBranchLabels = () => {
+    if (step.id === 'code-review-pass') {
+      return { down: 'Pass', other: 'Fail' }
+    }
+    return { down: 'Yes', other: 'No' }
+  }
+  const labels = getBranchLabels()
+
+  return (
+    <div className="flex flex-col items-center w-full">
+      <div className="relative flex flex-col items-center w-full max-w-[120px]">
+        <div
+          ref={stepRef}
+          data-step-id={step.id}
+          className={cn(
+            'relative border-2 flex items-center justify-center transition-all duration-200 w-full',
+            styles.border,
+            styles.bg,
+            status === 'in_progress' && 'ring-2 ring-cyan-400/50 shadow-lg shadow-cyan-500/20'
+          )}
+          style={{
+            aspectRatio: '2 / 1',
+            clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+          }}
+        >
+          <div className={cn('text-[10px] font-semibold text-center whitespace-pre-line leading-tight', styles.text)}>
+            {step.name}
+          </div>
+        </div>
+        {/* Branch label for "Yes/Pass" is now rendered with the arrow below */}
+        {/* Branch label for "No/Fail" (horizontal path) - sits above the line */}
+        <span className={cn(
+          "absolute top-1/2 -translate-y-full -mt-1 text-[11px] font-medium text-gray-400",
+          isLoopDecision ? "-left-4" : "-right-1"
+        )}>{labels.other}</span>
+      </div>
+
+      {/* Connector arrow with stem - same as regular boxes */}
+      {showArrow && (
+        <div className="pt-1 text-gray-500 flex flex-col items-center relative">
+          {/* Vertical stem line */}
+          <div className="w-0.5 h-4 bg-gray-500" />
+          <ArrowDown className="w-4 h-4 -mt-1" />
+          {/* Yes/Pass label - left of arrow, vertically centered */}
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-full pr-1 text-[11px] font-medium text-green-400">
+            {labels.down}
+          </span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// End node component - oval shape
+function EndNode({ step, status, stepRef }: { step: WorkflowStepDef; status: StepStatus; stepRef?: React.RefObject<HTMLDivElement | null> }) {
   const styles = getStatusStyles(status)
 
   return (
@@ -153,20 +222,15 @@ function DecisionDiamond({ step, status, stepRef }: { step: WorkflowStepDef; sta
         ref={stepRef}
         data-step-id={step.id}
         className={cn(
-          'w-20 h-20 rotate-45 border-2 flex items-center justify-center transition-all duration-200',
+          'px-6 py-2 rounded-full border-2 text-center transition-all duration-200',
           styles.border,
           styles.bg,
           status === 'in_progress' && 'ring-2 ring-cyan-400/50 shadow-lg shadow-cyan-500/20'
         )}
       >
-        <div className={cn('-rotate-45 text-xs font-semibold text-center', styles.text)}>
+        <div className={cn('text-xs font-semibold', styles.text)}>
           {step.name}
         </div>
-      </div>
-      {/* Yes/No labels */}
-      <div className="flex justify-between w-full mt-2 px-2">
-        <span className="text-[10px] text-green-400">Yes ↓</span>
-        <span className="text-[10px] text-gray-400">No →</span>
       </div>
     </div>
   )
@@ -179,17 +243,22 @@ function WorkflowStep({ step, status, showArrow, arrowLabel, stepRef }: Workflow
 
   // Render decision diamond
   if (step.isDecision) {
-    return <DecisionDiamond step={step} status={status} stepRef={stepRef} />
+    return <DecisionDiamond step={step} status={status} stepRef={stepRef} showArrow={showArrow} />
+  }
+
+  // Render end oval
+  if (step.isEnd) {
+    return <EndNode step={step} status={status} stepRef={stepRef} />
   }
 
   return (
-    <div className="flex flex-col items-center">
-      {/* Step box */}
+    <div className="flex flex-col items-center w-full">
+      {/* Step box - constrained width for breathing room */}
       <div
         ref={stepRef}
         data-step-id={step.id}
         className={cn(
-          'w-full px-3 py-2 rounded-lg border-2 text-center transition-all duration-200',
+          'w-full max-w-[120px] px-2 py-2 rounded-lg border-2 text-center transition-all duration-200',
           styles.border,
           styles.bg,
           status === 'in_progress' && 'ring-2 ring-cyan-400/50 shadow-lg shadow-cyan-500/20'
@@ -203,10 +272,10 @@ function WorkflowStep({ step, status, showArrow, arrowLabel, stepRef }: Workflow
         )}>
           {step.name}
         </div>
-        {/* Optional badge */}
+        {/* Optional badge with custom label support */}
         {step.optional && (
           <div className="text-[9px] text-gray-500 italic">
-            (optional)
+            ({step.optionalLabel || 'optional'})
           </div>
         )}
         {/* Role badge */}
@@ -226,13 +295,15 @@ function WorkflowStep({ step, status, showArrow, arrowLabel, stepRef }: Workflow
         </div>
       </div>
 
-      {/* Connector arrow */}
+      {/* Connector arrow with stem */}
       {showArrow && (
-        <div className="py-1 text-gray-500 flex flex-col items-center">
+        <div className="pt-1 text-gray-500 flex flex-col items-center">
           {arrowLabel && (
             <span className="text-[9px] text-cyan-400 italic mb-0.5">{arrowLabel}</span>
           )}
-          <ArrowDown className="w-4 h-4" />
+          {/* Vertical stem line */}
+          <div className="w-0.5 h-4 bg-gray-500" />
+          <ArrowDown className="w-4 h-4 -mt-1" />
         </div>
       )}
     </div>
@@ -245,9 +316,10 @@ interface PhaseColumnProps {
   stepStatuses: Map<string, StepStatus>
   stepRefs?: Map<string, React.RefObject<HTMLDivElement | null>>
   arrowLabels?: Map<string, string>
+  extraLeftPadding?: number  // Extra left padding in px for loop arrows
 }
 
-function PhaseColumn({ phase, steps, stepStatuses, stepRefs, arrowLabels }: PhaseColumnProps) {
+function PhaseColumn({ phase, steps, stepStatuses, stepRefs, arrowLabels, extraLeftPadding }: PhaseColumnProps) {
   // Calculate phase completion
   const completedCount = steps.filter(s => {
     const status = stepStatuses.get(s.id)
@@ -272,7 +344,10 @@ function PhaseColumn({ phase, steps, stepStatuses, stepRefs, arrowLabels }: Phas
       </div>
 
       {/* Steps flow */}
-      <div className="flex-1 flex flex-col gap-1 p-3">
+      <div
+        className="flex-1 flex flex-col gap-1 py-2 pr-4"
+        style={{ paddingLeft: extraLeftPadding ? `${extraLeftPadding}px` : '16px' }}
+      >
         {steps.map((step, index) => (
           <WorkflowStep
             key={step.id}
@@ -336,8 +411,17 @@ function Legend() {
 
       {/* Decision diamond legend */}
       <div className="flex items-center gap-1">
-        <div className="w-3 h-3 rotate-45 border border-gray-500 bg-gray-700/50" />
+        <div
+          className="w-5 h-3 border border-gray-500 bg-gray-700/50"
+          style={{ clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)' }}
+        />
         <span className="text-[10px] text-gray-400">Decision</span>
+      </div>
+
+      {/* End node legend */}
+      <div className="flex items-center gap-1">
+        <div className="w-4 h-2.5 rounded-full border border-gray-500 bg-gray-700/50" />
+        <span className="text-[10px] text-gray-400">End</span>
       </div>
     </div>
   )
@@ -348,6 +432,7 @@ interface ConnectorPath {
   path: string
   label?: string
   labelPos?: { x: number; y: number }
+  noArrow?: boolean  // If true, no arrowhead on this path
 }
 
 export function WorkflowDiagram() {
@@ -398,6 +483,9 @@ export function WorkflowDiagram() {
 
   // Refs for connector lines
   const containerRef = useRef<HTMLDivElement>(null)
+  const planningLaneRef = useRef<HTMLDivElement>(null)
+  const solutioningLaneRef = useRef<HTMLDivElement>(null)
+  const implementationLaneRef = useRef<HTMLDivElement>(null)
   const brainstormRef = useRef<HTMLDivElement>(null)
   const researchRef = useRef<HTMLDivElement>(null)
   const productBriefRef = useRef<HTMLDivElement>(null)
@@ -407,6 +495,12 @@ export function WorkflowDiagram() {
   const architectureRef = useRef<HTMLDivElement>(null)
   const implReadinessRef = useRef<HTMLDivElement>(null)
   const sprintPlanningRef = useRef<HTMLDivElement>(null)
+  const createStoryRef = useRef<HTMLDivElement>(null)
+  const developStoryRef = useRef<HTMLDivElement>(null)
+  const codeReviewPassRef = useRef<HTMLDivElement>(null)
+  const moreStoriesRef = useRef<HTMLDivElement>(null)
+  const retrospectiveRef = useRef<HTMLDivElement>(null)
+  const moreEpicsRef = useRef<HTMLDivElement>(null)
 
   const stepRefs = new Map<string, React.RefObject<HTMLDivElement | null>>([
     ['brainstorm-project', brainstormRef],
@@ -418,6 +512,12 @@ export function WorkflowDiagram() {
     ['create-architecture', architectureRef],
     ['implementation-readiness', implReadinessRef],
     ['sprint-planning', sprintPlanningRef],
+    ['create-story', createStoryRef],
+    ['develop-story', developStoryRef],
+    ['code-review-pass', codeReviewPassRef],
+    ['more-stories', moreStoriesRef],
+    ['retrospective', retrospectiveRef],
+    ['more-epics', moreEpicsRef],
   ])
 
   // Arrow labels for specific steps
@@ -448,6 +548,10 @@ export function WorkflowDiagram() {
       }
     }
 
+    const _planningLane = getPos(planningLaneRef)
+    void _planningLane // Reserved for future use
+    const solutioningLane = getPos(solutioningLaneRef)
+    const implementationLane = getPos(implementationLaneRef)
     const brainstorm = getPos(brainstormRef)
     const research = getPos(researchRef)
     const productBrief = getPos(productBriefRef)
@@ -457,64 +561,145 @@ export function WorkflowDiagram() {
     const architecture = getPos(architectureRef)
     const implReadiness = getPos(implReadinessRef)
     const sprintPlanning = getPos(sprintPlanningRef)
+    const createStory = getPos(createStoryRef)
+    const developStory = getPos(developStoryRef)
+    const codeReviewPass = getPos(codeReviewPassRef)
+    const moreStories = getPos(moreStoriesRef)
+    const moreEpics = getPos(moreEpicsRef)
 
     const paths: ConnectorPath[] = []
 
-    // Discovery → PRD curves
-    if (brainstorm && prd) {
-      const gap = prd.left - brainstorm.right
+    // Discovery → PRD: All three lines converge smoothly at the back of one arrow to PRD
+    if (brainstorm && research && productBrief && prd) {
+      const targetX = prd.left
+      const targetY = prd.centerY
+      const convergeX = targetX - 25  // Convergence point (back of arrow)
+      // Vertical portion centered between the swim lanes
+      const midX = brainstorm.right + (prd.left - brainstorm.right) / 2
+
+      // Brainstorm → convergence point: smooth S-curve down
       paths.push({
-        path: `M ${brainstorm.right} ${brainstorm.centerY} C ${brainstorm.right + gap * 0.5} ${brainstorm.centerY - 30}, ${prd.left - gap * 0.3} ${prd.centerY - 20}, ${prd.left} ${prd.centerY}`
+        path: `M ${brainstorm.right} ${brainstorm.centerY} C ${midX} ${brainstorm.centerY}, ${midX} ${targetY}, ${convergeX} ${targetY}`,
+        noArrow: true
       })
-    }
-    if (research && prd) {
-      const gap = prd.left - research.right
+
+      // Research → convergence point: smooth S-curve
       paths.push({
-        path: `M ${research.right} ${research.centerY} C ${research.right + gap * 0.4} ${research.centerY}, ${prd.left - gap * 0.3} ${prd.centerY + 10}, ${prd.left} ${prd.centerY + 5}`
+        path: `M ${research.right} ${research.centerY} C ${midX} ${research.centerY}, ${midX} ${targetY}, ${convergeX} ${targetY}`,
+        noArrow: true
       })
-    }
-    if (productBrief && prd) {
-      const gap = prd.left - productBrief.right
+
+      // Product Brief → convergence point: smooth S-curve up
       paths.push({
-        path: `M ${productBrief.right} ${productBrief.centerY} C ${productBrief.right + gap * 0.5} ${productBrief.centerY + 30}, ${prd.left - gap * 0.3} ${prd.centerY + 30}, ${prd.left} ${prd.centerY + 10}`
+        path: `M ${productBrief.right} ${productBrief.centerY} C ${midX} ${productBrief.centerY}, ${midX} ${targetY}, ${convergeX} ${targetY}`,
+        noArrow: true
+      })
+
+      // Convergence point → PRD (with arrow)
+      paths.push({
+        path: `M ${convergeX} ${targetY} L ${targetX} ${targetY}`
       })
     }
 
     // Decision "No" → Architecture (horizontal curve to next column)
-    if (hasUiDecision && architecture) {
+    if (hasUiDecision && architecture && solutioningLane) {
       const startX = hasUiDecision.right + 5
       const startY = hasUiDecision.centerY
-      const endX = architecture.left
-      const endY = architecture.centerY
-      const gap = endX - startX
+      const targetX = architecture.left
+      const targetY = architecture.centerY
+      const convergeX = solutioningLane.left + 10
+      // Control points: first stays horizontal longer, second ensures flat entry
+      const ctrl1X = solutioningLane.left - 5
+      const ctrl2X = solutioningLane.left - 25
+
+      // Curve to convergence point (no arrow)
       paths.push({
-        path: `M ${startX} ${startY} C ${startX + gap * 0.4} ${startY}, ${endX - gap * 0.3} ${endY}, ${endX} ${endY}`,
-        label: 'No',
-        labelPos: { x: startX + gap * 0.5, y: startY - 10 }
+        path: `M ${startX} ${startY} C ${ctrl1X} ${startY}, ${ctrl2X} ${targetY}, ${convergeX} ${targetY}`,
+        noArrow: true
+      })
+      // Convergence point → Architecture (with arrow)
+      paths.push({
+        path: `M ${convergeX} ${targetY} L ${targetX} ${targetY}`
       })
     }
 
-    // UX Design → Architecture
-    if (createDesign && architecture) {
+    // UX Design → Architecture (converges with Has UI "No" arrow)
+    if (createDesign && architecture && solutioningLane) {
       const startX = createDesign.right
       const startY = createDesign.centerY
-      const endX = architecture.left
-      const endY = architecture.centerY
-      const gap = endX - startX
+      const _targetX = architecture.left
+      void _targetX // Reserved for future use
+      const targetY = architecture.centerY
+      const convergeX = solutioningLane.left + 10
+      // Control points: first stays horizontal longer, second ensures flat entry
+      const ctrl1X = solutioningLane.left - 5
+      const ctrl2X = solutioningLane.left - 25
+
+      // Curve to convergence point (no arrow - shares arrow with Has UI "No")
       paths.push({
-        path: `M ${startX} ${startY} C ${startX + gap * 0.4} ${startY + 20}, ${endX - gap * 0.3} ${endY + 20}, ${endX} ${endY}`
+        path: `M ${startX} ${startY} C ${ctrl1X} ${startY}, ${ctrl2X} ${targetY}, ${convergeX} ${targetY}`,
+        noArrow: true
       })
     }
 
     // Impl. Readiness → Sprint Planning
-    if (implReadiness && sprintPlanning) {
+    if (implReadiness && sprintPlanning && implementationLane) {
       const startX = implReadiness.right
       const startY = implReadiness.centerY
-      const endX = sprintPlanning.left
-      const endY = sprintPlanning.centerY
-      const gap = endX - startX
+      const targetX = sprintPlanning.left
+      const targetY = sprintPlanning.centerY
+      const convergeX = implementationLane.left + 10
+      // Control points: first stays horizontal longer, second ensures flat entry
+      const ctrl1X = implementationLane.left - 5
+      const ctrl2X = implementationLane.left - 25
+
+      // Curve to convergence point (no arrow)
       paths.push({
-        path: `M ${startX} ${startY} C ${startX + gap * 0.4} ${startY}, ${endX - gap * 0.3} ${endY}, ${endX} ${endY}`
+        path: `M ${startX} ${startY} C ${ctrl1X} ${startY}, ${ctrl2X} ${targetY}, ${convergeX} ${targetY}`,
+        noArrow: true
+      })
+      // Convergence point → Sprint Planning (with arrow)
+      paths.push({
+        path: `M ${convergeX} ${targetY} L ${targetX} ${targetY}`
+      })
+    }
+
+    // Code Review Pass "Fail" → back to Develop Story (loop LEFT and up)
+    if (codeReviewPass && developStory) {
+      const startX = codeReviewPass.left - 5
+      const startY = codeReviewPass.centerY
+      const endX = developStory.left
+      const endY = developStory.centerY
+      // Loop out to the left and back up
+      const loopOffset = 25
+      paths.push({
+        path: `M ${startX} ${startY} L ${startX - loopOffset} ${startY} L ${startX - loopOffset} ${endY} L ${endX} ${endY}`
+      })
+    }
+
+    // More Stories "Yes" → back to Create Story (loop LEFT and up)
+    if (moreStories && createStory) {
+      const startX = moreStories.left - 5
+      const startY = moreStories.centerY
+      const endX = createStory.left
+      const endY = createStory.centerY
+      // Loop out to the left and back up (offset more to avoid overlap)
+      const loopOffset = 40
+      paths.push({
+        path: `M ${startX} ${startY} L ${startX - loopOffset} ${startY} L ${startX - loopOffset} ${endY} L ${endX} ${endY}`
+      })
+    }
+
+    // More Epics "Yes" → back to Create Story (loop LEFT and up, outermost)
+    if (moreEpics && createStory) {
+      const startX = moreEpics.left - 5
+      const startY = moreEpics.centerY
+      const endX = createStory.left
+      const endY = createStory.centerY
+      // Loop out further to the left and back up (outermost loop)
+      const loopOffset = 55
+      paths.push({
+        path: `M ${startX} ${startY} L ${startX - loopOffset} ${startY} L ${startX - loopOffset} ${endY} L ${endX} ${endY}`
       })
     }
 
@@ -571,13 +756,14 @@ export function WorkflowDiagram() {
             <defs>
               <marker
                 id="arrowhead"
-                markerWidth="8"
-                markerHeight="6"
-                refX="7"
-                refY="3"
+                markerWidth="10"
+                markerHeight="8"
+                refX="10"
+                refY="4"
                 orient="auto"
+                markerUnits="strokeWidth"
               >
-                <polygon points="0 0, 8 3, 0 6" fill="#88C0D0" />
+                <polygon points="0 0, 10 4, 0 8" fill="#88C0D0" />
               </marker>
             </defs>
             {connectorPaths.map((connector, index) => (
@@ -588,7 +774,7 @@ export function WorkflowDiagram() {
                   stroke="#88C0D0"
                   strokeWidth="2"
                   strokeDasharray="6 3"
-                  markerEnd="url(#arrowhead)"
+                  markerEnd={connector.noArrow ? undefined : "url(#arrowhead)"}
                   opacity="0.7"
                 />
                 {connector.label && connector.labelPos && (
@@ -606,17 +792,34 @@ export function WorkflowDiagram() {
             ))}
           </svg>
 
-          {/* Grid of phase columns */}
-          <div className="grid grid-cols-4 gap-3 min-h-0">
+          {/* Grid of phase columns - slim lanes with wide gaps for connector arrows */}
+          <div className="flex justify-center gap-7 min-h-0">
             {PHASES.map((phase) => (
-              <PhaseColumn
+              <div
                 key={phase.id}
-                phase={phase}
-                steps={WORKFLOW_STEPS[phase.id] || []}
-                stepStatuses={stepStatuses}
-                stepRefs={stepRefs}
-                arrowLabels={arrowLabels}
-              />
+                ref={
+                  phase.id === 'planning' ? planningLaneRef :
+                  phase.id === 'solutioning' ? solutioningLaneRef :
+                  phase.id === 'implementation' ? implementationLaneRef :
+                  undefined
+                }
+                className={cn(
+                  "flex-shrink-0",
+                  // Discovery stays narrow, Planning/Solutioning wider for incoming arrows,
+                  // Implementation widest to fit story loop arrows on the left
+                  phase.id === 'discovery' ? "w-[160px]" :
+                  phase.id === 'implementation' ? "w-[230px]" : "w-[190px]"
+                )}
+              >
+                <PhaseColumn
+                  phase={phase}
+                  steps={WORKFLOW_STEPS[phase.id] || []}
+                  stepStatuses={stepStatuses}
+                  stepRefs={stepRefs}
+                  arrowLabels={arrowLabels}
+                  extraLeftPadding={phase.id === 'implementation' ? 70 : undefined}
+                />
+              </div>
             ))}
           </div>
         </div>

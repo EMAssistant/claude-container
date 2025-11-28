@@ -27,6 +27,7 @@ Complete the OAuth login in your browser, then exit with `/exit`.
 ```bash
 docker run -d --name claude-container \
   -p 3000:3000 \
+  --memory=8g \
   -e HOST_WORKSPACE_PATH=/path/to/your/project \
   -v /path/to/your/project:/workspace \
   -v ~/.claude-container:/config/.claude-code \
@@ -40,6 +41,7 @@ macOS:
 ```bash
 docker run -d --name claude-container \
   -p 3000:3000 \
+  --memory=8g \
   -e HOST_WORKSPACE_PATH=/path/to/your/project \
   -v /var/run/docker.sock:/var/run/docker.sock \
   --group-add $(stat -f '%g' /var/run/docker.sock) \
@@ -53,6 +55,7 @@ Linux:
 ```bash
 docker run -d --name claude-container \
   -p 3000:3000 \
+  --memory=8g \
   -e HOST_WORKSPACE_PATH=/path/to/your/project \
   -v /var/run/docker.sock:/var/run/docker.sock \
   --group-add $(stat -c '%g' /var/run/docker.sock) \
@@ -87,6 +90,7 @@ docker kill claude-container && docker rm claude-container
 docker build -t claude-container .
 docker run -d --name claude-container \
   -p 3000:3000 \
+  --memory=8g \
   -e HOST_WORKSPACE_PATH=/path/to/your/project \
   -v /var/run/docker.sock:/var/run/docker.sock \
   --group-add $(stat -f '%g' /var/run/docker.sock) \
